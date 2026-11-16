@@ -7,7 +7,7 @@ import { gaps, primaryStep, scoreVerdict } from './verdict'
 const dash = (over: Partial<Dashboard> = {}): Dashboard => ({
   status_counts: { Saved: 0, Applied: 0, Interview: 0, Offer: 0, Rejected: 0, Withdrawn: 0 },
   applications_per_week: [], response_rate: null, high_match_jobs: [], high_match_threshold: 70,
-  unread_notifications: 0, follow_ups_due: 0, total_jobs: 0, sources: [], ready_to_apply: [], saved_without_resume: [],
+  unread_notifications: 0, follow_ups_due: 0, total_jobs: 0, sources: [], ready_to_apply: [], saved_without_resume: [], snoozed: {},
   ...over,
 })
 
@@ -31,6 +31,20 @@ describe('next steps', () => {
       ['Profile missing preferred locations', '/settings?section=locations'],
       ['JobStreet needs attention', '/settings?section=sources'],
     ])
+  })
+  it('marks job steps so they can be hidden, and leaves snoozed steps out', () => {
+    const d = dash({
+      ready_to_apply: [{ job_id: 4, title: 'Junior Dev', company: 'X', document_id: 9, version: 1 }],
+      saved_without_resume: [{ job_id: 5, title: 'QA', company: 'Y' }],
+      high_match_jobs: [{ id: 1, title: 'A', company: 'X', score: 91 }, { id: 2, title: 'B', company: 'Y', score: 74 }],
+      follow_ups_due: 2,
+    })
+    expect(nextSteps(d, []).map((s) => [s.key, s.jobId])).toEqual([
+      ['follow-ups', undefined], ['ready-4', 4], ['high-match-1-2', undefined], ['tailor-5', 5]])
+    d.snoozed = { 'tailor-5': '2999-01-01', 'high-match-1-2': '2999-01-01' }
+    expect(nextSteps(d, []).map((s) => s.key)).toEqual(['follow-ups', 'ready-4'])
+    d.high_match_jobs.push({ id: 3, title: 'C', company: 'Z', score: 80 }) // a new match: the old snooze no longer covers it
+    expect(nextSteps(d, []).map((s) => s.key)).toContain('high-match-1-2-3')
   })
   it('names a single high match and links straight to it', () => {
     const [s] = nextSteps(dash({ high_match_jobs: [{ id: 7, title: 'Dev', company: 'X', score: 88 }] }), [])

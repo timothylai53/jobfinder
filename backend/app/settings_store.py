@@ -93,3 +93,13 @@ def next_item_code(session: Session) -> str:
         session.add(AppSetting(key="next_item_number", value=n + 1))
     session.flush()
     return f"B{n}"
+
+
+def get_snoozed(session: Session, today) -> dict[str, str]:
+    """Today next steps snoozed until a date (ISO). Only snoozes still in force are returned."""
+    raw = _get(session, "snoozed_steps") or {}
+    return {k: v for k, v in raw.items() if isinstance(v, str) and v > today.isoformat()}
+
+
+def set_snoozed(session: Session, snoozed: dict[str, str]) -> None:
+    _put(session, "snoozed_steps", snoozed)

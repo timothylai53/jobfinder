@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Download, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Download, ExternalLink, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '@/api/client'
-import { STATUSES, type Application, type DeepAnalysisResult, type DocumentRow, type JobDetail as JobDetailT, type Status } from '@/api/types'
+import { STATUSES, type Application, type DeepAnalysisResult, type DocumentRow, type JobDetail as JobDetailT, type Profile, type Status } from '@/api/types'
 import Breakdown from '@/components/Breakdown'
 import { AiActions, AiDialogs, useAiDialog } from '@/components/ai/AiTools'
 import { useAiSettings } from '@/components/ai/AiTaskFlow'
@@ -11,6 +11,7 @@ import DocumentsCard, { useDocuments } from '@/components/ai/DocumentsCard'
 import { DeepAnalysisView } from '@/components/ai/AnalysisViews'
 import PasteFullJdDialog from '@/components/PasteFullJdDialog'
 import ProfileGaps from '@/components/ProfileGaps'
+import { useToast } from '@/components/Toast'
 import { ErrorText, Field, NativeSelect, Notice, ScoreBadge, StatusMark } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { formatDate, formatDateTime, formatSalary } from '@/lib/score'
 import { gaps, primaryStep, scoreVerdict } from '@/lib/verdict'
+import { pendingDeletes } from '@/lib/pendingDeletes'
 import { cn } from '@/lib/utils'
 
 const TABS = [['overview', 'Overview'], ['score', 'Score details'], ['documents', 'Documents'], ['description', 'Job description']] as const
@@ -49,11 +51,25 @@ export default function JobDetail() {
     mutationFn: (body: Record<string, unknown>) => api.patch(`/api/applications/${q.data!.application!.id}`, body),
     onSuccess: invalidate,
   })
-  const hide = useMutation({ mutationFn: (hidden: boolean) => api.patch(`/api/jobs/${id}`, { hidden }), onSuccess: invalidate })
-  const del = useMutation({
-    mutationFn: () => api.del(`/api/jobs/${id}`),
-    onSuccess: () => { invalidate(); navigate('/jobs') },
+  const toast = useToast()
+  const hide = useMutation({
+    mutationFn: (hidden: boolean) => api.patch(`/api/jobs/${id}`, { hidden }),
+    onSuccess: (_d, hidden) => {
+      invalidate()
+      if (hidden) toast({ message: 'Job hidden.', undo: () => { api.patch(`/api/jobs/${id}`, { hidden: false }).then(invalidate) } })
+    },
   })
+  // Delete waits 5 s for Undo before it really happens; the job leaves the list straight away.
+  const remove = () => {
+    const jobId = Number(id)
+    pendingDeletes.add(jobId)
+    navigate('/jobs')
+    toast({
+      message: 'Job deleted.',
+      undo: () => pendingDeletes.remove(jobId),
+      onExpire: () => { api.del(`/api/jobs/${jobId}`).finally(() => { invalidate(); pendingDeletes.remove(jobId) }) },
+    })
+  }
   const dialog = useAiDialog()
   // The open tab lives in the URL (?tab=score), so links, reloads and Back keep it.
   const [params, setParams] = useSearchParams()
@@ -86,13 +102,12 @@ export default function JobDetail() {
             onTailor={() => dialog.start('tailor_resume')} onApplied={(body) => patchApp.mutate(body)} />
           <div className="flex gap-1">
             <Button size="sm" variant="ghost" onClick={() => hide.mutate(!job.hidden)}>{job.hidden ? 'Unhide' : 'Hide'}</Button>
-            <Button size="sm" variant="ghost" className="text-red-700 hover:bg-red-50 hover:text-red-800"
-              onClick={() => { if (confirm('Delete this job, its score and its tracker entry?')) del.mutate() }}>Delete</Button>
+            <Button size="sm" variant="ghost" className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={remove}>Delete</Button>
           </div>
         </div>
       </header>
 
-      <ErrorText error={save.error || patchApp.error || hide.error || del.error} />
+      <ErrorText error={save.error || patchApp.error || hide.error} />
       {imported?.duplicate && <Notice tone="warn">This ad matched a job already saved, so it was merged into that job.</Notice>}
       {job.hidden && <Notice tone="warn">Hidden: {job.hidden_reason}</Notice>}
       {summaryOnly && (
@@ -118,7 +133,7 @@ export default function JobDetail() {
         <TabsContent value="overview" className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
           <section aria-labelledby="missing">
             <h2 id="missing" className="mb-3 text-lg font-semibold">What you're missing</h2>
-            {!match ? <p className="text-muted-foreground">Not scored yet.</p> : <Missing breakdown={match.breakdown} />}
+            {!match ? <p className="text-muted-foreground">Not scored yet.</p> : <Missing breakdown={match.breakdown} onChanged={invalidate} />}
           </section>
           <div className="flex flex-col gap-8">
             <section aria-labelledby="application">
@@ -130,7 +145,7 @@ export default function JobDetail() {
             <section aria-labelledby="ai-tools">
               <h2 id="ai-tools" className="mb-1 text-lg font-semibold">Resume and letters</h2>
               <p className="mb-3 text-sm text-muted-foreground">Written only from your Experience Bank; anything else is flagged before you save.</p>
-              <AiActions dialog={dialog} emphasise={false} />
+              <AiActions dialog={dialog} showTailor={false} />
             </section>
           </div>
         </TabsContent>
@@ -208,27 +223,65 @@ function PrimaryAction({ application, jobId, onSave, saving, onTailor, onApplied
   )
 }
 
-/** Only the partly met and missing items; the full breakdown is under Score details. */
-function Missing({ breakdown }: { breakdown: Parameters<typeof gaps>[0] }) {
+/** Only the partly met and missing items; the full breakdown is under Score details. A missing skill can be added to
+ * the profile ("I have this"), which rescores every job; years and education are fixed in the profile instead. */
+function Missing({ breakdown, onChanged }: { breakdown: Parameters<typeof gaps>[0]; onChanged: () => void }) {
+  const qc = useQueryClient()
+  const toast = useToast()
+  const setSkills = async (change: (skills: string[]) => string[]) => {
+    const p = await api.get<Profile>('/api/profile')
+    await api.put('/api/profile', { ...p, skills: change(p.skills) })
+    qc.invalidateQueries({ queryKey: ['profile'] })
+    onChanged()
+  }
+  const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
+  const add = useMutation({
+    mutationFn: (skill: string) => setSkills((s) => (s.some((x) => same(x, skill)) ? s : [...s, skill])),
+    onSuccess: (_d, skill) => toast({
+      message: `${skill} added to your profile. Scores updated.`,
+      undo: () => { setSkills((s) => s.filter((x) => !same(x, skill))) },
+    }),
+  })
+  const claim = (skill: string) => {
+    const ok = confirm(`Add "${skill}" to your profile skills?\n\nEvery job is rescored, and AI-written resumes may then mention ${skill}. Only add it if you really have it.`)
+    if (ok) add.mutate(skill)
+  }
   const list = gaps(breakdown)
   if (breakdown.gates.length === 0 && list.length === 0) {
     return <p className="flex items-center gap-2"><StatusMark status="met" /> Nothing. Every requirement the ad states is met.</p>
   }
   return (
-    <ul className="flex flex-col gap-2.5">
-      {breakdown.gates.map((g) => (
-        <li key={g.key} className="flex items-start gap-2.5 text-red-800"><StatusMark status="not_met" className="mt-1" /><span className="font-medium">{g.message}</span></li>
-      ))}
-      {list.map(({ category, item }, i) => (
-        <li key={i} className="flex items-start gap-2.5">
-          <StatusMark status={item.status} className="mt-1" />
-          <span>
-            <span className="font-medium">{item.name}</span>
-            <span className="block text-sm text-muted-foreground">{category}{item.detail ? `: ${item.detail}` : ''}</span>
-          </span>
-        </li>
-      ))}
-    </ul>
+    <>
+      <ErrorText error={add.error} />
+      <ul className="flex flex-col gap-2.5">
+        {breakdown.gates.map((g) => (
+          <li key={g.key} className="flex items-start gap-2.5 text-red-800"><StatusMark status="not_met" className="mt-1" /><span className="font-medium">{g.message}</span></li>
+        ))}
+        {list.map(({ category, categoryKey, item }, i) => {
+          const isSkill = categoryKey.endsWith('_skills') && item.status === 'not_met'
+          const options = item.group && item.group.length > 0 ? item.group : [item.name]
+          return (
+            <li key={i} className="flex flex-wrap items-start gap-x-2.5 gap-y-1">
+              <StatusMark status={item.status} className="mt-1" />
+              <span className="min-w-0 flex-1">
+                <span className="font-medium">{item.name}</span>
+                <span className="block text-sm text-muted-foreground">{category}{item.detail ? `: ${item.detail}` : ''}</span>
+              </span>
+              {isSkill && (
+                <span className="flex flex-wrap gap-1">
+                  {options.map((skill) => (
+                    <Button key={skill} size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground" disabled={add.isPending}
+                      aria-label={`I have ${skill}: add it to my profile skills`} onClick={() => claim(skill)}>
+                      <Plus className="size-4" aria-hidden /> {options.length > 1 ? `I have ${skill}` : 'I have this'}
+                    </Button>
+                  ))}
+                </span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </>
   )
 }
 
@@ -237,20 +290,26 @@ function ApplicationForm({ application, history, onPatch }: {
 }) {
   const [notes, setNotes] = useState(application.notes ?? '')
   useEffect(() => setNotes(application.notes ?? ''), [application.notes])
+  // Dates and the versions sent only mean something once you have applied.
+  const applied = application.status !== 'Saved'
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(10.5rem,1fr))] gap-3">
         <Field label="Status">
           <NativeSelect className="h-9" value={application.status} onChange={(v) => onPatch({ status: v as Status })} options={[...STATUSES]} />
         </Field>
-        <Field label="Applied on">
-          <Input type="date" value={application.applied_at ?? ''} onChange={(e) => onPatch({ applied_at: e.target.value || null })} />
-        </Field>
-        <Field label="Follow up on">
-          <Input type="date" value={application.follow_up_at ?? ''} onChange={(e) => onPatch({ follow_up_at: e.target.value || null })} />
-        </Field>
+        {applied && (
+          <>
+            <Field label="Applied on">
+              <Input type="date" value={application.applied_at ?? ''} onChange={(e) => onPatch({ applied_at: e.target.value || null })} />
+            </Field>
+            <Field label="Follow up on">
+              <Input type="date" value={application.follow_up_at ?? ''} onChange={(e) => onPatch({ follow_up_at: e.target.value || null })} />
+            </Field>
+          </>
+        )}
       </div>
-      <VersionsSent application={application} onChange={onPatch} />
+      {applied && <VersionsSent application={application} onChange={onPatch} />}
       <Field label="Notes">
         <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} onBlur={() => notes !== application.notes && onPatch({ notes })} />
       </Field>

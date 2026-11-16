@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, CheckCircle2, Circle, ListTodo } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { AlertTriangle, CheckCircle2, Circle, Clock, EyeOff, ListTodo } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { api } from '@/api/client'
 import type { Dashboard as DashboardT, ExperienceItem, Profile } from '@/api/types'
 import { ErrorText, PageHeader } from '@/components/common'
 import ImportJobDialog from '@/components/ImportJobDialog'
+import { useToast } from '@/components/Toast'
 import { useProfileStatus } from '@/components/ProfileGaps'
 import { Button } from '@/components/ui/button'
 import { formatDate, formatDateTime } from '@/lib/score'
@@ -45,9 +46,27 @@ export default function Dashboard() {
 }
 
 function NextSteps({ steps }: { steps: NextStep[] }) {
+  const qc = useQueryClient()
+  const toast = useToast()
+  const refresh = () => { for (const k of [['dashboard'], ['jobs']]) qc.invalidateQueries({ queryKey: k }) }
+  const snooze = useMutation({
+    mutationFn: (s: NextStep) => api.post('/api/dashboard/snooze', { key: s.key, days: 3 }),
+    onSuccess: (_d, s) => {
+      refresh()
+      toast({ message: 'Snoozed for 3 days.', undo: () => api.del(`/api/dashboard/snooze/${encodeURIComponent(s.key)}`).then(refresh) })
+    },
+  })
+  const notInterested = useMutation({
+    mutationFn: (s: NextStep) => api.patch(`/api/jobs/${s.jobId}`, { hidden: true, hidden_reason: 'Not interested' }),
+    onSuccess: (_d, s) => {
+      refresh()
+      toast({ message: 'Job hidden: not interested.', undo: () => api.patch(`/api/jobs/${s.jobId}`, { hidden: false }).then(refresh) })
+    },
+  })
   return (
-    <section aria-labelledby="next-steps" className="max-w-3xl">
+    <section aria-labelledby="next-steps">
       <h2 id="next-steps" className="mb-3 text-lg font-semibold">Next steps</h2>
+      <ErrorText error={snooze.error || notInterested.error} />
       {steps.length === 0 ? (
         <div className="rounded-xl border bg-background px-5 py-6">
           <p className="font-medium">Nothing waiting on you.</p>
@@ -57,14 +76,26 @@ function NextSteps({ steps }: { steps: NextStep[] }) {
       ) : (
         <ol className="divide-y rounded-xl border bg-background">
           {steps.map((s, i) => (
-            <li key={s.key} className="flex items-center gap-3 px-5 py-3.5">
+            <li key={s.key} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3">
               {s.tone === 'fix'
                 ? <AlertTriangle role="img" className="size-[18px] shrink-0 text-attention" aria-label="Needs fixing" />
                 : <ListTodo className="size-[18px] shrink-0 text-muted-foreground" aria-hidden />}
-              <span className="min-w-0 flex-1 text-[15px]">{s.text}</span>
-              <Button asChild size="sm" variant={i === 0 ? 'default' : 'outline'}>
-                <Link to={s.to} aria-label={`${s.action}: ${s.text}`}>{s.action}</Link>
-              </Button>
+              <span className="min-w-0 flex-1 basis-64 text-[15px]">{s.text}</span>
+              <div className="ml-auto flex items-center gap-1">
+                {s.jobId !== undefined && (
+                  <Button size="sm" variant="ghost" className="text-muted-foreground" disabled={notInterested.isPending}
+                    aria-label={`Not interested: ${s.text}`} onClick={() => notInterested.mutate(s)}>
+                    <EyeOff className="size-4" aria-hidden /> Not interested
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" className="text-muted-foreground" disabled={snooze.isPending}
+                  aria-label={`Snooze for 3 days: ${s.text}`} onClick={() => snooze.mutate(s)}>
+                  <Clock className="size-4" aria-hidden /> Snooze 3 days
+                </Button>
+                <Button asChild size="sm" variant={i === 0 ? 'default' : 'outline'} className="ml-1">
+                  <Link to={s.to} aria-label={`${s.action}: ${s.text}`}>{s.action}</Link>
+                </Button>
+              </div>
             </li>
           ))}
         </ol>

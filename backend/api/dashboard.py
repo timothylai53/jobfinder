@@ -1,10 +1,11 @@
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
 from app.db import get_session
-from app.settings_store import get_general
+from app.settings_store import get_general, get_snoozed, set_snoozed
 from models import STATUSES, Application, Document, Job, MatchResult, Notification, Source, StatusHistory
 from models._base import utcnow
 
@@ -92,6 +93,30 @@ def dashboard(session: Session = Depends(get_session)):
         "follow_ups_due": sum(1 for a in apps if a.status == "Applied" and a.follow_up_at and a.follow_up_at <= today),
         "total_jobs": len(jobs),
         "sources": _source_health(session),
+        "snoozed": get_snoozed(session, today),
         "ready_to_apply": ready,
         "saved_without_resume": to_tailor,
     }
+
+
+class SnoozeIn(BaseModel):
+    key: str = Field(min_length=1, max_length=200)  # a Today next-step key, e.g. "tailor-12"
+    days: int = Field(3, ge=1, le=30)
+
+
+@router.post("/snooze")
+def snooze(data: SnoozeIn, session: Session = Depends(get_session)):
+    """Hide one Today next step until a few days from now. Expired snoozes are dropped when read."""
+    today = date.today()
+    snoozed = get_snoozed(session, today)
+    snoozed[data.key] = (today + timedelta(days=data.days)).isoformat()
+    set_snoozed(session, snoozed)
+    return {"key": data.key, "until": snoozed[data.key]}
+
+
+@router.delete("/snooze/{key}")
+def unsnooze(key: str, session: Session = Depends(get_session)):
+    snoozed = get_snoozed(session, date.today())
+    snoozed.pop(key, None)
+    set_snoozed(session, snoozed)
+    return {"ok": True}

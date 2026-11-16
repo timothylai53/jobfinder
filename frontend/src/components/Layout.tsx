@@ -7,6 +7,7 @@ import { SETUP_DONE_KEY } from '@/pages/Setup'
 import { api } from '@/api/client'
 import { cn } from '@/lib/utils'
 import NotificationBell from './NotificationBell'
+import { ToastProvider } from './Toast'
 
 // The four places a job search happens, then the tools you visit now and then.
 const MAIN = [
@@ -57,6 +58,7 @@ export default function Layout() {
   }, [profile.data, bank.data, navigate])
 
   return (
+    <ToastProvider>
     <div className="flex min-h-screen bg-fog">
       <a href="#main" className="sr-only z-50 rounded bg-background px-3 py-2 focus:not-sr-only focus:fixed focus:top-2 focus:left-2">Skip to content</a>
       <aside className="sticky top-0 z-30 flex h-screen w-52 shrink-0 flex-col border-r bg-background px-3 py-4">
@@ -84,5 +86,6 @@ export default function Layout() {
         </div>
       </main>
     </div>
+    </ToastProvider>
   )
 }

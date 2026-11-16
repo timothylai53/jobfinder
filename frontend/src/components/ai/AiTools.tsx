@@ -172,18 +172,21 @@ export function AiDialogs({ job, dialog }: { job: JobInfo; dialog: ReturnType<ty
   return null
 }
 
-/** "Tailor resume" as the main AI action; the other AI tasks and the template cover letter under "More". */
-export function AiActions({ dialog, emphasise = true }: { dialog: ReturnType<typeof useAiDialog>; emphasise?: boolean }) {
+/** The AI actions on Job Detail. With `showTailor` off (the page's primary button already offers it), "Tailor resume"
+ * moves into the More menu so a new version is always one click away, but never shown twice. */
+export function AiActions({ dialog, showTailor = true }: { dialog: ReturnType<typeof useAiDialog>; showTailor?: boolean }) {
   const settings = useAiSettings()
   const off = settings.data?.mode === 'off'
+  const tailor = { open: 'tailor_resume' as const, label: 'Tailor resume (new version)', icon: FileText, ai: true }
+  const items = [...(showTailor ? [] : [tailor]), ...MORE].filter((m) => !off || !m.ai)
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {!off && (
-        <Button variant={emphasise ? 'default' : 'outline'} onClick={() => dialog.start('tailor_resume')}>
+      {!off && showTailor && (
+        <Button onClick={() => dialog.start('tailor_resume')}>
           <FileText className="size-4" aria-hidden /> Tailor resume
         </Button>
       )}
-      <MoreMenu items={MORE.filter((m) => !off || !m.ai)} onPick={(o) => dialog.start(o)} />
+      <MoreMenu items={items} label="More" onPick={(o) => dialog.start(o)} />
       {off && (
         <span className="text-sm text-muted-foreground">
           AI is off (<Link to="/settings?section=ai" className="underline underline-offset-2">Settings → AI</Link>). The template cover letter still works.
@@ -194,7 +197,7 @@ export function AiActions({ dialog, emphasise = true }: { dialog: ReturnType<typ
 }
 
 /** A small disclosure menu: Escape or a click outside closes it, and focus returns to the button. */
-function MoreMenu({ items, onPick }: { items: typeof MORE; onPick: (o: AiOpen) => void }) {
+function MoreMenu({ items, label, onPick }: { items: typeof MORE; label: string; onPick: (o: AiOpen) => void }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const button = useRef<HTMLButtonElement>(null)
@@ -209,7 +212,7 @@ function MoreMenu({ items, onPick }: { items: typeof MORE; onPick: (o: AiOpen) =
   return (
     <div ref={ref} className="relative">
       <Button ref={button} variant="outline" aria-expanded={open} aria-controls="ai-more" onClick={() => setOpen(!open)}>
-        More <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} aria-hidden />
+        {label} <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} aria-hidden />
       </Button>
       {open && (
         <ul id="ai-more" className="absolute right-0 z-40 mt-1 w-72 rounded-lg border bg-popover p-1 shadow-[0_8px_24px_-8px_rgb(23_33_43/0.18)]">

@@ -190,6 +190,7 @@ def parse_paste(req: PasteRequest, session: Session = Depends(get_session)):
 
 
 class JobPatch(BaseModel):
+    hidden_reason: str | None = None  # with hidden=true, e.g. "Not interested" from Today
     hidden: bool | None = None
     title: str | None = None
     company: str | None = None
@@ -211,7 +212,8 @@ def patch_job(job_id: int, data: JobPatch, session: Session = Depends(get_sessio
         # A manual choice (hide or unhide) is final: filter rules no longer touch this job.
         job.hidden = hidden
         job.hidden_by = "manual"
-        job.hidden_reason = "Hidden manually" if hidden else ""
+        reason = (upd.pop("hidden_reason", None) or "").strip()
+        job.hidden_reason = (reason or "Hidden manually") if hidden else ""
     for k, v in upd.items():
         setattr(job, k, v)
     session.add(job)

@@ -7,10 +7,13 @@ export interface NextStep {
   action: string
   to: string
   tone: 'act' | 'fix'
+  /** Set when the step is about one job, so it can be marked "Not interested" (hides that job). */
+  jobId?: number
 }
 
 const plural = (n: number, one: string, many = one + 's') => `${n} ${n === 1 ? one : many}`
 
+/** Snoozed steps are left out. Keys are stable per job, so snoozing one step never hides a different job's step. */
 export function nextSteps(d: Dashboard, missing: ProfileStatus['missing']): NextStep[] {
   const out: NextStep[] = []
   if (d.follow_ups_due > 0) {
@@ -18,18 +21,20 @@ export function nextSteps(d: Dashboard, missing: ProfileStatus['missing']): Next
       text: `${plural(d.follow_ups_due, 'follow-up')} due` })
   }
   for (const r of d.ready_to_apply) {
-    out.push({ key: `ready-${r.job_id}`, tone: 'act', to: `/jobs/${r.job_id}`, action: 'Mark as applied',
+    out.push({ key: `ready-${r.job_id}`, jobId: r.job_id, tone: 'act', to: `/jobs/${r.job_id}`, action: 'Mark as applied',
       text: `Resume v${r.version} ready for ${r.title}, ${r.company}` })
   }
   const highs = d.high_match_jobs.length
   if (highs > 0) {
-    out.push({ key: 'high-match', tone: 'act', to: highs === 1 ? `/jobs/${d.high_match_jobs[0].id}` : '/jobs', action: 'Review',
+    // The key names the jobs, so a snooze doesn't hide matches that arrive later.
+    out.push({ key: `high-match-${d.high_match_jobs.map((j) => j.id).join('-')}`, jobId: highs === 1 ? d.high_match_jobs[0].id : undefined,
+      tone: 'act', to: highs === 1 ? `/jobs/${d.high_match_jobs[0].id}` : '/jobs', action: 'Review',
       text: highs === 1
         ? `New job scored ${d.high_match_jobs[0].score}: ${d.high_match_jobs[0].title}, ${d.high_match_jobs[0].company}`
         : `${highs} new jobs scored ${d.high_match_threshold}+` })
   }
   for (const r of d.saved_without_resume) {
-    out.push({ key: `tailor-${r.job_id}`, tone: 'act', to: `/jobs/${r.job_id}`, action: 'Tailor resume',
+    out.push({ key: `tailor-${r.job_id}`, jobId: r.job_id, tone: 'act', to: `/jobs/${r.job_id}`, action: 'Tailor resume',
       text: `No resume yet for ${r.title}, ${r.company}` })
   }
   for (const m of missing) {
@@ -40,7 +45,8 @@ export function nextSteps(d: Dashboard, missing: ProfileStatus['missing']): Next
     out.push({ key: 'sources', tone: 'fix', to: '/settings?section=sources', action: 'Check sources',
       text: `${paused.map((s) => s.label).join(', ')} ${paused.length === 1 ? 'needs' : 'need'} attention` })
   }
-  return out
+  const snoozed = d.snoozed ?? {}
+  return out.filter((s) => !snoozed[s.key])
 }
 
 export interface SetupStep {

@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatDate, formatSalary, sortJobs, type SortKey } from '@/lib/score'
 import { cn } from '@/lib/utils'
+import { usePendingDeletes } from '@/lib/pendingDeletes'
 
 const SORTS: { value: SortKey; label: string }[] = [
   { value: 'score', label: 'Score' },
@@ -44,7 +45,8 @@ export default function Jobs() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['jobs'] }),
   })
 
-  const all = jobs.data ?? []
+  const deleting = usePendingDeletes()
+  const all = (jobs.data ?? []).filter((j) => !deleting.has(j.id))
   const hiddenCount = all.filter((j) => j.hidden).length
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase()

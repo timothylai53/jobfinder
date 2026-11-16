@@ -47,9 +47,9 @@ export function scoreVerdict(b: Breakdown, opts: { summaryOnly?: boolean; lowCon
 }
 
 /** Everything marked ⚠️ or ❌, with its category, for the Overview tab. */
-export function gaps(b: Breakdown): { category: string; item: BreakdownItem }[] {
+export function gaps(b: Breakdown): { category: string; categoryKey: string; item: BreakdownItem }[] {
   return b.categories.flatMap((c) =>
-    c.items.filter((i) => i.status === 'partial' || i.status === 'not_met').map((item) => ({ category: c.label, item })))
+    c.items.filter((i) => i.status === 'partial' || i.status === 'not_met').map((item) => ({ category: c.label, categoryKey: c.key, item })))
 }
 
 export type PrimaryStep = 'save' | 'tailor' | 'download' | 'mark_applied' | 'done'
