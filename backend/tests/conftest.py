@@ -31,6 +31,13 @@ def pytest_sessionfinish(session, exitstatus):
 
 
 @pytest.fixture(autouse=True)
+def no_fake_sources_env(monkeypatch):
+    """Same result whatever the shell or CI sets: JOBFINDER_FAKE_SOURCES=1 would switch to the fake-mode delay and
+    fake JobSpy, so it is cleared for every test. A test that needs fake mode sets it itself (monkeypatch.setenv)."""
+    monkeypatch.delenv("JOBFINDER_FAKE_SOURCES", raising=False)
+
+
+@pytest.fixture(autouse=True)
 def no_network(monkeypatch):
     """Tests never reach a real site: real HTTP transports and the real JobSpy call fail loudly."""
     import httpx

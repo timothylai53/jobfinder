@@ -14,9 +14,9 @@ jobs:
       run:
         working-directory: backend
     env:
-      # Belt and braces: tests already block real HTTP and the real JobSpy call (tests/conftest.py).
+      # tests/conftest.py already blocks real HTTP and the real JobSpy call, and clears JOBFINDER_FAKE_SOURCES
+      # (fake mode changes the pacing delays the tests check), so it is deliberately not set here.
       JOBFINDER_NO_SCHEDULER: "1"
-      JOBFINDER_FAKE_SOURCES: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
