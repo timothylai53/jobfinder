@@ -1,0 +1,18 @@
+```json
+{
+  "summary": "Software engineering graduate with internship experience in Python and SQL.",
+  "skills_order": ["Python", "SQL"],
+  "sections": [
+    {"section": "Experience", "items": [
+      {"source_id": "B1", "text": "Software Engineering Intern, Contoh Tech Sdn Bhd, Jun 2024 - Sep 2024. Developed REST APIs in Python and Flask. Wrote SQL queries for reporting."},
+      {"source_id": "B1", "text": "Software Engineering Intern: wrote SQL queries for weekly reporting"}
+    ]},
+    {"section": "Projects", "items": [
+      {"source_id": "B2", "text": "Built a React front end with a Node.js backend"},
+      {"source_id": "B2", "text": "Campus Food Ordering App is used by students, e.g. for lunch orders"}
+    ]}
+  ],
+  "omitted_ids": [],
+  "notes": ""
+}
+```

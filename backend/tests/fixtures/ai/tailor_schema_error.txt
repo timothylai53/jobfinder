@@ -1,0 +1,11 @@
+```json
+{
+  "summary": "Graduate developer.",
+  "skills_order": "Python, SQL",
+  "sections": [
+    {"section": "Experience", "items": [
+      {"source_id": "B1"}
+    ]}
+  ]
+}
+```

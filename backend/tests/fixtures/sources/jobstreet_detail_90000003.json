@@ -1,0 +1,37 @@
+{
+ "data": {
+  "jobDetails": {
+   "job": {
+    "id": "90000003",
+    "title": "Senior Software Engineer",
+    "content": "<p><strong>Requirements</strong></p><ul><li>Minimum 6 years of experience in Java and Spring Boot</li></ul>",
+    "advertiser": {
+     "id": "1",
+     "name": "Contoh Bank Berhad"
+    },
+    "location": {
+     "label": "Kuala Lumpur"
+    },
+    "workTypes": {
+     "label": "Full time"
+    },
+    "workArrangements": {
+     "arrangements": [
+      {
+       "label": "On-site"
+      }
+     ]
+    },
+    "salary": null,
+    "listedAt": {
+     "dateTimeUtc": "2026-11-07T03:00:00.000Z"
+    },
+    "classifications": [
+     {
+      "label": "Engineering - Software (Information & Communication Technology)"
+     }
+    ]
+   }
+  }
+ }
+}

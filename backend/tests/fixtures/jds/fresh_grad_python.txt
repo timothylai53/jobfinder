@@ -1,0 +1,14 @@
+Graduate Software Engineer (Python) - Fully remote
+
+What you'll do
+- Develop backend services in Python and Django
+- Design REST APIs and write SQL queries
+
+Who you are
+- Degree in Software Engineering, Computer Science or any related discipline
+- Fresh graduates are encouraged to apply
+- Strong problem-solving skills
+
+Bonus points
+- Docker
+- AWS is a plus

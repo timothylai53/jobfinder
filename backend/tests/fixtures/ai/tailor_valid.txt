@@ -1,0 +1,30 @@
+Sure! Here is the tailored resume for the Junior Software Engineer role at Syarikat Contoh Bhd.
+
+```json
+{
+  "summary": "Software engineering graduate with internship experience building REST APIs in Python and SQL.",
+  "skills_order": ["Python", "SQL", "React", "Flask", "Git", "Java"],
+  "sections": [
+    {"section": "Experience", "items": [
+      {"source_id": "B1", "text": "Developed REST APIs in Python (Flask) used by the internal reporting team"},
+      {"source_id": "B1", "text": "Wrote SQL queries for weekly reporting"}
+    ]},
+    {"section": "Projects", "items": [
+      {"source_id": "B2", "text": "Built a React front end with a Node.js backend for campus food ordering"}
+    ]},
+    {"section": "Education", "items": [
+      {"source_id": "B3", "text": "Bachelor of Software Engineering"}
+    ]},
+    {"section": "Certifications", "items": [
+      {"source_id": "B4", "text": "Oracle Certified Associate, Java SE 8 Programmer"}
+    ]},
+    {"section": "Publications", "items": [
+      {"source_id": "B5", "text": "A Study of Queue Scheduling in Campus Systems"}
+    ]}
+  ],
+  "omitted_ids": [],
+  "notes": "Docker and Kubernetes are asked for but not in the bank; consider a small Docker project."
+}
+```
+
+Good luck with your application!

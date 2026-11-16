@@ -1,0 +1,37 @@
+{
+ "data": {
+  "jobDetails": {
+   "job": {
+    "id": "95667394",
+    "title": "Junior Software Engineer",
+    "content": "<p><strong>Responsibilities</strong></p><ul><li>Design, development, testing, and deployment of software & application to meet business objective under organization’s IT projects & initiatives.</li><li>Support & maintenance (2nd Level SLA) of software & application to ensure organization’s Business As Usual (BAU).</li><li>Upgrade of software & application to meet user’s & compliance requirements.</li><li>Research, design & planning for software & application to fulfil business requirement & organization objective.</li></ul><p><strong>Requirements</strong></p><ul><li>Degree in Information Technology (IT)/ Computer Science/ Software Engineering or related field.</li><li>Minimum two (2) years’ working experience in Software Engineering or related field, with at least one (1) year of experience in IT-related projects.</li><li>Experience in fullstack development or data engineering is preferred.</li><li>Must have strong analytical, problem-solving, good communication and stakeholder management skills.</li><li>Must be proficient in at least one (1) programming language. (C#/ Java/ Javascript or equivalent)</li><li>Must be proficient in SQL & Relational Database (MS SQL / MySQL or equivalent)</li><li>Familiar with software development life cycle (SLDC) and software development tools (IDE, text editor, SQL management tool, source code control, etc.)</li><li>Familiar with web development technologies, standards & protocols.</li><li>Fresh graduates are encouraged to apply.</li></ul>",
+    "advertiser": {
+     "id": "1",
+     "name": "Contoh Insurans (Malaysia) Berhad"
+    },
+    "location": {
+     "label": "Kuala Lumpur City Centre, Kuala Lumpur"
+    },
+    "workTypes": {
+     "label": "Full time"
+    },
+    "workArrangements": {
+     "arrangements": [
+      {
+       "label": "Hybrid"
+      }
+     ]
+    },
+    "salary": null,
+    "listedAt": {
+     "dateTimeUtc": "2026-11-04T02:00:00.000Z"
+    },
+    "classifications": [
+     {
+      "label": "Engineering - Software (Information & Communication Technology)"
+     }
+    ]
+   }
+  }
+ }
+}

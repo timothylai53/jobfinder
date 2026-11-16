@@ -1,0 +1,17 @@
+# data never leaves this laptop and is never committed
+data/
+backend/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+frontend/node_modules/
+frontend/dist/
+*.log
+.claude/
+
+# Prompt templates I edited in Settings (the shipped defaults live in defaults/)
+backend/ai/templates/*.md
+demo_data/
+
+# Private notes (privacy audit, publish steps): never committed
+private/

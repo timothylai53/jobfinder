@@ -1,0 +1,16 @@
+```json
+{
+  "requirements": [
+    {"text": "Python", "type": "required", "status": "met", "evidence_ids": ["B1"], "note": "Used in internship"},
+    {"text": "SQL", "type": "required", "status": "met", "evidence_ids": ["B1"], "note": ""},
+    {"text": "React", "type": "required", "status": "partial", "evidence_ids": ["B2"], "note": "One project"},
+    {"text": "Docker", "type": "required", "status": "not_met", "evidence_ids": [], "note": "Not in the bank"},
+    {"text": "Kubernetes", "type": "preferred", "status": "met", "evidence_ids": [], "note": "No evidence given"},
+    {"text": "Degree in Computer Science or related", "type": "required", "status": "met", "evidence_ids": ["B3", "B42"], "note": ""}
+  ],
+  "overall_fit": 68,
+  "strengths": ["Python and SQL from a real internship"],
+  "gaps": ["Docker", "Kubernetes"],
+  "resume_suggestions": ["Put the internship first", "Mention the SQL reporting work"]
+}
+```

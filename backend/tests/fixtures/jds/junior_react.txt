@@ -1,0 +1,20 @@
+About Us
+Acme Digital Sdn Bhd is a growing product studio in Kuala Lumpur. We love Python workshops and celebrate Chinese New Year together.
+
+Job Responsibilities
+- Build responsive web pages with React and TypeScript
+- Work closely with designers and backend engineers
+
+Requirements
+- Bachelor's Degree in Computer Science, Information Technology or related field
+- 0-1 year of working experience; fresh graduates are welcome to apply
+- Solid understanding of JavaScript, HTML and CSS
+- Familiar with Git
+- Good command of English
+
+Nice to have
+- Experience with Next.js
+- Knowledge of Tailwind CSS
+
+Benefits
+- Medical insurance, free parking, AWS certification sponsorship

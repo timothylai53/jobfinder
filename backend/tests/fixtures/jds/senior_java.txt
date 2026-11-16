@@ -1,0 +1,11 @@
+Senior Java Engineer
+
+Requirements:
+- Minimum 5 years of experience in Java development
+- Strong experience with Spring Boot and Microservices
+- Bachelor's degree in Computer Science or equivalent
+- Experience with Kubernetes and Kafka
+- Excellent communication skills in English
+
+Preferred:
+- Experience with AWS

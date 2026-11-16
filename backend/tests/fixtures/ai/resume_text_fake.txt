@@ -1,0 +1,16 @@
+Ali Bin Contoh
+ali.contoh@example.com | 012-345 6789 | Shah Alam, Selangor
+
+EXPERIENCE
+Software Engineering Intern, Contoh Tech Sdn Bhd    Jun 2024 - Sep 2024
+- Developed REST APIs in Python and Flask
+
+PROJECTS
+Campus Food Ordering App, Universiti Contoh    2023
+- Built a React front end
+
+SKILLS
+Python, SQL, Flask, React
+
+LANGUAGES
+English, Malay

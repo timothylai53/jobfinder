@@ -1,0 +1,174 @@
+{
+ "data": [
+  {
+   "id": "95667394",
+   "title": "Junior Software Engineer",
+   "advertiser": {
+    "id": "1",
+    "description": "Contoh Insurans (Malaysia) Berhad"
+   },
+   "companyName": "Contoh Insurans (Malaysia) Berhad",
+   "locations": [
+    {
+     "label": "Kuala Lumpur City Centre, Kuala Lumpur",
+     "countryCode": "MY",
+     "seoHierarchy": []
+    }
+   ],
+   "workTypes": [
+    "Full time"
+   ],
+   "workArrangements": {
+    "data": [
+     {
+      "id": "2",
+      "label": {
+       "text": "Hybrid"
+      }
+     }
+    ]
+   },
+   "salaryLabel": "",
+   "listingDate": "2026-11-04T02:00:00Z",
+   "listingDateDisplay": "4d ago",
+   "teaser": "Design, develop, test and deploy software & applications for IT projects.",
+   "bulletPoints": [],
+   "classifications": [
+    {
+     "classification": {
+      "id": "6281",
+      "description": "Information & Communication Technology"
+     },
+     "subclassification": {
+      "id": "6287",
+      "description": "Engineering - Software"
+     }
+    }
+   ]
+  },
+  {
+   "id": "90000001",
+   "title": "Graduate Software Engineer",
+   "advertiser": {
+    "id": "1",
+    "description": "Contoh Teknologi Sdn Bhd"
+   },
+   "companyName": "Contoh Teknologi Sdn Bhd",
+   "locations": [
+    {
+     "label": "Petaling Jaya, Selangor",
+     "countryCode": "MY",
+     "seoHierarchy": []
+    }
+   ],
+   "workTypes": [
+    "Full time"
+   ],
+   "workArrangements": null,
+   "salaryLabel": "RM 3,500 – RM 4,500 per month",
+   "listingDate": "2026-11-06T08:30:00Z",
+   "listingDateDisplay": "4d ago",
+   "teaser": "Join our product team building web apps in React and Node.js.",
+   "bulletPoints": [],
+   "classifications": [
+    {
+     "classification": {
+      "id": "6281",
+      "description": "Information & Communication Technology"
+     },
+     "subclassification": {
+      "id": "6287",
+      "description": "Engineering - Software"
+     }
+    }
+   ]
+  },
+  {
+   "id": "90000002",
+   "title": "Software Engineer (6-month contract)",
+   "advertiser": {
+    "id": "1",
+    "description": "Kedai Projek Sdn Bhd"
+   },
+   "companyName": "Kedai Projek Sdn Bhd",
+   "locations": [
+    {
+     "label": "Cyberjaya, Selangor",
+     "countryCode": "MY",
+     "seoHierarchy": []
+    }
+   ],
+   "workTypes": [
+    "Contract/Temp"
+   ],
+   "workArrangements": null,
+   "salaryLabel": "",
+   "listingDate": "2026-11-05T01:00:00Z",
+   "listingDateDisplay": "4d ago",
+   "teaser": "Short contract to maintain a PHP system.",
+   "bulletPoints": [],
+   "classifications": [
+    {
+     "classification": {
+      "id": "6281",
+      "description": "Information & Communication Technology"
+     },
+     "subclassification": {
+      "id": "6287",
+      "description": "Engineering - Software"
+     }
+    }
+   ]
+  },
+  {
+   "id": "90000003",
+   "title": "Senior Software Engineer",
+   "advertiser": {
+    "id": "1",
+    "description": "Contoh Bank Berhad"
+   },
+   "companyName": "Contoh Bank Berhad",
+   "locations": [
+    {
+     "label": "Kuala Lumpur",
+     "countryCode": "MY",
+     "seoHierarchy": []
+    }
+   ],
+   "workTypes": [
+    "Full time"
+   ],
+   "workArrangements": {
+    "data": [
+     {
+      "id": "2",
+      "label": {
+       "text": "On-site"
+      }
+     }
+    ]
+   },
+   "salaryLabel": "",
+   "listingDate": "2026-11-07T03:00:00Z",
+   "listingDateDisplay": "4d ago",
+   "teaser": "Lead a team of developers.",
+   "bulletPoints": [],
+   "classifications": [
+    {
+     "classification": {
+      "id": "6281",
+      "description": "Information & Communication Technology"
+     },
+     "subclassification": {
+      "id": "6287",
+      "description": "Engineering - Software"
+     }
+    }
+   ]
+  }
+ ],
+ "totalCount": 4,
+ "solMetadata": {
+  "searchRequestToken": "fake"
+ }
+}

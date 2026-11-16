@@ -1,0 +1,90 @@
+NURUL AINA BINTI CONTOH
+Address: Kuantan, Pahang
+Email: nurul.contoh@example.com
+LinkedIn: https://www.linkedin.com/in/example-nurul-aina-contoh-000000/
+https://github.com/example-ncontoh00
+Github:
+010-0000000
+Phone:
+PROFILE
+Bachelor of Science with Honours (Information Technology) Software Engineering student seeking a six
+month internship from July 1, 2026 to December 31, 2026. With programming abilities and
+experience in web development, database design, and teamwork in student projects. I'm looking for
+a chance as a Software Engineer Intern to gain real-world experience, improve technical skills, and
+contribute to a friendly team in a growing company.
+EDUCATION
+Universiti Contoh Malaysia (UCM) - Perlis Sep 2023 - Present
+Bachelor of Science with Honours (Information Technology) GPA : 3.52 | GCPA: 3.61
+Major: Software Engineering
+Kolej Contoh Vocational June 2020 - April 2022
+Diploma in Information Technology GCPA: 3.70
+MUET: Band 4.0
+PROJECT
+Web-Based Clinic Booking System - Final Year Project (Silver Award)
+Vue.js, Node.js, MongoDB, RESTful API, DigitalOcean, SendGrid API, Stripe API
+Architected an integrated full-stack application streamlining appointment booking, dynamic doctor
+schedules, and patient administration for small neighbourhood clinics, successfully deployed on
+DigitalOcean cloud infrastructure.
+Web-Based Library Loan System
+Angular, Java Spring Boot, Playwright, Jenkins, CI/CD, DigitalOcean
+Engineered a robust book lending platform featuring dynamic single-page member sign-up,
+secure Spring Boot APIs, automated Playwright E2E testing, and an automated Jenkins CI/CD
+deployment pipeline.
+Real-Time Parking Availability System
+Java, Object-Oriented Programming (OOP), Data Structures, Java Collections
+Engineered a real-time parking tracking application utilizing pure Java, implementing robust
+Object-Oriented Programming principles to handle complex business logic and ensure accurate
+slot availability updates.
+SKILLS
+Technical Skills
+Languages: Java, JavaScript, TypeScript, PHP, SQL, HTML, CSS, Python
+Frameworks & Libraries: Spring Boot, Angular, Bootstrap, Vue, Node.js
+Tools & Technologies: Node.js, Docker, Git, GitHub, Postman, XAMPP, MySQL, MongoDB, DigitalOcean,
+Jenkins
+Testing & Automation: Selenium , JUnit , PlayWright
+Development Skills: API Integration, UI/UX Design
+IDEs & Design Tools: IntelliJ IDEA, Visual Studio Code, Figma
+Language
+Malay (Fluent)
+English (Fluent)
+Mandarin (Native Proficient)
+ACHIEVEMENT
+Faculty Of Computing Dean’s List Award Semester S1 Session 2023/2024
+Faculty Of Computing Dean’s List Award Semester S2 Session 2024/2025
+Faculty Of Computing Dean’s List Award Semester S3 Session 2024/2025
+Faculty Of Computing Dean’s List Award Semester S4 Session 2025/2026
+High Academic Achiever (Diploma) Consistently maintained a CGPA of 3.50 or above in every
+semester
+Champion, Contoh Skills Competition (College Level) and Runner-up (Zone Level - East Coast) in IT
+Network & System Administration (2019).
+Best IT Skills Award, Graduation Ceremony, Kolej Contoh Vocational (2022)
+Placed in the top 10 and received a Silver Award in the Contoh Innovation competition.
+Participant, Contoh Code Hackathon 2026: Showcased rapid full-stack prototyping and problem-
+solving skills under strict time constraints.
+RESEARCH & PUBLICATIONS
+Nurul A.B.C (2025, June 3). Web-based Booking System for Small Clinics.
+Paper presented at the Contoh Computing Symposium (CCS) 2025, organized by
+Contoh Computing Society (CCS) Berhad.
+EXTRACURRICULAR ACTIVITIES
+University Level
+Photography Club Member, UCM Campus Events
+(Contoh Nite, Sports Day, Open Day, Convocation UCM, Culture Week)
+EXPERIENCE
+Freelance Web Designer (Part-Time) Jan 2020 - Jan 2022
+Designed simple websites based on client specifications for local shops. Performed content
+updates, image editing, and site optimization for clients.
+Helpdesk Assistant (Intern) - Contoh Rangkai Sdn Bhd, Kuantan Mar 2022 - Jul 2022
+Assisted in on-site desktop setup and printer maintenance across three office branches. Supported the
+technical team with software installs and field troubleshooting.
+Admin Clerk (Full Time) - Kedai Contohh, Kuantan Aug 2022 - Sep 2023
+Provided basic support for office computers and printers while managing the office supply and
+inventory.
+Performed data entry for daily orders and prepared detailed weekly sales summaries using
+Microsoft Excel.
+REFERENCE
+Dr. Ahmad Bin Contohhh
+Supervisor, Final Year Project
+Faculty Of Computing (FOC)
+Universiti Contoh Malaysia
+Phone: 010-0000001
+Email: ahmad.c@example.edu.my

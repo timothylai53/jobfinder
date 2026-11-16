@@ -1,0 +1,15 @@
+Here you go:
+
+{
+  “summary”: “Graduate developer with Python and SQL experience.”,
+  "skills_order": ["Python", "SQL",],
+  "sections": [
+    {"section": "Experience", "items": [
+      {"source_id": "B1", "text": "Developed REST APIs in Python"},
+    ]},
+  ],
+  "omitted_ids": ["B5"],
+  "notes": "",
+}
+
+Let me know if you want changes.

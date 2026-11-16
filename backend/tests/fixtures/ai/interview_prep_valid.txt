@@ -1,0 +1,12 @@
+```json
+{
+  "questions": [
+    {"question": "How did you design the REST APIs in your internship?", "category": "project",
+     "why_likely": "The job asks for Python APIs", "suggested_points_ids": ["B1"]},
+    {"question": "What is the difference between a JOIN and a subquery?", "category": "technical",
+     "why_likely": "SQL is required", "suggested_points_ids": []},
+    {"question": "Tell me about working in a team.", "category": "behavioural",
+     "why_likely": "Common for graduates", "suggested_points_ids": ["B2", "B77"]}
+  ]
+}
+```

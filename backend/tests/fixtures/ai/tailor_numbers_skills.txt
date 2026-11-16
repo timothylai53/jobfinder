@@ -1,0 +1,25 @@
+Here is your tailored resume.
+
+```json
+{
+  "summary": "2025 software engineering graduate with 2 internships and 10 projects in Python.",
+  "skills_order": ["Python", "SQL", "React"],
+  "sections": [
+    {"section": "Experience", "items": [
+      {"source_id": "B1", "text": "Developed REST APIs in Python serving 500+ users and cut response time by 40%"},
+      {"source_id": "B1", "text": "Wrote SQL queries for weekly reporting during the Jun 2024 - Sep 2024 internship"},
+      {"source_id": "B1", "text": "Developed REST APIs in Python and versioned them with Git"}
+    ]},
+    {"section": "Projects", "items": [
+      {"source_id": "B2", "text": "Built a React front end that loads 3x faster and saved RM 2k in hosting"},
+      {"source_id": "B2", "text": "Built a React front end with a Python Flask API"},
+      {"source_id": "B2", "text": "Built a React front end and deployed it with Docker"}
+    ]},
+    {"section": "Certifications", "items": [
+      {"source_id": "B4", "text": "Oracle Certified Associate, Java SE 8 Programmer (2024)"}
+    ]}
+  ],
+  "omitted_ids": [],
+  "notes": ""
+}
+```

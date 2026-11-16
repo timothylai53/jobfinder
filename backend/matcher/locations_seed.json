@@ -1,0 +1,18 @@
+{
+  "Johor": ["Johor Bahru", "JB", "Iskandar Puteri", "Nusajaya", "Skudai", "Senai", "Kulai", "Pasir Gudang", "Batu Pahat", "Muar", "Kluang", "Segamat", "Pontian", "Kota Tinggi", "Mersing"],
+  "Kedah": ["Alor Setar", "Alor Star", "Sungai Petani", "Kulim", "Langkawi", "Jitra", "Kuala Kedah"],
+  "Kelantan": ["Kota Bharu", "Pasir Mas", "Tanah Merah", "Machang", "Tumpat"],
+  "Melaka": ["Malacca", "Melaka City", "Ayer Keroh", "Alor Gajah", "Jasin", "Masjid Tanah"],
+  "Negeri Sembilan": ["Seremban", "Nilai", "Port Dickson", "Senawang", "Rembau", "Bahau"],
+  "Pahang": ["Kuantan", "Temerloh", "Bentong", "Raub", "Genting Highlands", "Cameron Highlands", "Pekan", "Jerantut"],
+  "Penang": ["Pulau Pinang", "George Town", "Georgetown", "Bayan Lepas", "Bayan Baru", "Gelugor", "Air Itam", "Butterworth", "Bukit Mertajam", "Seberang Perai", "Batu Kawan", "Nibong Tebal", "Balik Pulau"],
+  "Perak": ["Ipoh", "Taiping", "Teluk Intan", "Seri Iskandar", "Kampar", "Sitiawan", "Lumut", "Batu Gajah", "Kuala Kangsar", "Tanjung Malim"],
+  "Perlis": ["Kangar", "Arau", "Padang Besar"],
+  "Sabah": ["Kota Kinabalu", "KK", "Sandakan", "Tawau", "Lahad Datu", "Keningau", "Semporna", "Kudat", "Penampang", "Putatan"],
+  "Sarawak": ["Kuching", "Miri", "Sibu", "Bintulu", "Kota Samarahan", "Samarahan", "Sri Aman", "Mukah", "Limbang", "Kapit"],
+  "Selangor": ["Shah Alam", "Petaling Jaya", "PJ", "Subang Jaya", "Subang", "USJ", "Sunway", "Bandar Sunway", "Cyberjaya", "Puchong", "Klang", "Port Klang", "Ampang", "Kajang", "Bangi", "Seri Kembangan", "Serdang", "Cheras", "Rawang", "Selayang", "Sepang", "Semenyih", "Balakong", "Kota Damansara", "Ara Damansara", "Mutiara Damansara", "Bandar Utama", "Damansara", "Glenmarie", "Kuala Selangor", "Batu Caves", "Gombak"],
+  "Terengganu": ["Kuala Terengganu", "Kemaman", "Kerteh", "Dungun", "Marang", "Besut"],
+  "Kuala Lumpur": ["KL", "Bangsar", "Bangsar South", "Mont Kiara", "Bukit Jalil", "Bukit Bintang", "KLCC", "KL Sentral", "Mid Valley", "Brickfields", "Cheras", "Kepong", "Setapak", "Wangsa Maju", "Sri Petaling", "Sentul", "Titiwangsa", "Segambut", "Damansara Heights", "Taman Tun Dr Ismail", "TTDI", "Desa ParkCity", "TRX", "Jalan Ampang", "Old Klang Road", "Seputeh"],
+  "Putrajaya": ["Presint"],
+  "Labuan": ["Victoria Labuan"]
+}

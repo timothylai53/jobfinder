@@ -1,0 +1,13 @@
+```json
+{
+  "greeting": "Dear Hiring Manager,",
+  "paragraphs": [
+    "I am applying for the Junior Software Engineer position at Syarikat Contoh Bhd.",
+    "During my 2024 internship at Contoh Tech Sdn Bhd I developed REST APIs in Python that handled 10,000 requests a day.",
+    "I improved test coverage by 30 percent and will complete my degree in 2025.",
+    "Thank you for your time."
+  ],
+  "closing": "Sincerely,",
+  "used_ids": ["B1"]
+}
+```

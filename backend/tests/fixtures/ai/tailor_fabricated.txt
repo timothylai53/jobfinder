@@ -1,0 +1,16 @@
+```json
+{
+  "summary": "Experienced engineer skilled in Kubernetes and AWS.",
+  "skills_order": ["Python", "Kubernetes", "Docker"],
+  "sections": [
+    {"section": "Experience", "items": [
+      {"source_id": "B1", "text": "Developed REST APIs in Python"},
+      {"source_id": "B99", "text": "Led a team of 5 engineers at Google"},
+      {"source_id": "", "text": "Deployed microservices to Kubernetes"},
+      {"source_id": "B2", "text": "Built a React front end and deployed it with Docker"}
+    ]}
+  ],
+  "omitted_ids": ["B42"],
+  "notes": ""
+}
+```

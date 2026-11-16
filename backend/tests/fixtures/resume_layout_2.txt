@@ -1,0 +1,40 @@
+Siti Contoh
+Kuala Lumpur, Malaysia · siti.contoh@example.com · +60 12-000 0000
+PROFILE
+Software engineering student who enjoys building web systems for small businesses.
+EDUCATION
+Bachelor of Software Engineering (Hons) · Universiti Contoh Malaysia
+Sep 2023 – Present
+Diploma in Information Technology · Politeknik Contoh
+Jun 2020 – May 2023
+MUET: Band 4.0
+WORK EXPERIENCE
+Software Developer Intern · Kedai Tech Sdn Bhd
+Sep 2024 – Dec 2024
+• Built REST APIs with Node.js and Express for the ordering module
+• Wrote unit tests with Jest
+Freelance Web Designer (Part-
+Time) · Self-employed
+Jan 2021 – Present
+• Built simple websites for 30+ clients and advised them on
+hosting within their budget
+PROJECTS
+Web-Based Clinic Booking System · Final Year Project (Silver Award)
+Vue.js, Node.js, MongoDB, Express.js, Tailwind CSS
+A web system for a clinic to manage doctors, bookings and reminders, with an admin
+dashboard and online payment.
+Campus Lost & Found App · Mobile Development Assignment
+Flutter, Firebase
+Android app where students post lost items and chat with the finder.
+Personal Portfolio Website
+React, TypeScript, Tailwind CSS
+My portfolio site with a blog and a project gallery.
+SKILLS
+JavaScript, TypeScript, Python, Java, SQL, Git
+CERTIFICATIONS
+AWS Certified Cloud Practitioner · 2024
+REFERENCE
+Dr. Aminah Contoh
+Senior Lecturer, Universiti Contoh Malaysia
+Phone: +60 3-0000 0000
+Email: aminah.contoh@example.edu.my

@@ -1,0 +1,123 @@
+{
+ "linkedin": [
+  {
+   "id": "li-4012345678",
+   "site": "linkedin",
+   "job_url": "https://www.linkedin.com/jobs/view/4012345678",
+   "title": "Junior Software Engineer",
+   "company": "Contoh Insurans (Malaysia) Berhad",
+   "location": {
+    "country": "malaysia",
+    "city": "Kuala Lumpur",
+    "state": "Federal Territory of Kuala Lumpur"
+   },
+   "date_posted": "2026-11-05",
+   "job_type": "fulltime",
+   "interval": null,
+   "min_amount": null,
+   "max_amount": null,
+   "currency": null,
+   "is_remote": false,
+   "description": null
+  },
+  {
+   "id": "li-4012345679",
+   "site": "linkedin",
+   "job_url": "https://www.linkedin.com/jobs/view/4012345679",
+   "title": "Software Engineer (Fresh Graduate)",
+   "company": "Contoh Fintech Sdn Bhd",
+   "location": {
+    "country": "malaysia",
+    "city": "Cyberjaya",
+    "state": "Selangor"
+   },
+   "date_posted": "2026-11-06",
+   "job_type": "fulltime",
+   "interval": "yearly",
+   "min_amount": 48000,
+   "max_amount": 60000,
+   "currency": "MYR",
+   "is_remote": false,
+   "description": null
+  },
+  {
+   "id": "li-4012345680",
+   "site": "linkedin",
+   "job_url": "https://www.linkedin.com/jobs/view/4012345680",
+   "title": "Lead Backend Engineer",
+   "company": "Contoh Scale Sdn Bhd",
+   "location": {
+    "country": "malaysia",
+    "city": "Kuala Lumpur",
+    "state": null
+   },
+   "date_posted": "2026-11-07",
+   "job_type": "fulltime",
+   "is_remote": false,
+   "description": null
+  }
+ ],
+ "indeed": [
+  {
+   "id": "in-abc123",
+   "site": "indeed",
+   "job_url": "https://my.indeed.com/viewjob?jk=abc123",
+   "title": "Graduate Software Engineer",
+   "company": "Contoh Teknologi Sdn Bhd",
+   "location": {
+    "country": "malaysia",
+    "city": "Petaling Jaya",
+    "state": "Selangor"
+   },
+   "date_posted": "2026-11-06",
+   "job_type": "fulltime",
+   "interval": "monthly",
+   "min_amount": 3500,
+   "max_amount": 4500,
+   "currency": "MYR",
+   "is_remote": false,
+   "description": "Indeed copy: Degree in CS. React, Node.js, Git."
+  },
+  {
+   "id": "in-def456",
+   "site": "indeed",
+   "job_url": "https://my.indeed.com/viewjob?jk=def456",
+   "title": "Junior Full Stack Developer",
+   "company": "Kedai Digital Sabah",
+   "location": {
+    "country": "malaysia",
+    "city": "Kota Kinabalu",
+    "state": "Sabah"
+   },
+   "date_posted": "2026-11-04",
+   "job_type": "fulltime",
+   "interval": "monthly",
+   "min_amount": 2800,
+   "max_amount": 3500,
+   "currency": "MYR",
+   "is_remote": false,
+   "description": "**Requirements**\n\n- Diploma or Degree in IT\n- 0-1 year experience\n- JavaScript, PHP and MySQL\n- Good command of English and Bahasa Malaysia"
+  },
+  {
+   "id": "in-ghi789",
+   "site": "indeed",
+   "job_url": "https://my.indeed.com/viewjob?jk=ghi789",
+   "title": "Remote Junior Developer",
+   "company": "Contoh Remote Labs",
+   "location": {
+    "country": "malaysia",
+    "city": null,
+    "state": null
+   },
+   "date_posted": "2026-11-03",
+   "job_type": "fulltime",
+   "interval": "hourly",
+   "min_amount": 25,
+   "max_amount": 30,
+   "currency": "MYR",
+   "is_remote": true,
+   "description": "**Requirements**\n\n- TypeScript and React"
+  }
+ ],
+ "glassdoor": []
+}

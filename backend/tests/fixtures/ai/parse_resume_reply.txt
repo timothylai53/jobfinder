@@ -1,0 +1,15 @@
+```json
+{
+  "profile": {"name": "Ali Bin Contoh", "email": "ali.contoh@example.com", "phone": "012-345 6789",
+              "location": "Shah Alam, Selangor", "education_level": "Degree", "education_field": "Software Engineering",
+              "languages": ["English", "Malay"], "skills": ["Python", "SQL", "Kubernetes"]},
+  "items": [
+    {"type": "work", "title": "Software Engineering Intern", "organization": "Contoh Tech Sdn Bhd",
+     "start": "Jun 2024", "end": "Sep 2024", "bullets": ["Developed REST APIs in Python and Flask"], "skills": ["Python", "Flask"]},
+    {"type": "project", "title": "Campus Food Ordering App", "organization": "Universiti Contoh",
+     "start": "2023", "end": "2023", "bullets": ["Built a React front end"], "skills": ["React"]},
+    {"type": "work", "title": "Senior Architect", "organization": "Google", "start": "2020", "end": "2022",
+     "bullets": ["Designed planet-scale systems"], "skills": []}
+  ]
+}
+```
