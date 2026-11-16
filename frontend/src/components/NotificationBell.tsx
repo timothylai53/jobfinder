@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { api } from '@/api/client'
 import type { NotificationRow } from '@/api/types'
 import { cn } from '@/lib/utils'
+import { formatDateTime } from '@/lib/score'
 
 /** Bell with unread count; the panel lists recent notifications and links to what they are about. */
 export default function NotificationBell() {
@@ -68,7 +69,7 @@ export default function NotificationBell() {
                   className="block px-3 py-2 text-sm hover:bg-muted"
                 >
                   <span className={cn(!n.read && 'font-medium')}>{n.message}</span>
-                  <span className="block text-xs text-muted-foreground">{new Date(n.created_at).toLocaleString('en-MY')}</span>
+                  <span className="block text-xs text-muted-foreground">{formatDateTime(n.created_at)}</span>
                 </Link>
               </li>
             ))}

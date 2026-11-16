@@ -57,8 +57,7 @@ export default function SkillGaps() {
   const max = Math.max(1, ...(d?.gaps ?? []).map((g) => g.total))
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="Skill gaps" />
-      <p className="-mt-2 text-[15px] text-muted-foreground">What to learn next: skills the jobs ask for that your Experience Bank and profile don't show yet, most-asked first.</p>
+      <PageHeader title="Skill gaps" lead="What to learn next: skills the jobs ask for that your Experience Bank and profile don't show yet." />
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex rounded-lg border bg-background p-0.5 text-[15px]">
           {(['saved', 'scored'] as const).map((s) => (

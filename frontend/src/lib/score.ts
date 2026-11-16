@@ -1,12 +1,5 @@
 import type { ItemStatus } from '@/api/types'
 
-export const STATUS_ICON: Record<ItemStatus, string> = {
-  met: '✅',
-  partial: '⚠️',
-  not_met: '❌',
-  not_specified: '➖',
-}
-
 export const STATUS_LABEL: Record<ItemStatus, string> = {
   met: 'met',
   partial: 'partial',
@@ -14,13 +7,14 @@ export const STATUS_LABEL: Record<ItemStatus, string> = {
   not_specified: 'not specified',
 }
 
-/** Tailwind classes for a 0-100 score badge; gated jobs are always red. */
+/** Tailwind classes for a 0-100 score badge. The accent marks good matches; amber a partial one; weak scores stay
+ * neutral, and only a failed hard gate is red. */
 export function scoreTone(score: number | null, gated = false): string {
   if (score === null) return 'bg-muted text-muted-foreground'
-  if (gated) return 'bg-red-100 text-red-800'
-  if (score >= 70) return 'bg-green-100 text-green-800'
-  if (score >= 50) return 'bg-amber-100 text-amber-800'
-  return 'bg-red-100 text-red-800'
+  if (gated) return 'bg-red-50 text-red-800 ring-1 ring-inset ring-red-200'
+  if (score >= 70) return 'bg-accent text-accent-foreground ring-1 ring-inset ring-primary/25'
+  if (score >= 50) return 'bg-attention-bg text-attention ring-1 ring-inset ring-attention-edge/40'
+  return 'bg-muted text-foreground ring-1 ring-inset ring-border'
 }
 
 export function formatSalary(min: number | null, max: number | null, currency: string): string {
@@ -64,8 +58,31 @@ export function sortJobs<T extends Sortable>(jobs: T[], key: SortKey, desc: bool
   })
 }
 
-export function formatDate(iso: string | null | undefined): string {
-  if (!iso) return ''
+// One date format everywhere: "15 Nov 2026" (en-GB order, regardless of the browser's own locale).
+const DATE = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+const TIME = new Intl.DateTimeFormat('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true })
+const MONTH = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric' })
+
+function toDate(iso: string | null | undefined): Date | null {
+  if (!iso) return null
   const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso)
-  return d.toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+/** "15 Nov 2026" */
+export function formatDate(iso: string | null | undefined): string {
+  const d = toDate(iso)
+  return d ? DATE.format(d).replace('Sept', 'Sep') : ''
+}
+
+/** "15 Nov 2026, 10:48 pm" for moments (status changes, runs, notifications). */
+export function formatDateTime(iso: string | null | undefined): string {
+  const d = toDate(iso)
+  return d ? `${formatDate(iso)}, ${TIME.format(d).replace(/\s?([ap])\.?m\.?$/i, ' $1m').toLowerCase()}` : ''
+}
+
+/** "Nov 2026" for months (expected graduation). */
+export function formatMonth(iso: string | null | undefined): string {
+  const d = toDate(iso)
+  return d ? MONTH.format(d).replace('Sept', 'Sep') : ''
 }

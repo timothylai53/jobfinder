@@ -197,7 +197,7 @@ export default function Tracker() {
   const apps = list.data ?? []
   return (
     <div>
-      <PageHeader title="Tracker">
+      <PageHeader title="Tracker" lead="Where each application stands. Drag a card to change its status.">
         <Button variant={view === 'kanban' ? 'default' : 'outline'} onClick={() => setV('kanban')}>
           Kanban
         </Button>

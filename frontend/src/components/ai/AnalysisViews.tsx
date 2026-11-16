@@ -1,14 +1,12 @@
 import type { DeepAnalysisResult, GuardFlag, InterviewPrepResult } from '@/api/types'
 import { flagsAt } from '@/lib/ai'
-import { STATUS_ICON } from '@/lib/score'
+import { StatusMark, FlagIcon } from '@/components/common'
 import { cn } from '@/lib/utils'
-
-const ICON = { met: STATUS_ICON.met, partial: STATUS_ICON.partial, not_met: STATUS_ICON.not_met }
 
 function Ids({ ids, flags, path }: { ids: string[]; flags: GuardFlag[]; path: string }) {
   if (!ids.length) return null
   return (
-    <span className="text-xs">
+    <span className="text-[13px]">
       {ids.map((id, i) => {
         const bad = flagsAt(flags, `${path}.${i}`).length > 0
         return <span key={i} title={bad ? 'Not in your Experience Bank' : undefined} className={cn('mr-1 rounded px-1', bad ? 'bg-red-100 text-red-700 line-through' : 'bg-muted')}>{id}</span>
@@ -27,7 +25,7 @@ function List({ title, items }: { title: string; items: string[] }) {
   )
 }
 
-/** Deep analysis: each requirement ✅⚠️❌ with the bank items that prove it (unknown IDs crossed out in red). */
+/** Deep analysis: each requirement met / partly met / not met, with the bank items that prove it (unknown IDs crossed out in red). */
 export function DeepAnalysisView({ data, flags = [] }: { data: DeepAnalysisResult; flags?: GuardFlag[] }) {
   return (
     <div className="flex flex-col gap-3">
@@ -37,12 +35,12 @@ export function DeepAnalysisView({ data, flags = [] }: { data: DeepAnalysisResul
           const f = flagsAt(flags, `requirements.${i}`).filter((x) => x.path === `requirements.${i}`)
           return (
             <li key={i} className={cn('rounded-md border px-2 py-1.5 text-sm', f.length && 'border-red-300 bg-red-50/40')}>
-              <span className="mr-1">{ICON[r.status]}</span>
+              <StatusMark status={r.status} className="mr-1.5 inline-block align-[-3px]" />
               <span className="font-medium">{r.text}</span>
-              <span className="ml-1 text-xs text-muted-foreground">({r.type})</span>{' '}
+              <span className="ml-1 text-[13px] text-muted-foreground">({r.type})</span>{' '}
               <Ids ids={r.evidence_ids} flags={flags} path={`requirements.${i}.evidence_ids`} />
               {r.note && <div className="text-muted-foreground">{r.note}</div>}
-              {f.map((x, k) => <div key={k} className="text-red-700">⚠ {x.message}</div>)}
+              {f.map((x, k) => <div key={k} className="text-red-700"><FlagIcon />{x.message}</div>)}
             </li>
           )
         })}

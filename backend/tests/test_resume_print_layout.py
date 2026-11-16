@@ -65,3 +65,4 @@ def test_printed_html_has_no_repeated_year(client):
     doc = client.post("/api/documents/resume", json={"job_id": job, "add_original_ids": ["B1"]}).json()
     html = client.get(f"/api/documents/{doc['id']}/html").text
     assert "Contoh Expo 2024" in html and "(2024)" not in html and "<li>Silver Award, Contoh Expo 2024</li>" not in html
+

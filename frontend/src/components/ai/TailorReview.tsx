@@ -3,7 +3,7 @@ import { Check, Scissors, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { api } from '@/api/client'
 import type { AiTask, DocumentRow, ExperienceItem, GuardFlag, TailorResult } from '@/api/types'
-import { ErrorText } from '@/components/common'
+import { ErrorText, FlagIcon } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 
 function FlagList({ flags }: { flags: GuardFlag[] }) {
   if (!flags.length) return null
-  return <ul className="text-sm">{flags.map((f, i) => <li key={i} className={isWarning(f) ? 'text-amber-700' : 'text-red-700'}>⚠ {f.message}</li>)}</ul>
+  return <ul className="text-sm">{flags.map((f, i) => <li key={i} className={isWarning(f) ? 'text-amber-700' : 'text-red-700'}><FlagIcon />{f.message}</li>)}</ul>
 }
 
 /**

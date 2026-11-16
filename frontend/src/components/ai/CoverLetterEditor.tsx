@@ -3,7 +3,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '@/api/client'
 import type { CoverLetterResult, DocumentRow, GuardFlag } from '@/api/types'
-import { ErrorText, Field } from '@/components/common'
+import { ErrorText, Field, FlagIcon } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -41,7 +41,7 @@ export default function CoverLetterEditor({ jobId, initial, flags = [], source, 
               className={cn('text-[15px]', p.flags.length && 'border-red-400 bg-red-50/40')} />
             <Button variant="ghost" size="sm" aria-label={`Remove paragraph ${i + 1}`} onClick={() => setParas(paras.filter((_, j) => j !== i))}><Trash2 className="size-4" /></Button>
           </div>
-          {p.flags.map((f, k) => <span key={k} className="text-sm text-red-700">⚠ {f.message}</span>)}
+          {p.flags.map((f, k) => <span key={k} className="text-sm text-red-700"><FlagIcon />{f.message}</span>)}
         </div>
       ))}
       <Button variant="outline" size="sm" className="self-start" onClick={() => setParas([...paras, { text: '', flags: [] }])}><Plus className="size-4" /> Add paragraph</Button>
@@ -49,7 +49,7 @@ export default function CoverLetterEditor({ jobId, initial, flags = [], source, 
       <p className="text-sm text-muted-foreground">
         Based on bank items: {initial.used_ids.join(', ') || 'none'}. Your name and contact details are added from your profile.
       </p>
-      {idFlags.map((f, k) => <span key={k} className="text-sm text-red-700">⚠ {f.message}</span>)}
+      {idFlags.map((f, k) => <span key={k} className="text-sm text-red-700"><FlagIcon />{f.message}</span>)}
       <div className="flex items-center justify-end gap-2">
         <ErrorText error={save.error} />
         <Button disabled={save.isPending || !paras.some((p) => p.text.trim())} onClick={() => save.mutate()}>

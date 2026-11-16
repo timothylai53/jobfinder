@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 
 from app.db import get_session
 from app.settings_store import get_general
-from models import STATUSES, Application, Job, MatchResult, Notification, Source, StatusHistory
+from models import STATUSES, Application, Document, Job, MatchResult, Notification, Source, StatusHistory
 from models._base import utcnow
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
@@ -66,6 +66,22 @@ def dashboard(session: Session = Depends(get_session)):
             high.append({"id": j.id, "title": j.title, "company": j.company, "score": m.total})
     high.sort(key=lambda x: -x["score"])
     today = date.today()
+    # Saved (not yet applied) jobs: the ones with a resume version are ready to send, the rest still need one.
+    latest_resume: dict[int, Document] = {}
+    for doc in session.exec(select(Document).where(Document.type == "resume")).all():
+        if doc.job_id is not None and (doc.job_id not in latest_resume or doc.version > latest_resume[doc.job_id].version):
+            latest_resume[doc.job_id] = doc
+    ready, to_tailor = [], []
+    for a in sorted(apps, key=lambda a: a.id):
+        j = jobs.get(a.job_id)
+        if a.status != "Saved" or j is None:
+            continue
+        row = {"job_id": j.id, "title": j.title, "company": j.company}
+        doc = latest_resume.get(j.id)
+        if doc:
+            ready.append({**row, "document_id": doc.id, "version": doc.version})
+        else:
+            to_tailor.append(row)
     return {
         "status_counts": {s: sum(a.status == s for a in apps) for s in STATUSES},
         "applications_per_week": weekly_counts([a.applied_at for a in apps if a.applied_at], today),
@@ -76,4 +92,6 @@ def dashboard(session: Session = Depends(get_session)):
         "follow_ups_due": sum(1 for a in apps if a.status == "Applied" and a.follow_up_at and a.follow_up_at <= today),
         "total_jobs": len(jobs),
         "sources": _source_health(session),
+        "ready_to_apply": ready,
+        "saved_without_resume": to_tailor,
     }

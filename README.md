@@ -8,7 +8,7 @@ It runs entirely on one Windows laptop. There are no accounts, no paid APIs, and
 
 > All screenshots and examples use **fake demo data** (`scripts/seed_demo.py`).
 
-![Dashboard](docs/screenshots/dashboard.png)
+![Today: next steps first, then one row of stats](docs/screenshots/dashboard.png)
 
 ## Why I built it
 
@@ -31,10 +31,11 @@ JobFinder does the reading and bookkeeping, and treats **accuracy as the first r
 | **Fabrication guard** | See below. Flags are red (possibly invented) or amber (worth a look), right next to the item, in a side-by-side review. |
 | **Documents** | Numbered resume / cover-letter / analysis versions per job. An ATS-friendly single-column PDF via headless Chromium (selectable text, standard headings, clickable profile links). The tracker records which version you actually sent. |
 | **Tracker** | Kanban (drag and drop) and table views, status history, follow-up reminders. |
+| **Today** | Opens on what to do next, built from real state: new high matches, follow-ups due, resumes ready to send, profile gaps. A first-run checklist (profile, resume, first job) until there is something to show. Each job page has one primary button that follows the job: Save to tracker, Tailor resume, Download resume, Mark as applied. |
 | **Automations** | Daily fetch, scoring, high-match alerts and follow-up reminders (APScheduler, with catch-up after the laptop was off), each with a run log. |
 | **Skill gaps** | The skills your saved jobs ask for that you don't have yet, ranked by how often they're asked for. |
 
-| Jobs list | Job detail: score breakdown |
+| Jobs list | Job detail: score, one-line verdict, the next step |
 |---|---|
 | ![Jobs](docs/screenshots/jobs.png) | ![Job detail](docs/screenshots/job-detail-score.png) |
 
@@ -93,7 +94,7 @@ Data flow: fetch → normalise → dedupe → filter → save the full ad → qu
 
 - **Backend:** Python 3.12, FastAPI, SQLModel/SQLAlchemy, Pydantic v2, SQLite, APScheduler, httpx, python-jobspy, pdfplumber, python-docx, Jinja2, Playwright (headless Chromium for PDFs), openpyxl.
 - **Frontend:** React, Vite, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, React Router, dnd-kit.
-- **Tests:** pytest (**403 tests**) and Vitest (**32 tests**). An autouse fixture blocks every real HTTP request and the real JobSpy call, so the suite never touches a live site. PDF tests render real PDFs offline and read them back.
+- **Tests:** pytest (**404 tests**) and Vitest (**42 tests**). An autouse fixture blocks every real HTTP request and the real JobSpy call, so the suite never touches a live site. PDF tests render real PDFs offline and read them back.
 - **CI:** GitHub Actions on `ubuntu-latest`: backend pytest (with Playwright Chromium), frontend Vitest and production build.
 
 ## How it was built (with Claude Code)

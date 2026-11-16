@@ -97,8 +97,8 @@ def shoot(base: str) -> None:
 
         snap("dashboard", "/")
         snap("jobs", "/jobs")
-        page.set_viewport_size({"width": 1440, "height": 1240})
-        snap("job-detail-score", f"/jobs/{first['id']}")
+        saved = next(j for j in jobs if j["title"].startswith("Frontend Developer"))  # saved, no resume yet: "Tailor resume"
+        snap("job-detail-score", f"/jobs/{saved['id']}")
         page.set_viewport_size({"width": 1780, "height": 600})
         snap("tracker-kanban", "/tracker")
         page.set_viewport_size({"width": 1440, "height": 900})

@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { formatSalary, parseList, scoreTone, sortJobs } from './score'
 
 describe('scoreTone', () => {
-  it('uses thresholds and treats gated jobs as red', () => {
-    expect(scoreTone(85)).toContain('green')
-    expect(scoreTone(55)).toContain('amber')
-    expect(scoreTone(30)).toContain('red')
+  it('accent for good matches, amber for partial, neutral for weak, red only for a failed gate', () => {
+    expect(scoreTone(85)).toContain('bg-accent')
+    expect(scoreTone(55)).toContain('attention')
+    expect(scoreTone(30)).not.toMatch(/red|accent|attention/)
     expect(scoreTone(85, true)).toContain('red')
     expect(scoreTone(null)).toContain('muted')
   })

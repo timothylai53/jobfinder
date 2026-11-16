@@ -1,16 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FileText, ListChecks, MessagesSquare, PenLine, Sparkles } from 'lucide-react'
-import { useState } from 'react'
+import { ChevronDown, FileText, ListChecks, MessagesSquare, PenLine, Sparkles } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '@/api/client'
 import type {
   AiTask, AiTaskType, CoverLetterResult, DeepAnalysisResult, DocumentRow, ExperienceItem, InterviewPrepResult, TailorResult, TemplateDraft,
 } from '@/api/types'
-import { ErrorText, NativeSelect, Notice } from '@/components/common'
+import { ErrorText, Notice } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { TASK_LABEL } from '@/lib/ai'
+import { cn } from '@/lib/utils'
 import AiTaskFlow, { useAiSettings } from './AiTaskFlow'
 import { DeepAnalysisView, InterviewPrepView } from './AnalysisViews'
 import CoverLetterEditor from './CoverLetterEditor'
@@ -46,7 +46,7 @@ function SaveResult({ task, onSaved, children }: { task: AiTask; onSaved: (d: Do
   )
 }
 
-interface JobInfo { id: number; title: string; summaryOnly: boolean; lowConfidence: string }
+export interface JobInfo { id: number; title: string; summaryOnly: boolean; lowConfidence: string }
 
 function TaskDialog({ task, job, provider, onClose }: { task: AiTaskType; job: JobInfo; provider: 'copy_paste' | 'ollama'; onClose: () => void }) {
   const qc = useQueryClient()
@@ -142,49 +142,87 @@ function TemplateDialog({ job, onClose }: { job: JobInfo; onClose: () => void })
   )
 }
 
-const ACTIONS: { task: AiTaskType; icon: typeof Sparkles }[] = [
-  { task: 'deep_analysis', icon: ListChecks },
-  { task: 'tailor_resume', icon: FileText },
-  { task: 'cover_letter', icon: PenLine },
-  { task: 'interview_prep', icon: MessagesSquare },
+const MORE: { open: AiOpen & string; label: string; icon: typeof Sparkles; ai: boolean }[] = [
+  { open: 'deep_analysis', label: TASK_LABEL.deep_analysis, icon: ListChecks, ai: true },
+  { open: 'cover_letter', label: TASK_LABEL.cover_letter, icon: PenLine, ai: true },
+  { open: 'interview_prep', label: TASK_LABEL.interview_prep, icon: MessagesSquare, ai: true },
+  { open: 'template', label: 'Cover letter from template (no AI)', icon: FileText, ai: false },
 ]
 
-/** Job Detail: AI actions (Copy-Paste or Ollama, overridable per action) + the template cover letter. */
-export default function AiTools({ job }: { job: JobInfo }) {
+export type AiOpen = AiTaskType | 'template' | null
+
+/** Which AI dialog is open on Job Detail. `n` makes every opening a fresh task. */
+export function useAiDialog() {
+  const [state, setState] = useState<{ open: AiOpen; n: number }>({ open: null, n: 0 })
+  return {
+    ...state,
+    start: (open: AiOpen) => setState((s) => ({ open, n: s.n + 1 })),
+    close: () => setState((s) => ({ ...s, open: null })),
+  }
+}
+
+/** The open dialog. The mode (Copy-Paste or Ollama) is the one chosen in Settings -> AI; if Ollama fails, the
+ * dialog itself offers Copy-Paste for that task. */
+export function AiDialogs({ job, dialog }: { job: JobInfo; dialog: ReturnType<typeof useAiDialog> }) {
   const settings = useAiSettings()
   const mode = settings.data?.mode ?? 'copy_paste'
-  const [override, setOverride] = useState<'copy_paste' | 'ollama' | ''>('')
-  const [open, setOpen] = useState<AiTaskType | 'template' | null>(null)
-  const [n, setN] = useState(0) // a fresh task every time a dialog opens
-  const provider = (override || (mode === 'off' ? 'copy_paste' : mode)) as 'copy_paste' | 'ollama'
-  const start = (t: AiTaskType | 'template') => { setN(n + 1); setOpen(t) }
+  const provider = (mode === 'off' ? 'copy_paste' : mode) as 'copy_paste' | 'ollama'
+  if (dialog.open === 'template') return <TemplateDialog key={dialog.n} job={job} onClose={dialog.close} />
+  if (dialog.open) return <TaskDialog key={dialog.n} task={dialog.open} job={job} provider={provider} onClose={dialog.close} />
+  return null
+}
+
+/** "Tailor resume" as the main AI action; the other AI tasks and the template cover letter under "More". */
+export function AiActions({ dialog, emphasise = true }: { dialog: ReturnType<typeof useAiDialog>; emphasise?: boolean }) {
+  const settings = useAiSettings()
+  const off = settings.data?.mode === 'off'
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Sparkles className="size-4" /> AI tools</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {mode === 'off' ? (
-          <p className="text-sm text-muted-foreground">AI is off (<Link to="/settings?section=ai" className="underline">Settings → AI</Link>). The template cover letter still works.</p>
-        ) : (
-          <>
-            <div className="flex flex-wrap gap-2">
-              {ACTIONS.map(({ task, icon: Icon }) => (
-                <Button key={task} variant="outline" onClick={() => start(task)}><Icon className="size-4" /> {TASK_LABEL[task]}</Button>
-              ))}
-            </div>
-            <label className="flex items-center gap-2 text-sm text-muted-foreground">
-              Use
-              <NativeSelect value={override || mode} onChange={(v) => setOverride(v as 'copy_paste' | 'ollama')}
-                options={[{ value: 'copy_paste', label: 'Copy-Paste (free web chat)' }, { value: 'ollama', label: 'Ollama (on this laptop)' }]} />
-              for these actions
-            </label>
-          </>
-        )}
-        <Button variant="ghost" className="self-start" onClick={() => start('template')}><PenLine className="size-4" /> Cover letter from template (no AI)</Button>
-      </CardContent>
-      {open === 'template' && <TemplateDialog key={n} job={job} onClose={() => setOpen(null)} />}
-      {open && open !== 'template' && <TaskDialog key={n} task={open} job={job} provider={provider} onClose={() => setOpen(null)} />}
-    </Card>
+    <div className="flex flex-wrap items-center gap-2">
+      {!off && (
+        <Button variant={emphasise ? 'default' : 'outline'} onClick={() => dialog.start('tailor_resume')}>
+          <FileText className="size-4" aria-hidden /> Tailor resume
+        </Button>
+      )}
+      <MoreMenu items={MORE.filter((m) => !off || !m.ai)} onPick={(o) => dialog.start(o)} />
+      {off && (
+        <span className="text-sm text-muted-foreground">
+          AI is off (<Link to="/settings?section=ai" className="underline underline-offset-2">Settings → AI</Link>). The template cover letter still works.
+        </span>
+      )}
+    </div>
+  )
+}
+
+/** A small disclosure menu: Escape or a click outside closes it, and focus returns to the button. */
+function MoreMenu({ items, onPick }: { items: typeof MORE; onPick: (o: AiOpen) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const button = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); button.current?.focus() } }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey) }
+  }, [open])
+  return (
+    <div ref={ref} className="relative">
+      <Button ref={button} variant="outline" aria-expanded={open} aria-controls="ai-more" onClick={() => setOpen(!open)}>
+        More <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} aria-hidden />
+      </Button>
+      {open && (
+        <ul id="ai-more" className="absolute right-0 z-40 mt-1 w-72 rounded-lg border bg-popover p-1 shadow-[0_8px_24px_-8px_rgb(23_33_43/0.18)]">
+          {items.map(({ open: o, label, icon: Icon }) => (
+            <li key={o}>
+              <button type="button" className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-[15px] hover:bg-muted focus-visible:bg-muted"
+                onClick={() => { setOpen(false); onPick(o) }}>
+                <Icon className="size-4 text-muted-foreground" aria-hidden /> {label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }

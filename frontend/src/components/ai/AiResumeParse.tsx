@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { parsedToDraft } from '@/lib/ai'
 import AiTaskFlow, { useAiSettings } from './AiTaskFlow'
+import { FlagIcon } from '@/components/common'
 
 /**
  * parse_resume (brief §6.1): for complex layouts, let an AI structure the resume text. The result replaces the
@@ -39,7 +40,7 @@ export default function AiResumeParse({ draft, onDraft }: { draft: ResumeDraft; 
                   <div className="flex flex-col gap-2 text-sm">
                     <div>The AI found <strong>{r.items.length} items</strong>{r.profile.name && <> for <strong>{r.profile.name}</strong></>}.</div>
                     {t.flags.length > 0 && (
-                      <ul className="text-red-700">{t.flags.map((f, i) => <li key={i}>⚠ {f.path}: {f.message}</li>)}</ul>
+                      <ul className="text-red-700">{t.flags.map((f, i) => <li key={i}><FlagIcon />{f.path}: {f.message}</li>)}</ul>
                     )}
                     <div className="flex justify-end">
                       <Button onClick={() => { onDraft(parsedToDraft(r, draft, bank.data ?? [])); setOpen(false) }}>Use this in the review screen</Button>

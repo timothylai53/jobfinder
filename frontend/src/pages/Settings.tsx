@@ -400,7 +400,7 @@ export default function Settings() {
   }
   return (
     <div>
-      <PageHeader title="Settings">
+      <PageHeader title="Settings" lead="Your profile, what to search for, and how scoring and AI work.">
         <Button variant="outline" asChild><Link to="/setup">Run setup again</Link></Button>
       </PageHeader>
       <div className="grid items-start gap-6 md:grid-cols-[15rem_minmax(0,1fr)]">

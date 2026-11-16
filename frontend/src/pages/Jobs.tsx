@@ -61,7 +61,7 @@ export default function Jobs() {
 
   return (
     <div>
-      <PageHeader title="Jobs">
+      <PageHeader title="Jobs" lead="Every job you have fetched or imported, scored against your Experience Bank.">
         <FetchNowDialog />
         <ImportJobDialog defaultOpen={params.get("import") === "1"} />
       </PageHeader>

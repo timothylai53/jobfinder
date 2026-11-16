@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { api } from '@/api/client'
 import type { ProfileStatus } from '@/api/types'
+import { formatMonth } from '@/lib/score'
 
 export function useProfileStatus() {
   // Key starts with 'profile' so every profile / bank change that invalidates ['profile'] refreshes it.
@@ -16,7 +17,7 @@ export function useProfileStatus() {
 export function educationLabel(e: ProfileStatus['education']): string {
   if (!e) return 'none found'
   const parts = [e.level + (e.field ? ` in ${e.field}` : '')]
-  if (e.in_progress) parts.push(`in progress${e.expected ? `, expected ${new Date(e.expected).toLocaleDateString('en-MY', { month: 'short', year: 'numeric' })}` : ''}`)
+  if (e.in_progress) parts.push(`in progress${e.expected ? `, expected ${formatMonth(e.expected)}` : ''}`)
   parts.push(e.source === 'profile' ? 'from your profile' : `from ${e.source}`)
   return parts.join(', ')
 }

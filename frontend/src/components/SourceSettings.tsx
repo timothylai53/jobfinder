@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { ErrorText, Field, ListInput, NativeSelect } from './common'
 import { sourceStatus } from './FetchNowDialog'
+import { formatDateTime } from '@/lib/score'
 
 const JOB_TYPES = [
   { value: 'fulltime', label: 'Full time' }, { value: 'parttime', label: 'Part time' },
@@ -118,7 +119,7 @@ function SourceCard({ s }: { s: SourceRow }) {
           <span className={cn('text-sm font-normal', st.tone)}>{st.text}</span>
         </label>
         <p className="text-sm text-muted-foreground">
-          {s.last_run_at ? `Last run ${new Date(s.last_run_at).toLocaleString('en-MY')}: ` : 'Not run yet. '}
+          {s.last_run_at ? `Last run ${formatDateTime(s.last_run_at)}: ` : 'Not run yet. '}
           {s.status !== 'ok' ? s.last_error : s.last_result}
         </p>
         {s.key === 'glassdoor' && <p className="text-sm text-muted-foreground">Glassdoor has little Malaysia coverage; off by default.</p>}

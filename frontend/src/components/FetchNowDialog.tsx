@@ -9,11 +9,12 @@ import { Input } from '@/components/ui/input'
 import { anyRunning, CAP_STORAGE_KEY, confirmAgainText, DEFAULT_CAP, fetchButtonLabel, fetchedToday } from '@/lib/fetchPlan'
 import { cn } from '@/lib/utils'
 import { ErrorText, NativeSelect } from './common'
+import { formatDateTime } from '@/lib/score'
 
 export function sourceStatus(s: SourceRow): { text: string; tone: string } {
   if (s.running) return { text: 'Fetching now…', tone: 'text-attention' }
   if (!s.enabled) return { text: 'Off', tone: 'text-muted-foreground' }
-  if (s.status === 'paused') return { text: `Paused until ${new Date(s.paused_until ?? '').toLocaleString('en-MY')}`, tone: 'text-red-700' }
+  if (s.status === 'paused') return { text: `Paused until ${formatDateTime(s.paused_until)}`, tone: 'text-red-700' }
   if (s.status === 'error') return { text: 'Last run failed', tone: 'text-attention' }
   if (s.runs_today >= s.max_runs_per_day) return { text: 'Daily limit reached', tone: 'text-muted-foreground' }
   return { text: 'Ready', tone: 'text-primary' }

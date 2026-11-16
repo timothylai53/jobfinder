@@ -7,7 +7,6 @@ import ItemEditor from '@/components/ItemEditor'
 import ResumeUpload from '@/components/ResumeUpload'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 
 function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
@@ -29,7 +28,7 @@ function BankItem({ item }: { item: ExperienceItem }) {
   })
   const del = useMutation({ mutationFn: () => api.del(`/api/experience/${item.id}`), onSuccess: () => invalidateAll(qc) })
   return (
-    <div className="rounded-md border bg-background p-3">
+    <li className="px-4 py-3">
       {editing ? (
         <div className="flex flex-col gap-2">
           <ItemEditor value={val} onChange={setVal} />
@@ -68,7 +67,7 @@ function BankItem({ item }: { item: ExperienceItem }) {
           </div>
         </div>
       )}
-    </div>
+    </li>
   )
 }
 
@@ -113,18 +112,19 @@ function Resumes({ items }: { items: ExperienceItem[] }) {
   })
   const del = useMutation({ mutationFn: (id: number) => api.del(`/api/resumes/${id}`), onSuccess: () => invalidateAll(qc) })
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>BaseResumes: each is a selection of bank items</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+    <section aria-labelledby="base-resumes" className="flex flex-col gap-3">
+      <div>
+        <h2 id="base-resumes" className="text-lg font-semibold">Base resumes</h2>
+        <p className="text-sm text-muted-foreground">Each one is a selection of bank items, e.g. one for software roles and one for IT support.</p>
+      </div>
+      <div className="flex flex-col gap-4">
         <ErrorText error={resumes.error || update.error || create.error} />
         {(resumes.data ?? []).map((r) => (
-          <div key={r.id} className="rounded-md border p-3">
+          <div key={r.id} className="border-b pb-4">
             <div className="mb-2 flex items-center justify-between">
               <div className="font-medium">{r.name}</div>
               <Button size="sm" variant="ghost" onClick={() => confirm(`Delete BaseResume “${r.name}”? Its Experience Bank items stay.`) && del.mutate(r.id)}>
-                Delete BaseResume
+                Delete
               </Button>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
@@ -151,8 +151,8 @@ function Resumes({ items }: { items: ExperienceItem[] }) {
           <Input placeholder="New BaseResume name" value={newName} onChange={(e) => setNewName(e.target.value)} className="w-64" />
           <Button variant="outline" disabled={!newName.trim()} onClick={() => create.mutate()}>Create</Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   )
 }
 
@@ -173,8 +173,8 @@ function ClearBank({ count }: { count: number }) {
       {clear.data && <span className="text-sm text-muted-foreground">Cleared. Backup saved as {clear.data.backup}.</span>}
       <ErrorText error={clear.error} />
       {count > 0 && (
-        <Button variant="destructive" size="sm" disabled={clear.isPending} onClick={() => ask() && clear.mutate()}>
-          Clear Experience Bank
+        <Button variant="ghost" size="sm" className="text-red-700 hover:bg-red-50 hover:text-red-800" disabled={clear.isPending} onClick={() => ask() && clear.mutate()}>
+          Clear bank…
         </Button>
       )}
     </div>
@@ -187,28 +187,25 @@ export default function ResumeBank() {
   const [adding, setAdding] = useState(false)
   const list = items.data ?? []
   return (
-    <div className="flex flex-col gap-4">
-      <PageHeader title="Resume & Experience Bank" />
+    <div className="flex flex-col gap-8">
+      <PageHeader title="Resume" lead="Your Experience Bank: the only facts that scores and AI-written resumes may use." />
       <ResumeUpload />
-      <Card>
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-          <CardTitle>Experience Bank ({list.length} items): the source of truth for scoring and tailoring</CardTitle>
+      <section aria-labelledby="bank" className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 id="bank" className="text-lg font-semibold">Experience Bank <span className="font-normal text-muted-foreground">({list.length} items)</span></h2>
+            {profile.data && profile.data.skills.length > 0 && (
+              <p className="text-sm text-muted-foreground">Profile skills: {profile.data.skills.join(', ')} (edit in Settings → Profile)</p>
+            )}
+          </div>
           <ClearBank count={list.length} />
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          <ErrorText error={items.error} />
-          {profile.data && profile.data.skills.length > 0 && (
-            <div className="text-sm">
-              <span className="text-muted-foreground">Profile skills (edit in Settings → Profile): </span>
-              {profile.data.skills.join(', ')}
-            </div>
-          )}
-          {list.map((it) => <BankItem key={it.id} item={it} />)}
-          {adding ? <NewItem onClose={() => setAdding(false)} /> : (
-            <Button variant="outline" onClick={() => setAdding(true)}>+ Add item</Button>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+        <ErrorText error={items.error} />
+        {list.length > 0 && <ul className="divide-y rounded-xl border bg-background">{list.map((it) => <BankItem key={it.id} item={it} />)}</ul>}
+        {adding ? <NewItem onClose={() => setAdding(false)} /> : (
+          <Button variant="outline" className="self-start" onClick={() => setAdding(true)}>Add item</Button>
+        )}
+      </section>
       <Resumes items={list} />
     </div>
   )

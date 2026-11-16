@@ -198,6 +198,10 @@ export interface Dashboard {
   follow_ups_due: number
   total_jobs: number
   sources: { key: string; label: string; status: string; note: string; paused_until: string | null; last_run_at: string | null }[]
+  /** Saved (not applied) jobs that already have a resume version: ready to send. */
+  ready_to_apply: { job_id: number; title: string; company: string; document_id: number; version: number }[]
+  /** Saved (not applied) jobs with no resume version yet. */
+  saved_without_resume: { job_id: number; title: string; company: string }[]
 }
 
 export interface PasteDraft {

@@ -6,6 +6,7 @@ import { ErrorText, NativeSelect, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { formatDateTime } from '@/lib/score'
 
 const RESULT_TONE: Record<string, string> = {
   ok: 'bg-accent text-accent-foreground', error: 'bg-red-100 text-red-800',
@@ -13,7 +14,7 @@ const RESULT_TONE: Record<string, string> = {
 }
 
 function when(iso: string | null | undefined) {
-  return iso ? new Date(iso).toLocaleString('en-MY', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
+  return iso ? formatDateTime(iso) : '—'
 }
 
 function scheduleText(a: AutomationRow) {
@@ -90,7 +91,7 @@ export default function Automations() {
   const label = Object.fromEntries((autos.data ?? []).map((a) => [a.key, a.label]))
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Automations" />
+      <PageHeader title="Automations" lead="What runs by itself while the app is open, and when it last ran." />
       <p className="-mt-2 text-[15px] text-muted-foreground">
         Automations run only while JobFinder is open. A daily one that was missed while it was closed runs once when you start it.
       </p>

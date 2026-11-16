@@ -41,7 +41,7 @@ function DetectedField({ label, state, children, className }: { label: string; s
  * Import a job. Main path: paste the whole job page (Ctrl+A, Ctrl+C) and let the app pick out the fields.
  * A URL can be tried first; many job boards block it, in which case we go straight to pasting.
  */
-export default function ImportJobDialog({ defaultOpen = false }: { defaultOpen?: boolean }) {
+export default function ImportJobDialog({ defaultOpen = false, variant = 'default' }: { defaultOpen?: boolean; variant?: 'default' | 'outline' }) {
   const [open, setOpen] = useState(defaultOpen)
   const [stage, setStage] = useState<'paste' | 'review'>('paste')
   const [pasted, setPasted] = useState('')
@@ -117,7 +117,7 @@ export default function ImportJobDialog({ defaultOpen = false }: { defaultOpen?:
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset() }}>
       <DialogTrigger asChild>
-        <Button>Import job</Button>
+        <Button variant={variant}>Import job</Button>
       </DialogTrigger>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>

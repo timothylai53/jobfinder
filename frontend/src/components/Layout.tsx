@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Briefcase, FileText, GraduationCap, KanbanSquare, LayoutDashboard, Settings, Timer } from 'lucide-react'
+import { Briefcase, FileText, GraduationCap, KanbanSquare, Settings, Sun, Timer } from 'lucide-react'
 import { useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import type { ExperienceItem, Profile } from '@/api/types'
@@ -8,15 +8,37 @@ import { api } from '@/api/client'
 import { cn } from '@/lib/utils'
 import NotificationBell from './NotificationBell'
 
-const NAV = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+// The four places a job search happens, then the tools you visit now and then.
+const MAIN = [
+  { to: '/', label: 'Today', icon: Sun, end: true },
   { to: '/jobs', label: 'Jobs', icon: Briefcase },
   { to: '/tracker', label: 'Tracker', icon: KanbanSquare },
-  { to: '/resume', label: 'Resume & Bank', icon: FileText },
+  { to: '/resume', label: 'Resume', icon: FileText },
+]
+const MORE = [
   { to: '/skill-gaps', label: 'Skill gaps', icon: GraduationCap },
   { to: '/automations', label: 'Automations', icon: Timer },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
+
+function Item({ to, label, icon: Icon, end, small }: { to: string; label: string; icon: typeof Sun; end?: boolean; small?: boolean }) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        cn(
+          'flex items-center gap-2.5 rounded-md px-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground',
+          small ? 'py-1.5 text-sm' : 'py-2 text-[15px]',
+          isActive && 'bg-accent font-medium text-accent-foreground hover:bg-accent hover:text-accent-foreground',
+        )
+      }
+    >
+      <Icon className={small ? 'size-4' : 'size-[18px]'} aria-hidden />
+      {label}
+    </NavLink>
+  )
+}
 
 export default function Layout() {
   const health = useQuery({
@@ -36,39 +58,30 @@ export default function Layout() {
 
   return (
     <div className="flex min-h-screen bg-fog">
-      <aside className="sticky top-0 z-30 flex h-screen w-52 shrink-0 flex-col border-r bg-background p-3">
-        <div className="mb-4 flex items-center justify-between px-2">
-          <span className="text-lg font-semibold">JobFinder</span>
+      <a href="#main" className="sr-only z-50 rounded bg-background px-3 py-2 focus:not-sr-only focus:fixed focus:top-2 focus:left-2">Skip to content</a>
+      <aside className="sticky top-0 z-30 flex h-screen w-52 shrink-0 flex-col border-r bg-background px-3 py-4">
+        <div className="mb-5 flex items-center justify-between px-2.5">
+          <span className="text-lg font-semibold tracking-tight">JobFinder</span>
           <NotificationBell />
         </div>
-        <nav className="flex flex-col gap-1">
-          {NAV.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-2 rounded-md px-2 py-1.5 text-[15px] hover:bg-muted',
-                  isActive && 'bg-accent font-medium text-accent-foreground',
-                )
-              }
-            >
-              <Icon className="size-4" />
-              {label}
-            </NavLink>
-          ))}
+        <nav aria-label="Main" className="flex flex-col gap-0.5">
+          {MAIN.map((n) => <Item key={n.to} {...n} />)}
         </nav>
-        <div className="mt-auto px-2 text-xs text-muted-foreground">
+        <nav aria-label="Tools" className="mt-auto flex flex-col gap-0.5 border-t pt-3">
+          {MORE.map((n) => <Item key={n.to} {...n} small />)}
+        </nav>
+        <p className="mt-3 px-2.5 text-[13px] leading-snug text-muted-foreground">
           {health.isError ? (
-            <span className="text-red-600">Backend not reachable. Is start.bat running?</span>
+            <span className="text-red-700">Backend not reachable. Is start.bat running?</span>
           ) : (
-            'Local only · nothing leaves this laptop'
+            'Runs on this laptop only'
           )}
-        </div>
+        </p>
       </aside>
-      <main className="min-w-0 flex-1 p-6">
-        <Outlet />
+      <main id="main" className="min-w-0 flex-1 px-8 py-7">
+        <div className="mx-auto max-w-[88rem]">
+          <Outlet />
+        </div>
       </main>
     </div>
   )
