@@ -6,6 +6,7 @@ import tempfile
 _TMP = tempfile.mkdtemp(prefix="jobfinder-test-")
 os.environ["JOBFINDER_DATA_DIR"] = _TMP
 os.environ["JOBFINDER_NO_SCHEDULER"] = "1"  # tests drive automations directly
+os.environ["JOBFINDER_NO_AUTO_BACKUP"] = "1"  # tested directly in test_backup.py
 os.environ["JOBFINDER_TEMPLATES_DIR"] = os.path.join(_TMP, "prompt-templates")  # edited prompts never touch the repo
 
 import pytest  # noqa: E402

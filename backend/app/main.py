@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -22,8 +23,9 @@ from api import (
     skills,
     sources,
 )
-from app import security
+from app import config, security
 from app.db import create_db, engine
+from export.backup import daily_backup
 from filters.service import seed_if_empty as seed_filters
 from matcher.service import rescore_all
 from scheduler import service as scheduler
@@ -36,7 +38,21 @@ from sources.ingest import tidy_stored_locations
 log = logging.getLogger("jobfinder")
 
 
+def startup_backup() -> None:
+    """One automatic backup per day, made before anything else touches the database; the last 14 are kept.
+    JOBFINDER_NO_AUTO_BACKUP=1 turns it off (tests). A failed backup is logged and never blocks startup."""
+    if os.environ.get("JOBFINDER_NO_AUTO_BACKUP") == "1":
+        return
+    try:
+        made = daily_backup(config.DB_PATH, config.BACKUPS_DIR)
+        if made:
+            log.info("Automatic backup saved: %s", made.name)
+    except Exception:  # noqa: BLE001 - a backup problem must not stop the app
+        log.exception("Automatic backup failed")
+
+
 def init_db() -> None:
+    startup_backup()
     create_db()
     with Session(engine) as s:
         seed_skills(s)

@@ -6,7 +6,7 @@ from sqlmodel import Session
 
 from app import config
 from app.db import get_session
-from export.backup import backup_db
+from export.backup import backup_db, backup_status
 from export.excel_csv import APP_COLUMNS, JOB_COLUMNS, application_rows, job_rows, to_csv, to_xlsx
 
 router = APIRouter(prefix="/api", tags=["export"])
@@ -37,3 +37,9 @@ def export_csv(kind: str, session: Session = Depends(get_session)):
 def backup():
     dest = backup_db(config.DB_PATH, config.BACKUPS_DIR)
     return {"path": str(dest), "name": dest.name}
+
+
+@router.get("/backup/status")
+def backup_info():
+    """Last backup (manual or automatic) and how many automatic daily backups are kept."""
+    return backup_status(config.BACKUPS_DIR)

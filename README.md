@@ -116,7 +116,8 @@ I built this with [Claude Code](https://claude.com/claude-code) as the implement
 Requirements: Windows 10/11, Python 3.11+ (tested 3.12), Node.js 20+ (tested 22).
 
 1. **`setup.bat`** (once): creates `backend\.venv`, installs Python packages and Playwright's Chromium, and runs `npm install`.
-2. **`start.bat`**: starts the API (http://127.0.0.1:8730) and the UI (http://localhost:5730) and opens your browser. Close both windows to stop.
+2. **`start.bat`**: starts the API (http://127.0.0.1:8730) and the UI (http://localhost:5730) together in **one minimized window** and opens your browser. **`stop.bat`** stops both (closing that window works too). `start-debug.bat` starts them in two visible windows if you want to watch the logs. `create-shortcut.bat` (optional, once) puts a JobFinder shortcut on your Desktop.
+   - The database is **backed up automatically** once a day when JobFinder starts (`data\backups\jobfinder-auto-*.db`, the last 14 kept). Settings → Export & backup shows the last backup.
 3. **Try it with fake data:**
    ```bash
    backend\.venv\Scripts\python scripts\seed_demo.py

@@ -14,6 +14,7 @@ import { AiSettingsTab, PromptTemplatesTab } from '@/components/ai/AiSettings'
 import { cn } from '@/lib/utils'
 import { Textarea } from '@/components/ui/textarea'
 import { mapToText, textToMap } from '@/lib/locations'
+import { formatDateTime } from '@/lib/score'
 
 const EDU_LEVELS = ['', 'SPM', 'STPM', 'Diploma', 'Degree', 'Master', 'PhD']
 
@@ -321,8 +322,22 @@ function SkillsTab() {
 
 // ---------- export / backup ----------
 
+interface BackupStatus {
+  last_backup_at: string | null
+  last_backup_name: string | null
+  last_backup_automatic: boolean
+  automatic_kept: number
+  keep_automatic: number
+}
+
 function ExportTab() {
-  const backup = useMutation({ mutationFn: () => api.post<{ path: string; name: string }>('/api/backup') })
+  const status = useQuery({ queryKey: ['backup-status'], queryFn: () => api.get<BackupStatus>('/api/backup/status') })
+  const qc = useQueryClient()
+  const backup = useMutation({
+    mutationFn: () => api.post<{ path: string; name: string }>('/api/backup'),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['backup-status'] }),
+  })
+  const b = status.data
   return (
     <Card>
       <CardContent className="flex flex-col gap-3">
@@ -331,12 +346,24 @@ function ExportTab() {
           <Button asChild variant="outline"><a href="/api/export/jobs.csv">Jobs CSV</a></Button>
           <Button asChild variant="outline"><a href="/api/export/applications.csv">Applications CSV</a></Button>
         </div>
-        <div className="flex items-center gap-2 border-t pt-3">
-          <Button variant="outline" onClick={() => backup.mutate()} disabled={backup.isPending}>Backup database now</Button>
-          {backup.data && <span className="text-sm text-primary">Saved {backup.data.path}</span>}
-          <ErrorText error={backup.error} />
+        <div className="flex flex-col gap-2 border-t pt-3">
+          <p className="text-[15px]">
+            <span className="font-medium">Last backup: </span>
+            {b?.last_backup_at
+              ? <>{formatDateTime(b.last_backup_at)} <span className="text-muted-foreground">({b.last_backup_automatic ? 'automatic' : 'manual'})</span></>
+              : <span className="text-muted-foreground">none yet</span>}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            A backup is made automatically once a day when JobFinder starts; the last {b?.keep_automatic ?? 14} are kept
+            ({b?.automatic_kept ?? 0} now). Backups you make yourself are never deleted.
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => backup.mutate()} disabled={backup.isPending}>Backup database now</Button>
+            {backup.data && <span className="text-sm text-primary">Saved {backup.data.name}</span>}
+            <ErrorText error={backup.error || status.error} />
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">Backups are copies of data/jobfinder.db in data/backups/. To restore one, stop the app and copy it back over data/jobfinder.db.</p>
+        <p className="text-sm text-muted-foreground">Backups are copies of data/jobfinder.db in data/backups/. To restore one, run stop.bat and copy it back over data/jobfinder.db.</p>
       </CardContent>
     </Card>
   )
