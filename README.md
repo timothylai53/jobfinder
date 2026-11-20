@@ -94,8 +94,8 @@ Data flow: fetch → normalise → dedupe → filter → save the full ad → qu
 
 - **Backend:** Python 3.12, FastAPI, SQLModel/SQLAlchemy, Pydantic v2, SQLite, APScheduler, httpx, python-jobspy, pdfplumber, python-docx, Jinja2, Playwright (headless Chromium for PDFs), openpyxl.
 - **Frontend:** React, Vite, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, React Router, dnd-kit.
-- **Tests:** pytest (**404 tests**) and Vitest (**42 tests**). An autouse fixture blocks every real HTTP request and the real JobSpy call, so the suite never touches a live site. PDF tests render real PDFs offline and read them back.
-- **CI:** GitHub Actions on `ubuntu-latest`: backend pytest (with Playwright Chromium), frontend Vitest and production build.
+- **Tests:** pytest (**449 tests**) and Vitest (**46 tests**). An autouse fixture blocks every real HTTP request and the real JobSpy call, so the suite never touches a live site. PDF tests render real PDFs offline and read them back.
+- **CI:** GitHub Actions on `ubuntu-latest`: backend ruff (lint), mypy (types) and pytest (with Playwright Chromium); frontend Vitest and production build.
 
 ## How it was built (with Claude Code)
 
@@ -108,7 +108,7 @@ I built this with [Claude Code](https://claude.com/claude-code) as the implement
    - "Version control" no longer counts as Git;
    - numbers invented by the AI are now flagged;
    - headings no longer end a PDF page.
-4. **Every judgment call is logged.** [`DECISIONS.md`](DECISIONS.md) has 140+ numbered decisions with their reasons.
+4. **Every judgment call is logged.** [`DECISIONS.md`](DECISIONS.md) has 180+ numbered decisions with their reasons.
 5. **Standing rules** in [`CLAUDE.md`](CLAUDE.md): no live requests unless I start a supervised step, never touch the real database, no personal data in the repo, full test suite before every commit, ask before adding dependencies.
 
 ## Run it
@@ -142,6 +142,12 @@ cd frontend && npx vitest run && npm run build
 - **The quick score is rules, not understanding.** It depends on the skill dictionary and on how the ad is written. That's why it shows its working and marks thin ads as low confidence.
 - **The fabrication guard can't catch everything** (see above). You still review each item.
 - **Single user, single laptop**, by design. No accounts, no sync, no DOCX export, one resume layout.
+
+## More
+
+- [SECURITY.md](SECURITY.md): threat model, every control, and known limits.
+- [LEARNING.md](LEARNING.md): how each part works, explained simply, with likely interview questions.
+- [DECISIONS.md](DECISIONS.md): every design decision with its reason.
 
 ## License
 
