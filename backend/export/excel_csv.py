@@ -15,12 +15,21 @@ APP_COLUMNS = ["id", "job_id", "job_title", "company", "status", "applied_at", "
                "created_at", "updated_at"]
 
 
+# Text that a spreadsheet would run as a formula (CSV / formula injection, OWASP). Job titles and descriptions come
+# from untrusted ads, so a title like =HYPERLINK("http://evil","Click") must stay text when Excel opens the export.
+FORMULA_START = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _text(s: str) -> str:
+    return "'" + s if s.startswith(FORMULA_START) else s
+
+
 def _cell(v):
     if isinstance(v, list):
-        return ", ".join(str(x) for x in v)
+        return _text(", ".join(str(x) for x in v))
     if v is None:
         return ""
-    return v if isinstance(v, (int, float, bool)) else str(v)
+    return v if isinstance(v, (int, float, bool)) else _text(str(v))
 
 
 def job_rows(session: Session) -> list[dict]:

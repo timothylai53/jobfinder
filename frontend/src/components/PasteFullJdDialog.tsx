@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Textarea } from '@/components/ui/textarea'
 import { titlesMatch } from '@/lib/titles'
 import { ErrorText, Notice } from './common'
+import { safeHttpUrl } from '@/lib/url'
 
 interface Props {
   jobId: number
@@ -52,7 +53,8 @@ export default function PasteFullJdDialog({ jobId, title, url, size = 'default' 
   })
 
   const start = () => {
-    if (url) window.open(url, '_blank', 'noopener,noreferrer')
+    const safe = safeHttpUrl(url)
+    if (safe) window.open(safe, '_blank', 'noopener,noreferrer')
     setOpen(true)
   }
   const mismatch = draft && draft.title && !titlesMatch(draft.title, title)

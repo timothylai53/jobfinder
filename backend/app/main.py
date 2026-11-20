@@ -5,6 +5,7 @@ from sqlmodel import Session
 
 from api import (ai, applications, automations, dashboard, documents, experience, export, filters, jobs, notifications,
                  profile, resumes, settings, skill_gaps, skills, sources)
+from app import security
 from app.db import create_db, engine
 from filters.service import seed_if_empty as seed_filters
 from matcher.service import rescore_all
@@ -37,6 +38,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="JobFinder", lifespan=lifespan)
+security.install(app)
 for r in (profile, resumes, experience, skills, jobs, filters, applications, dashboard, export, settings, sources,
           automations, notifications, skill_gaps, ai, documents):
     app.include_router(r.router)

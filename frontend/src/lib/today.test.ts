@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Breakdown, Dashboard } from '@/api/types'
 import { formatDate, formatDateTime } from './score'
 import { isFirstRun, nextSteps, setupSteps } from './today'
+import { safeHttpUrl } from './url'
 import { gaps, primaryStep, scoreVerdict } from './verdict'
 
 const dash = (over: Partial<Dashboard> = {}): Dashboard => ({
@@ -110,5 +111,16 @@ describe('dates', () => {
     expect(formatDateTime('2026-11-15T22:48:40')).toBe('15 Nov 2026, 10:48 pm')
     expect(formatDateTime('2026-11-15T00:05:00')).toBe('15 Nov 2026, 12:05 am')
     expect(formatDate('')).toBe('')
+  })
+})
+
+describe('untrusted links', () => {
+  it('only plain http(s) addresses become links', () => {
+    expect(safeHttpUrl('https://my.jobstreet.com/job/1')).toBe('https://my.jobstreet.com/job/1')
+    expect(safeHttpUrl('javascript:alert(1)')).toBeNull()
+    expect(safeHttpUrl(' JavaScript:alert(1)')).toBeNull()
+    expect(safeHttpUrl('data:text/html,<script>alert(1)</script>')).toBeNull()
+    expect(safeHttpUrl('file:///C:/Windows')).toBeNull()
+    expect(safeHttpUrl('')).toBeNull()
   })
 })

@@ -10,6 +10,10 @@ from documents import cover_template, render
 from documents.service import CoverLetterIn, DocumentError, ResumeIn, save_analysis, save_cover_letter, save_resume
 from models import AITask, Application, Document, Job
 
+# The preview shows text from job ads and AI replies (escaped by Jinja). As a second wall, the page may run no
+# script and load nothing: only its own inline styles.
+PREVIEW_CSP = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+
 router = APIRouter(prefix="/api", tags=["documents"])
 
 
@@ -102,7 +106,7 @@ def preview_html(doc_id: int, session: Session = Depends(get_session)):
     doc = _doc(session, doc_id)
     if doc.type not in render.RENDERABLE:
         raise HTTPException(422, "Only resumes and cover letters have a printable layout")
-    return HTMLResponse(render.html_for(doc, get_general(session).resume_projects_first))
+    return HTMLResponse(render.html_for(doc, get_general(session).resume_projects_first), headers={"Content-Security-Policy": PREVIEW_CSP})
 
 
 @router.get("/documents/{doc_id}/pdf")

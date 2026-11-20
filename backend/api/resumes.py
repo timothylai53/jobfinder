@@ -18,6 +18,7 @@ from skills.service import build_matcher
 
 router = APIRouter(prefix="/api/resumes", tags=["resumes"])
 MAX_UPLOAD = 10 * 1024 * 1024
+MAGIC = {".pdf": b"%PDF-", ".docx": b"PK\x03\x04"}  # file signatures (a .docx is a zip)
 
 
 @router.post("/parse")
@@ -26,9 +27,11 @@ async def parse_upload(file: UploadFile = File(...), session: Session = Depends(
     suffix = "." + name.rsplit(".", 1)[-1].lower() if "." in name else ""
     if suffix not in (".pdf", ".docx"):
         raise HTTPException(422, "Upload a .pdf or .docx file")
-    data = await file.read()
+    data = await file.read(MAX_UPLOAD + 1)  # never more than the limit into memory
     if len(data) > MAX_UPLOAD:
         raise HTTPException(413, "File is larger than 10 MB")
+    if not data.startswith(MAGIC[suffix]):  # the name says PDF/DOCX; the bytes must agree
+        raise HTTPException(422, f"This file is not a real {suffix[1:].upper()} file")
     safe = re.sub(r"[^A-Za-z0-9._-]+", "_", name)[-80:]
     path = UPLOADS_DIR / f"{uuid.uuid4().hex[:8]}_{safe}"
     path.write_bytes(data)

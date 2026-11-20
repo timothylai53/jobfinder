@@ -131,7 +131,7 @@ def seed(target: Path) -> None:
 
     from app.main import app
 
-    with TestClient(app) as c:
+    with TestClient(app, base_url="http://127.0.0.1") as c:
         def ok(r):
             assert r.status_code < 300, r.text
             return r.json()

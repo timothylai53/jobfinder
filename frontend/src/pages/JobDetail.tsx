@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { formatDate, formatDateTime, formatSalary } from '@/lib/score'
 import { gaps, primaryStep, scoreVerdict } from '@/lib/verdict'
 import { pendingDeletes } from '@/lib/pendingDeletes'
+import { safeHttpUrl } from '@/lib/url'
 import { cn } from '@/lib/utils'
 
 const TABS = [['overview', 'Overview'], ['score', 'Score details'], ['documents', 'Documents'], ['description', 'Job description']] as const
@@ -114,7 +115,7 @@ export default function JobDetail() {
         <Notice tone="warn">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span>Only the search summary was saved, so this score is a rough estimate and won't trigger a high-match alert. Open the posting, copy the page and paste it here.</span>
-            <PasteFullJdDialog jobId={job.id} title={job.title} url={job.urls[0]} size="sm" />
+            <PasteFullJdDialog jobId={job.id} title={job.title} url={safeHttpUrl(job.urls[0]) ?? undefined} size="sm" />
           </div>
         </Notice>
       )}
@@ -162,7 +163,7 @@ export default function JobDetail() {
         <TabsContent value="description" className="max-w-[75ch]">
           <p className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span>Added {formatDate(job.fetched_at)} from {job.sources.join(', ')}</span>
-            {job.urls.map((u) => (
+            {job.urls.map(safeHttpUrl).filter((u): u is string => !!u).map((u) => (
               <a key={u} href={u} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-foreground underline underline-offset-2">
                 Open posting <ExternalLink className="size-3.5" aria-hidden />
               </a>

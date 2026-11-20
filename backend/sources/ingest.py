@@ -2,6 +2,8 @@
 
 Used unchanged by manual import, URL import and every fetched source.
 """
+import re
+
 from sqlmodel import Session, select
 
 from filters.service import apply_to_job, load_rules
@@ -68,6 +70,8 @@ def ingest(session: Session, items: list[NormalizedJob], scorer: Scorer | None =
     out: list[tuple[Job, bool]] = []
     for nj in items:
         nj.location = tidy_location(nj.location)
+        if nj.url and not re.match(r"(?i)^https?://", nj.url.strip()):  # never store javascript:, data:, file: links
+            nj.url = ""
         key = dedupe_key(nj.company, nj.title, nj.location)
         job = _find_existing(session, nj, key)
         dup = job is not None

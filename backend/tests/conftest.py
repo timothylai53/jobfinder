@@ -19,7 +19,8 @@ def client():
     from app.main import app
 
     SQLModel.metadata.drop_all(engine)
-    with TestClient(app) as c:  # runs lifespan: create tables + seed
+    # base_url: the API only answers to a local Host header (app/security.py)
+    with TestClient(app, base_url="http://127.0.0.1") as c:  # runs lifespan: create tables + seed
         yield c
 
 

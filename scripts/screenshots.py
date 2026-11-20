@@ -59,7 +59,8 @@ def wait(url: str, seconds: int = 60) -> None:
 def main() -> None:
     target = safe_target(None)
     subprocess.run([str(PY), str(ROOT / "scripts" / "seed_demo.py"), str(target)], check=True)
-    env = {**os.environ, **demo_env(target), "JOBFINDER_API": f"http://127.0.0.1:{API}"}
+    env = {**os.environ, **demo_env(target), "JOBFINDER_API": f"http://127.0.0.1:{API}",
+           "JOBFINDER_FRONTEND_ORIGINS": f"http://127.0.0.1:{UI},http://localhost:{UI}"}
     procs = [
         subprocess.Popen([str(PY), "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(API)],
                          cwd=ROOT / "backend", env=env),

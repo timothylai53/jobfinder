@@ -1,6 +1,9 @@
 """Manual import: pasted JD text, or a best-effort fetch of a public job URL."""
+import ipaddress
 import json
 import re
+import socket
+from urllib.parse import urljoin, urlsplit
 
 import httpx
 from bs4 import BeautifulSoup
@@ -110,13 +113,42 @@ def extract_from_html(html: str, url: str = "") -> NormalizedJob:
     return NormalizedJob(title=title, company=company, description=clean_text(str(main)), url=url)
 
 
-def fetch_url(url: str, timeout: float = 15.0) -> NormalizedJob:
-    """One polite, logged-out GET of a public page. Raises FetchError with a readable message."""
-    if not re.match(r"^https?://", url.strip()):
+MAX_REDIRECTS = 5
+
+
+def check_public_url(url: str) -> None:
+    """SSRF guard: only http(s) URLs whose host resolves to public internet addresses. Refuses this machine
+    (127.0.0.1, localhost, Ollama's port), the home network (192.168.x.x, 10.x.x.x) and link-local/cloud metadata
+    addresses (169.254.x.x). Called before the first request and again on every redirect."""
+    parts = urlsplit(url)
+    if parts.scheme not in ("http", "https") or not parts.hostname:
         raise FetchError("URL must start with http:// or https://")
     try:
-        r = httpx.get(url.strip(), headers={"User-Agent": USER_AGENT, "Accept": "text/html"},
-                      timeout=timeout, follow_redirects=True)
+        infos = socket.getaddrinfo(parts.hostname, parts.port or (443 if parts.scheme == "https" else 80))
+    except (socket.gaierror, UnicodeError) as e:
+        raise FetchError(f"Could not find the site {parts.hostname!r}. Paste the JD text instead.") from e
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0].split("%")[0])
+        if not ip.is_global:
+            raise FetchError("That address is on this computer or a private network, so it is not fetched. "
+                             "Paste the JD text instead.")
+
+
+def fetch_url(url: str, timeout: float = 15.0) -> NormalizedJob:
+    """One polite, logged-out GET of a public page. Raises FetchError with a readable message.
+    Redirects are followed by hand (at most 5) so each new address is checked too."""
+    url = url.strip()
+    try:
+        with httpx.Client(headers={"User-Agent": USER_AGENT, "Accept": "text/html"}, timeout=timeout,
+                          follow_redirects=False) as client:
+            for _ in range(MAX_REDIRECTS + 1):
+                check_public_url(url)
+                r = client.get(url)
+                if not r.is_redirect:
+                    break
+                url = urljoin(url, r.headers.get("location", ""))
+            else:
+                raise FetchError("Too many redirects. Paste the JD text instead.")
     except httpx.HTTPError as e:
         raise FetchError(f"Could not fetch the page ({e.__class__.__name__}). Paste the JD text instead.") from e
     if r.status_code >= 400:
