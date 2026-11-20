@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.db import get_session
 from app.settings_store import get_general
@@ -18,7 +18,7 @@ def list_applications(session: Session = Depends(get_session)):
     jobs = {j.id: j for j in session.exec(select(Job)).all()}
     scores = {m.job_id: m.total for m in session.exec(select(MatchResult).where(MatchResult.method == "quick")).all()}
     out = []
-    for a in session.exec(select(Application).order_by(Application.updated_at.desc())).all():
+    for a in session.exec(select(Application).order_by(col(Application.updated_at).desc())).all():
         j = jobs.get(a.job_id)
         out.append({**a.model_dump(), "job_title": j.title if j else "", "company": j.company if j else "",
                     "location": j.location if j else "", "score": scores.get(a.job_id)})
@@ -86,7 +86,7 @@ def patch_application(app_id: int, req: PatchApp, session: Session = Depends(get
 @router.get("/{app_id}/history", response_model=list[StatusHistory])
 def history(app_id: int, session: Session = Depends(get_session)):
     return session.exec(select(StatusHistory).where(StatusHistory.application_id == app_id)
-                        .order_by(StatusHistory.changed_at, StatusHistory.id)).all()
+                        .order_by(col(StatusHistory.changed_at), col(StatusHistory.id))).all()
 
 
 @router.delete("/{app_id}")

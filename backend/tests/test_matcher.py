@@ -124,11 +124,11 @@ def test_education_lowest_level():
 
 
 def test_languages_with_context():
-    langs = {l.language: l.mandatory for l in extract_languages(split_clauses(jd("mandarin_support")))}
+    langs = {lang.language: lang.mandatory for lang in extract_languages(split_clauses(jd("mandarin_support")))}
     assert langs == {"Mandarin": True, "Bahasa Malaysia": True, "English": True}
     # "Chinese New Year" in About Us must not become a language requirement.
     assert extract_languages(split_clauses(jd("junior_react"))) == [] or all(
-        l.language == "English" for l in extract_languages(split_clauses(jd("junior_react"))))
+        lang.language == "English" for lang in extract_languages(split_clauses(jd("junior_react"))))
 
 
 # ---------- full scoring ----------

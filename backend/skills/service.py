@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from models import AppSetting, Skill
 from skills.matcher import SkillDef, SkillMatcher
@@ -41,7 +41,7 @@ def seed_if_empty(session: Session) -> int:
         session.commit()
         return len(rows)
     row = session.get(AppSetting, SEED_VERSION_KEY)
-    current = int(row.value) if row and row.value is not None else 1
+    current = int(str(row.value)) if row and row.value is not None else 1
     if current >= latest:
         return 0
     have = {n.lower() for n in session.exec(select(Skill.name)).all()}
@@ -75,5 +75,5 @@ def remove_retired_aliases(session: Session) -> int:
 
 
 def build_matcher(session: Session) -> SkillMatcher:
-    rows = session.exec(select(Skill).order_by(Skill.id)).all()
+    rows = session.exec(select(Skill).order_by(col(Skill.id))).all()
     return SkillMatcher([SkillDef(name=r.name, aliases=list(r.aliases), category=r.category) for r in rows])

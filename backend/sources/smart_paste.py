@@ -229,7 +229,7 @@ def extract(text: str, location_map: dict[str, list[str]] | None = None) -> Past
     from sources.paste_jobstreet import recognize as jobstreet
 
     clean, urls = preprocess(text)
-    raw_lines = [norm(l) for l in clean.split("\n")]
+    raw_lines = [norm(row) for row in clean.split("\n")]
     names = location_names(location_map or {})
     d = jobstreet(raw_lines, names) or generic(raw_lines, names)
     return _finish(d, urls, text)
@@ -237,53 +237,53 @@ def extract(text: str, location_map: dict[str, list[str]] | None = None) -> Past
 
 def generic(raw_lines: list[str], names: list[str]) -> PasteDraft:
     """Fallback for any site: header fields are guesses, so they are all marked uncertain."""
-    lines = [l for l in raw_lines if l]
+    lines = [row for row in raw_lines if row]
     d = PasteDraft(source="generic")
 
-    start = next((i for i, l in enumerate(lines) if DESC_START.match(key(l))), None)
+    start = next((i for i, row in enumerate(lines) if DESC_START.match(key(row))), None)
     header_end = start
     if start is None:
         top = lines[:40]
-        marks = [i for i, l in enumerate(top) if re.search(r"^posted\b|\bago$|^(quick |easy )?apply( now)?$|^save$", key(l))]
+        marks = [i for i, row in enumerate(top) if re.search(r"^posted\b|\bago$|^(quick |easy )?apply( now)?$|^save$", key(row))]
         header_end = marks[-1] + 1 if marks else 0
         desc_lines = lines[header_end:]
     else:
         # LinkedIn's "About the job" is page chrome; real JD headings ("About the role") stay in the text.
         desc_lines = lines[start + 1:] if key(lines[start]) in ("about the job", "description") else lines[start:]
-    header = [l for l in lines[:header_end] if not is_noise(l)] if header_end else []
+    header = [row for row in lines[:header_end] if not is_noise(row)] if header_end else []
 
     cut = len(desc_lines)
-    for i, l in enumerate(desc_lines):
-        if TAIL_MARKERS.match(key(l)) and i >= 1:
+    for i, row in enumerate(desc_lines):
+        if TAIL_MARKERS.match(key(row)) and i >= 1:
             cut = i
             break
     tail = desc_lines[cut:]
-    body = [l for l in desc_lines[:cut] if not is_noise(l)]
+    body = [row for row in desc_lines[:cut] if not is_noise(row)]
     d.removed_lines = len(lines) - len(body) - len(header)
 
     # LinkedIn joins "Company · Location · 2 days ago · 87 applicants" on one line.
     expanded: list[str] = []
-    for l in header:
-        expanded.extend(p.strip() for p in re.split(r"\s+·\s+", l) if p.strip() and not is_noise(p))
-    for l in expanded:
-        if is_nav(l):
+    for row in header:
+        expanded.extend(p.strip() for p in re.split(r"\s+·\s+", row) if p.strip() and not is_noise(p))
+    for row in expanded:
+        if is_nav(row):
             continue
-        if ARRANGEMENT.match(l):
-            d.work_arrangement = d.work_arrangement or arrangement_label(l)
+        if ARRANGEMENT.match(row):
+            d.work_arrangement = d.work_arrangement or arrangement_label(row)
             continue
-        if not d.title and looks_like_title(l) and not looks_like_location(l, names) and not JOB_TYPE.fullmatch(l):
-            d.title = l
+        if not d.title and looks_like_title(row) and not looks_like_location(row, names) and not JOB_TYPE.fullmatch(row):
+            d.title = row
             continue
-        if d.title and not d.company and looks_like_title(l) and not looks_like_location(l, names) \
-                and not JOB_TYPE.search(l) and not re.search(r"\(.*\)$", l):
-            d.company = l
+        if d.title and not d.company and looks_like_title(row) and not looks_like_location(row, names) \
+                and not JOB_TYPE.search(row) and not re.search(r"\(.*\)$", row):
+            d.company = row
             continue
-        if not d.location and looks_like_location(l, names) and not JOB_TYPE.fullmatch(l):
-            d.location, arr = split_arrangement(l)
+        if not d.location and looks_like_location(row, names) and not JOB_TYPE.fullmatch(row):
+            d.location, arr = split_arrangement(row)
             d.work_arrangement = d.work_arrangement or arr
             continue
-        if not d.job_type and JOB_TYPE.search(l) and len(l) < 40:
-            d.job_type = normalize_job_type(l)
+        if not d.job_type and JOB_TYPE.search(row) and len(row) < 40:
+            d.job_type = normalize_job_type(row)
     if not d.title and body and looks_like_title(body[0]) and not header:
         d.title = body[0]  # plain JD paste whose first line is the title
         body = body[1:]
@@ -293,8 +293,8 @@ def generic(raw_lines: list[str], names: list[str]) -> PasteDraft:
             d.location = body.pop(0)
 
     if not d.job_type:  # LinkedIn criteria block: "Employment type" / "Full-time"
-        for i, l in enumerate(tail):
-            if key(l) == "employment type" and i + 1 < len(tail):
+        for i, row in enumerate(tail):
+            if key(row) == "employment type" and i + 1 < len(tail):
                 d.job_type = normalize_job_type(tail[i + 1])
                 break
 

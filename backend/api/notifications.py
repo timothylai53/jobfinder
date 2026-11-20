@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.db import get_session
 from models import Notification
@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 
 @router.get("")
 def list_notifications(limit: int = 30, session: Session = Depends(get_session)):
-    rows = session.exec(select(Notification).order_by(Notification.id.desc()).limit(min(limit, 200))).all()
+    rows = session.exec(select(Notification).order_by(col(Notification.id).desc()).limit(min(limit, 200))).all()
     return {"unread": unread_count(session), "items": rows}
 
 

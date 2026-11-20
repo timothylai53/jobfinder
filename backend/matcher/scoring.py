@@ -243,7 +243,7 @@ def _education(req: rules.EducationRequirement, cand: Candidate, max_points: flo
 def _language_location(clauses, jd, job_location, cand: Candidate, max_points: float, g: Gates, gates: list) -> dict:
     half = max_points / 2
     items = []
-    mine = {rules.normalize_language(l) or l for l in cand.languages}
+    mine = {rules.normalize_language(lang) or lang for lang in cand.languages}
 
     langs = rules.extract_languages(clauses)
     if langs:

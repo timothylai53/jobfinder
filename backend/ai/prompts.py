@@ -1,8 +1,9 @@
 """Prompt construction (brief §6.6): task template + Experience Bank items WITH their IDs + JD snapshot + profile
 basics + rules + the output schema. Contact details (email, phone) are left out: the AI doesn't need them."""
 import re
+from collections.abc import Sequence
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from ai import prompt_templates as templates
 from ai.schemas import EXAMPLES, SCHEMAS
@@ -50,7 +51,7 @@ def schema_text(task: str) -> str:
             f"{SCHEMA_NOTES.get(task, '')}```json\n{EXAMPLES[task]}\n```")
 
 
-def bank_text(items: list[ExperienceItem]) -> str:
+def bank_text(items: Sequence[ExperienceItem]) -> str:
     if not items:
         return "(empty)"
     out = []
@@ -98,7 +99,7 @@ def build(session: Session, task: str, job: Job | None = None, resume_text: str 
                                        "schema": schema_text(task)})
     if job is None:
         raise ValueError(f"{task} needs a job")
-    items = session.exec(select(ExperienceItem).order_by(ExperienceItem.id)).all()
+    items = session.exec(select(ExperienceItem).order_by(col(ExperienceItem.id))).all()
     return templates.render(task, {
         "rules": RULES, "profile": data_block("PROFILE", profile_text(session)),
         "bank": data_block("EXPERIENCE_BANK", bank_text(items)), "job": data_block("JOB_AD", job_text(job)),

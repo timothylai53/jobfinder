@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-
 from matcher.education import EduEntry, best, field_in, from_item, level_in, progress
 from resume_parser.sections import parse_resume_text
 from skills.matcher import SkillMatcher

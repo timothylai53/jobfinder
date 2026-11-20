@@ -4,7 +4,7 @@
 - HTTP 429/403, or 3 consecutive errors -> pause that source for 24 h, record why, notify;
 - a paused source is skipped until `paused_until` passes (or I resume it by hand).
 """
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlmodel import Session, select
 
@@ -37,10 +37,9 @@ OLD_DEFAULT_KEYWORDS = [
 ]
 
 
-def _aware(dt: datetime | None) -> datetime | None:
-    if dt is not None and dt.tzinfo is None:
-        from datetime import timezone
-        return dt.replace(tzinfo=timezone.utc)
+def _aware(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=UTC)
     return dt
 
 
@@ -50,7 +49,7 @@ def seed(session: Session) -> None:
             session.add(Source(key=key, enabled=enabled, max_results=results, max_runs_per_day=runs))
     if session.exec(select(SearchProfile.id).limit(1)).first() is None:
         for p in DEFAULT_PROFILES:
-            session.add(SearchProfile(name=p["name"], keywords=list(DEFAULT_KEYWORDS), locations=p["locations"],
+            session.add(SearchProfile(name=str(p["name"]), keywords=list(DEFAULT_KEYWORDS), locations=list(p["locations"]),
                                       job_type="fulltime", days=7))
     else:
         update_default_keywords(session)
@@ -78,8 +77,9 @@ def clamp_limits(src: Source) -> None:
 def refresh(src: Source, now: datetime | None = None) -> None:
     """Roll the daily counter over and lift an expired pause."""
     now = now or utcnow()
-    if src.runs_date != now.date():
-        src.runs_date, src.runs_today = now.date(), 0
+    today = now.astimezone().date()  # the local calendar day (Malaysia is UTC+8)
+    if src.runs_date != today:
+        src.runs_date, src.runs_today = today, 0
     if src.status == "paused" and src.paused_until and _aware(src.paused_until) <= now:
         src.status, src.paused_until, src.consecutive_errors = "ok", None, 0
 
@@ -89,7 +89,9 @@ def can_run(src: Source, now: datetime | None = None) -> tuple[bool, str]:
     if not src.enabled:
         return False, "disabled"
     if src.status == "paused":
-        return False, f"paused until {_aware(src.paused_until):%Y-%m-%d %H:%M} UTC"
+        # A pause always has an end time; if one ever doesn't, say so instead of crashing on None.
+        until = f"until {_aware(src.paused_until):%Y-%m-%d %H:%M} UTC" if src.paused_until else "(no end time set)"
+        return False, f"paused {until}"
     if src.runs_today >= src.max_runs_per_day:
         return False, f"daily limit reached ({src.max_runs_per_day} run(s) per day)"
     return True, ""

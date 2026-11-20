@@ -41,7 +41,7 @@ def level_in(text: str) -> str | None:
     """Highest education level named in a resume line ("Master's degree" is Master, not Degree)."""
     text = re.sub(r"\b(master'?s?|doctoral|doctorate)\s+degree", r"\1", text, flags=re.IGNORECASE)
     found = [lvl for lvl, pat in _EDU_PATTERNS if pat.search(text)]
-    return max(found, key=lambda l: EDU_LEVELS[l]) if found else None
+    return max(found, key=lambda lv: EDU_LEVELS[lv]) if found else None
 
 
 def _clean_field(f: str) -> str:

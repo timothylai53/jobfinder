@@ -1,0 +1,28 @@
+# Dev-only tool settings (ruff, mypy). The app's runtime dependencies stay in requirements.txt.
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+# Ruff's defaults (pyflakes F + pycodestyle E4/E7/E9) plus bugbear (likely bugs), isort and pyupgrade.
+select = ["E4", "E7", "E9", "F", "B", "I", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ai", "api", "app", "documents", "export", "filters", "matcher", "models", "notifications",
+                     "resume_parser", "scheduler", "skills", "sources", "tests", "tracker"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["."]
+exclude = ['^\.venv/', '^tests/']
+ignore_missing_imports = true   # third-party packages without type stubs (jobspy, pdfplumber, docx …)
+check_untyped_defs = true
+plugins = ["pydantic.mypy"]  # understands pydantic field defaults (Weights(), Gates() …)
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency markers are designed to be called in argument defaults (bugbear's own documented setting).
+extend-immutable-calls = ["fastapi.Depends", "fastapi.File", "fastapi.Query", "fastapi.Body", "fastapi.Form"]

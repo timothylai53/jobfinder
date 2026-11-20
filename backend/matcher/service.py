@@ -1,12 +1,13 @@
 """Glue between DB rows and the pure scoring function."""
-from sqlmodel import Session, select
-
 from datetime import date
+
+from sqlmodel import Session, col, select
 
 from app.settings_store import get_location_map, get_scoring
 from matcher import education
 from matcher.scoring import Candidate, score_job
 from models import ExperienceItem, Job, MatchResult, Profile
+from models._base import require_id
 from skills.matcher import SkillMatcher
 from skills.service import build_matcher
 
@@ -25,7 +26,7 @@ def effective_education(session: Session, profile: Profile | None = None) -> edu
     """Highest qualification across Experience Bank education/certification items and the Profile."""
     p = profile or get_profile(session)
     entries = []
-    for it in session.exec(select(ExperienceItem).where(ExperienceItem.type.in_(["education", "certification"]))).all():
+    for it in session.exec(select(ExperienceItem).where(col(ExperienceItem.type).in_(["education", "certification"]))).all():
         e = education.from_item(it.code, it.title, it.organization, it.end, list(it.bullets))
         if e:
             entries.append(e)
@@ -56,7 +57,7 @@ def build_candidate(session: Session, matcher: SkillMatcher) -> Candidate:
         if src not in lst:
             lst.append(src)
 
-    for item in session.exec(select(ExperienceItem).order_by(ExperienceItem.id)).all():
+    for item in session.exec(select(ExperienceItem).order_by(col(ExperienceItem.id))).all():
         linked = matcher.normalize_list(list(item.skills))
         found = matcher.find(" ".join([item.title, *item.bullets]))
         for s in dict.fromkeys(linked + found):
@@ -96,7 +97,7 @@ class Scorer:
         old = self.session.exec(select(MatchResult).where(MatchResult.job_id == job.id, MatchResult.method == "quick")).all()
         for o in old:
             self.session.delete(o)
-        mr = MatchResult(job_id=job.id, total=r["total"], breakdown=r,
+        mr = MatchResult(job_id=require_id(job), total=r["total"], breakdown=r,
                          gate_flags=[g["key"] for g in r["gates"]], method="quick")
         self.session.add(mr)
         return mr

@@ -14,6 +14,9 @@ engine = create_engine(f"sqlite:///{DB_PATH}", connect_args={"check_same_thread"
 def _sqlite_pragmas(dbapi_conn, _record):
     cur = dbapi_conn.cursor()
     cur.execute("PRAGMA foreign_keys=ON")
+    # WAL lets the page read while a background fetch writes; wait up to 30 s for a lock instead of failing at 5 s.
+    cur.execute("PRAGMA journal_mode=WAL")
+    cur.execute("PRAGMA busy_timeout=30000")
     cur.close()
 
 

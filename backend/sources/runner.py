@@ -10,11 +10,12 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from models import Job, SearchProfile, Source
-from models._base import utcnow
+from models._base import require_id, utcnow
 from sources import health
+from sources.base import NormalizedJob
 from sources.http import PoliteClient, RateLimited, SourceError
 from sources.ingest import ingest
 from sources.jobspy_source import JOBSPY_SITES, JobSpySource
@@ -83,8 +84,9 @@ def build_source(key: str, session: Session, cap: int, sleep: Callable[[float], 
         client = PoliteClient(sleep=sleep) if sleep else PoliteClient()
         return JobStreetSource(client, max_results=cap, known_ids=_known(session, key), now=now)
     if key in JOBSPY_SITES:
-        kw = {"sleep": sleep} if sleep else {}
-        return JobSpySource(key, max_results=cap, known=_known(session, key), **kw)
+        if sleep:
+            return JobSpySource(key, max_results=cap, known=_known(session, key), sleep=sleep)
+        return JobSpySource(key, max_results=cap, known=_known(session, key))
     raise ValueError(f"unknown source {key}")
 
 
@@ -92,7 +94,7 @@ def run_fetch(session: Session, source_keys: list[str] | None = None, profile_id
               results_cap: int | None = None, now: datetime | None = None,
               sleep: Callable[[float], None] | None = None) -> list[SourceResult]:
     now = now or utcnow()
-    profiles = [p for p in session.exec(select(SearchProfile).order_by(SearchProfile.id)).all()
+    profiles = [p for p in session.exec(select(SearchProfile).order_by(col(SearchProfile.id))).all()
                 if p.enabled and (profile_ids is None or p.id in profile_ids)]
     results: list[SourceResult] = []
     for key in SOURCE_ORDER:
@@ -130,7 +132,8 @@ def _fetch_one(session: Session, src: Source, res: SourceResult, mine: list[Sear
     session.commit()
 
     impl = build_source(key, session, cap, sleep, now)
-    jobs, error = [], None
+    jobs: list[NormalizedJob] = []
+    error: SourceError | None = None
     try:
         for p in mine:
             remaining = cap - len(jobs)
@@ -149,13 +152,19 @@ def _fetch_one(session: Session, src: Source, res: SourceResult, mine: list[Sear
             client.close()
 
     res.fetched = len(jobs)
-    for job, dup in ingest(session, jobs) if jobs else []:
-        if dup:
-            res.merged += 1
-        else:
-            res.new += 1
-            res.new_job_ids.append(job.id)
-            res.hidden += job.hidden
+    try:
+        for job, dup in ingest(session, jobs) if jobs else []:
+            if dup:
+                res.merged += 1
+            else:
+                res.new += 1
+                res.new_job_ids.append(require_id(job))
+                res.hidden += job.hidden
+    except Exception as e:  # noqa: BLE001 - e.g. a locked database: record it on the source, never crash the run
+        session.rollback()
+        res.new = res.merged = res.hidden = 0
+        res.new_job_ids = []
+        error = error or SourceError(f"saving the fetched jobs failed ({e.__class__.__name__}: {e})")
     notes = "; ".join(getattr(impl, "notes", []))
     summary = f"{res.fetched} fetched, {res.new} new, {res.merged} merged, {res.hidden} hidden by filters"
     if error is None:

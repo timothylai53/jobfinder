@@ -19,8 +19,17 @@ A copied JobStreet job page has a fixed header block:
 import re
 
 from sources.smart_paste import (
-    JOB_TYPE, SALARY, PasteDraft, find_salary, is_nav, key, looks_like_location, looks_like_title,
-    normalize_job_type, split_arrangement, tidy_description,
+    JOB_TYPE,
+    SALARY,
+    PasteDraft,
+    find_salary,
+    is_nav,
+    key,
+    looks_like_location,
+    looks_like_title,
+    normalize_job_type,
+    split_arrangement,
+    tidy_description,
 )
 
 BADGES = {
@@ -37,7 +46,7 @@ _POSTED = re.compile(r"^(posted|reposted)\b.*\bago$|^posted on\b", re.IGNORECASE
 
 
 def _is_jobstreet(lines: list[str]) -> bool:
-    keys = {key(l) for l in lines if l}
+    keys = {key(row) for row in lines if row}
     hits = sum(k in keys for k in ("view all jobs", "employer questions", "report this job advert", "employer site",
                                    "salary undisclosed", "company profile"))
     return hits >= 2 or any(k in ("jobstreet", "jobstreet by seek") for k in keys) and "view all jobs" in keys
@@ -46,13 +55,13 @@ def _is_jobstreet(lines: list[str]) -> bool:
 def recognize(raw_lines: list[str], names: list[str]) -> PasteDraft | None:
     if not _is_jobstreet(raw_lines):
         return None
-    idx = [i for i, l in enumerate(raw_lines) if l]  # positions of non-blank lines
+    idx = [i for i, row in enumerate(raw_lines) if row]  # positions of non-blank lines
     nb = [raw_lines[i] for i in idx]
 
     # 1. Anchor: "<Company> logo", else the "View all jobs" link under the company name.
     title_at = None
-    logo = next((i for i, l in enumerate(nb) if key(l).endswith(" logo") and i + 2 < len(nb)), None)
-    view_all = next((i for i, l in enumerate(nb) if key(l) == "view all jobs"), None)
+    logo = next((i for i, row in enumerate(nb) if key(row).endswith(" logo") and i + 2 < len(nb)), None)
+    view_all = next((i for i, row in enumerate(nb) if key(row) == "view all jobs"), None)
     if logo is not None:
         title_at = logo + 1
     elif view_all is not None:
@@ -108,5 +117,5 @@ def recognize(raw_lines: list[str], names: list[str]) -> PasteDraft | None:
         return None
     body = raw_lines[idx[start]: idx[end] if end < len(nb) else len(raw_lines)]
     d.description = tidy_description(body)
-    d.removed_lines = len(nb) - len([l for l in body if l.strip()])
+    d.removed_lines = len(nb) - len([row for row in body if row.strip()])
     return d

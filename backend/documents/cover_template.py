@@ -2,7 +2,7 @@
 chosen bank items. Works with AI off. Everything in it comes from the job, my bank or my profile."""
 import re
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from matcher.service import effective_education, get_profile
 from models import ExperienceItem, Job, MatchResult
@@ -30,7 +30,7 @@ def matched_skills(session: Session, job: Job, limit: int = 3) -> list[str]:
 def suggest_items(session: Session, job: Job, limit: int = 2) -> list[str]:
     """Bank items (work/project first) whose skills overlap the job's matched skills the most."""
     skills = {s.lower() for s in matched_skills(session, job, limit=10)}
-    items = session.exec(select(ExperienceItem).where(ExperienceItem.type.in_(["work", "project", "achievement"]))).all()
+    items = session.exec(select(ExperienceItem).where(col(ExperienceItem.type).in_(["work", "project", "achievement"]))).all()
 
     def overlap(it: ExperienceItem) -> int:
         text = " ".join([it.title, *it.bullets, *it.skills]).lower()

@@ -49,9 +49,10 @@ def test_cover_letter_pdf(client, job):
 
 
 def test_analysis_documents_have_no_pdf(client, job):
+    from sqlmodel import Session
+
     from app.db import engine
     from documents.service import save_analysis
-    from sqlmodel import Session
     with Session(engine) as s:
         doc = save_analysis(s, job, "interview_prep", {"questions": [{"question": "Why us?"}]}, "manual", None)
     assert client.get(f"/api/documents/{doc.id}/pdf").status_code == 422

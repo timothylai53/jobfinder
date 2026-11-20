@@ -57,7 +57,7 @@ export default function JobDetail() {
     mutationFn: (hidden: boolean) => api.patch(`/api/jobs/${id}`, { hidden }),
     onSuccess: (_d, hidden) => {
       invalidate()
-      if (hidden) toast({ message: 'Job hidden.', undo: () => { api.patch(`/api/jobs/${id}`, { hidden: false }).then(invalidate) } })
+      if (hidden) toast({ message: 'Job hidden.', undo: () => { api.patch(`/api/jobs/${id}`, { restore: true }).then(invalidate) } })
     },
   })
   // Delete waits 5 s for Undo before it really happens; the job leaves the list straight away.

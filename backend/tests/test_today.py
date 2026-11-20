@@ -32,9 +32,11 @@ def test_snooze_hides_a_next_step_until_it_expires(client):
 
 def test_expired_snoozes_are_dropped():
     from datetime import date
+
+    from sqlmodel import Session
+
     from app.db import engine
     from app.settings_store import _put, get_snoozed
-    from sqlmodel import Session
     with Session(engine) as s:
         _put(s, "snoozed_steps", {"old": "2020-01-01", "new": "2999-01-01"})
         assert get_snoozed(s, date.today()) == {"new": "2999-01-01"}

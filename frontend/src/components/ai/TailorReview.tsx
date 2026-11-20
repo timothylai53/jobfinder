@@ -59,7 +59,7 @@ export default function TailorReview({ task, onSaved }: { task: AiTask<TailorRes
               <button aria-label={`Remove ${s}`} onClick={() => setSkills(skills.filter((x) => x !== s))}><X className="size-3" /></button>
             </span>
           ))}
-          {flaggedSkills.map((s) => (
+          {flaggedSkills.filter((s) => !skills.includes(s)).map((s) => (
             <button key={s} title="Not in your bank or profile. Click to add it anyway." onClick={() => setSkills([...skills, s])}
               className="rounded-md border border-red-300 bg-red-50 px-2 py-0.5 text-sm text-red-700 line-through">{s}</button>
           ))}

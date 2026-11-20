@@ -119,11 +119,16 @@ def run_ollama(engine, task_id: int) -> None:
     except ollama.OllamaError as e:
         with Session(engine) as session:
             t = session.get(AITask, task_id)
-            t.status, t.error_message, t.updated_at = "failed", str(e), utcnow()
-            session.commit()
+            if t is not None:  # the task (or its job) may have been deleted while Ollama was working
+                t.status, t.error_message, t.updated_at = "failed", str(e), utcnow()
+                session.commit()
         return
     with Session(engine) as session:
-        submit_reply(session, session.get(AITask, task_id), reply, provider="ollama")
+        t = session.get(AITask, task_id)
+        # Only a task still waiting on this run takes the reply: if a reply was pasted meanwhile ("Use Copy-Paste
+        # instead") or the result was saved, the late Ollama answer must not replace it.
+        if t is not None and t.status == "running" and t.provider == "ollama":
+            submit_reply(session, t, reply, provider="ollama")
 
 
 def run_ollama_in_background(engine, task_id: int) -> None:

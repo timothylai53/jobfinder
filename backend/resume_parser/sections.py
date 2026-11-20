@@ -6,7 +6,15 @@ from matcher import education
 from matcher.rules import normalize_language
 from resume_parser.items import full_width, is_tech_line, join_wrapped, parse_items, skills_in  # noqa: F401
 from resume_parser.patterns import (
-    BULLET, CONTACT_LABEL, DATE_RANGE, EMAIL, ENGLISH_TESTS, PHONE, URL, DraftItem, heading_kind,
+    BULLET,
+    CONTACT_LABEL,
+    DATE_RANGE,
+    EMAIL,
+    ENGLISH_TESTS,
+    PHONE,
+    URL,
+    DraftItem,
+    heading_kind,
 )
 from skills.matcher import SkillMatcher
 

@@ -59,7 +59,7 @@ def from_clause(text: str, matcher: SkillMatcher, score_soft: bool = False) -> C
     # 1. Runs of skills separated only by "/", ",", "or", ...
     runs: list[list[tuple[int, int, str]]] = [[spans[0]]]
     seps: list[list[str]] = [[]]
-    for prev, cur in zip(spans, spans[1:]):
+    for prev, cur in zip(spans, spans[1:], strict=False):  # each span with the next one
         between = text[prev[1]:cur[0]]
         if _SEP.fullmatch(between):
             runs[-1].append(cur)
@@ -69,7 +69,7 @@ def from_clause(text: str, matcher: SkillMatcher, score_soft: bool = False) -> C
             seps.append([])
 
     prev_end = 0
-    for run, sp in zip(runs, seps):
+    for run, sp in zip(runs, seps, strict=True):  # built in step, always the same length
         # "at least one of ..." only applies to the list right after it; "... or equivalent" to the one before.
         equivalent = bool(_EQUIVALENT_AFTER.search(text[run[-1][1]:]))
         signal = bool(_ALT_SIGNAL.search(text[prev_end:run[0][0]])) or equivalent

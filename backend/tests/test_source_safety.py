@@ -1,5 +1,5 @@
 """Polite HTTP client + source health rules. No network: httpx.MockTransport only."""
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import pytest
@@ -8,7 +8,7 @@ from models import Source
 from sources import health
 from sources.http import USER_AGENT, PoliteClient, RateLimited, SchemaChanged, SourceError, set_transport_factory
 
-NOW = datetime(2026, 11, 8, 9, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 8, 9, 0, tzinfo=UTC)
 
 
 @pytest.fixture
@@ -91,7 +91,7 @@ def test_three_consecutive_errors_pause(client):
     from app.db import engine
     with Session(engine) as s:
         src = s.get(Source, "indeed")
-        for i in range(2):
+        for _ in range(2):
             health.record_failure(s, src, SourceError("timeout"), NOW)
             assert src.status == "error"
         health.record_failure(s, src, SourceError("timeout"), NOW)

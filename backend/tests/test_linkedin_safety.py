@@ -1,7 +1,7 @@
 """LinkedIn descriptions are fetched by us (paced, blocks detected); JobSpy's silent throttling is caught.
 All mocked: fake transport + fake JobSpy. No network."""
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import pandas as pd
@@ -13,7 +13,7 @@ from sources.fake import fake_handler
 from sources.http import RateLimited, set_transport_factory
 from sources.jobspy_source import JobSpySource, fake_scrape, run_scrape
 
-NOW = datetime(2026, 11, 8, 9, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 8, 9, 0, tzinfo=UTC)
 NO_SLEEP = lambda s: None  # noqa: E731
 
 
@@ -125,7 +125,7 @@ def test_runner_pauses_linkedin_on_job_page_429(client, net):
         assert li.fetched == 3 and li.requests == 1 + 2  # 1 JobSpy search + 2 job pages (the 2nd answered 429)
         assert "job pages blocked: saved 2 job(s)" in li.message  # the source's notes reach the run log
         src = s.get(Source, "linkedin")
-        assert src.status == "paused" and src.paused_until.replace(tzinfo=timezone.utc) == NOW + timedelta(hours=24)
+        assert src.status == "paused" and src.paused_until.replace(tzinfo=UTC) == NOW + timedelta(hours=24)
         assert any("LinkedIn paused for 24 hours" in n.message for n in s.exec(select(Notification)).all())
         jobs = s.exec(select(Job)).all()
         assert len(jobs) == 3 and jobs[0].title == "Junior Software Engineer"  # the job before the 429 is kept

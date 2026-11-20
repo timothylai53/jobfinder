@@ -6,12 +6,14 @@ an unknown or missing ID can't be saved (the fabrication guard already flagged i
 """
 import re
 from datetime import date
+from typing import Literal
 
 from pydantic import BaseModel
 from sqlmodel import Session, func, select
 
 from matcher.service import get_profile
 from models import AITask, Document, ExperienceItem, Job, MatchResult
+from models._base import require_id
 
 # Section order on the page; anything else the AI named goes after these, in its order.
 SECTION_ORDER = ["Summary", "Skills", "Experience", "Projects", "Education", "Certifications", "Publications", "Achievements"]
@@ -33,9 +35,12 @@ class AcceptedSection(BaseModel):
     items: list[AcceptedItem]
 
 
+DocumentSource = Literal["copy_paste", "ollama", "template", "manual"]
+
+
 class ResumeIn(BaseModel):
     job_id: int
-    source: str = "copy_paste"
+    source: DocumentSource = "copy_paste"
     ai_task_id: int | None = None
     summary: str = ""
     skills: list[str] = []
@@ -45,7 +50,7 @@ class ResumeIn(BaseModel):
 
 class CoverLetterIn(BaseModel):
     job_id: int
-    source: str = "copy_paste"
+    source: DocumentSource = "copy_paste"
     ai_task_id: int | None = None
     greeting: str
     paragraphs: list[str]
@@ -133,11 +138,11 @@ def save_resume(session: Session, data: ResumeIn) -> Document:
     sections: list[dict] = []
     for code in order:
         e = entries[code]
-        sec = next((s for s in sections if s["section"] == e["section"]), None)
-        if sec is None:
-            sec = {"section": e["section"], "entries": []}
-            sections.append(sec)
-        sec["entries"].append({k: v for k, v in e.items() if k != "section"})
+        group = next((s for s in sections if s["section"] == e["section"]), None)
+        if group is None:
+            group = {"section": e["section"], "entries": []}
+            sections.append(group)
+        group["entries"].append({k: v for k, v in e.items() if k != "section"})
     rank = {name: i for i, name in enumerate(SECTION_ORDER)}
     sections.sort(key=lambda s: rank.get(s["section"], len(rank)))
     content = {"header": _header(session), "target": {"title": job.title, "company": job.company},
@@ -166,7 +171,7 @@ def save_analysis(session: Session, job_id: int, type_: str, content: dict, sour
     if type_ == "deep_analysis":  # brief §5: MatchResult method "deep", next to the quick score
         for old in session.exec(select(MatchResult).where(MatchResult.job_id == job.id, MatchResult.method == "deep")).all():
             session.delete(old)
-        session.add(MatchResult(job_id=job.id, total=int(content.get("overall_fit", 0)), method="deep",
+        session.add(MatchResult(job_id=require_id(job), total=int(content.get("overall_fit", 0)), method="deep",
                                 breakdown={**content, "document_id": doc.id}, gate_flags=[]))
         session.commit()
         session.refresh(doc)  # the commit expired it

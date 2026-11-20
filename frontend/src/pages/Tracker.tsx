@@ -33,7 +33,7 @@ function useApplications() {
   return { list, move }
 }
 
-const isOverdue = (a: ApplicationRow) => a.status === 'Applied' && !!a.follow_up_at && a.follow_up_at <= new Date().toISOString().slice(0, 10)
+const isOverdue = (a: ApplicationRow) => a.status === 'Applied' && !!a.follow_up_at && a.follow_up_at <= new Date().toLocaleDateString('en-CA') /* local YYYY-MM-DD, not UTC */
 
 function Card({ app }: { app: ApplicationRow }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: app.id })

@@ -1,19 +1,20 @@
+from collections.abc import Sequence
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.db import get_session
+from app.settings_store import get_location_map
+from filters.service import apply_to_job, load_rules
 from matcher.service import Scorer, rescore_all
 from models import Application, Job, MatchResult, Source, StatusHistory
+from models._base import require_id
+from sources import health, smart_paste
 from sources.base import NormalizedJob
-from filters.service import apply_to_job, load_rules
-from sources.ingest import SUMMARY_ONLY, ingest, is_summary_only, low_confidence
-from app.settings_store import get_location_map
-from sources import smart_paste
-from sources import health
 from sources.http import PoliteClient, SourceError
+from sources.ingest import SUMMARY_ONLY, ingest, is_summary_only, low_confidence
 from sources.jobstreet import JobStreetSource, job_id_from_url
 from sources.manual import FetchError, fetch_url
 
@@ -36,8 +37,8 @@ def _summary(job: Job, mr: MatchResult | None, app: Application | None) -> dict:
 def list_jobs(session: Session = Depends(get_session)):
     scores = {m.job_id: m for m in session.exec(select(MatchResult).where(MatchResult.method == "quick")).all()}
     apps = {a.job_id: a for a in session.exec(select(Application)).all()}
-    jobs = session.exec(select(Job).order_by(Job.fetched_at.desc())).all()
-    return [_summary(j, scores.get(j.id), apps.get(j.id)) for j in jobs]
+    jobs = session.exec(select(Job).order_by(col(Job.fetched_at).desc())).all()
+    return [_summary(j, scores.get(require_id(j)), apps.get(require_id(j))) for j in jobs]
 
 
 @router.get("/{job_id}")
@@ -47,10 +48,10 @@ def get_job(job_id: int, session: Session = Depends(get_session)):
         raise HTTPException(404, "Job not found")
     mr = session.exec(select(MatchResult).where(MatchResult.job_id == job_id, MatchResult.method == "quick")).first()
     app = session.exec(select(Application).where(Application.job_id == job_id)).first()
-    history = []
+    history: Sequence[StatusHistory] = []
     if app:
         history = session.exec(select(StatusHistory).where(StatusHistory.application_id == app.id)
-                               .order_by(StatusHistory.changed_at, StatusHistory.id)).all()
+                               .order_by(col(StatusHistory.changed_at), col(StatusHistory.id))).all()
     return {
         "job": job,
         "summary_only": is_summary_only(job),
@@ -152,6 +153,8 @@ def _jobstreet_draft(session: Session, country: str, job_id: str) -> dict:
                 "error": f"This JobStreet job is already saved: “{existing.title}”."}
     if src is not None:
         health.refresh(src)
+        if not src.enabled:
+            return {"ok": False, "error": "JobStreet is switched off in Settings → Job sources. Paste the page text instead."}
         if src.status == "paused":
             return {"ok": False, "error": f"JobStreet is paused ({src.last_error}). Paste the page text instead."}
     client = PoliteClient()
@@ -190,15 +193,10 @@ def parse_paste(req: PasteRequest, session: Session = Depends(get_session)):
 
 
 class JobPatch(BaseModel):
-    hidden_reason: str | None = None  # with hidden=true, e.g. "Not interested" from Today
     hidden: bool | None = None
-    title: str | None = None
-    company: str | None = None
-    location: str | None = None
-    description: str | None = None
-    salary_min: float | None = None
-    salary_max: float | None = None
-    work_arrangement: str | None = None
+    hidden_reason: str | None = None  # with hidden=true, e.g. "Not interested" from Today
+    # Undo of a Hide: back to how it was before, so filter rules decide again (a plain unhide is final).
+    restore: bool = False
 
 
 @router.patch("/{job_id}")
@@ -206,19 +204,16 @@ def patch_job(job_id: int, data: JobPatch, session: Session = Depends(get_sessio
     job = session.get(Job, job_id)
     if not job:
         raise HTTPException(404, "Job not found")
-    upd = data.model_dump(exclude_unset=True)
-    if "hidden" in upd:
-        hidden = upd.pop("hidden")
+    if data.restore:
+        job.hidden, job.hidden_by, job.hidden_reason = False, "", ""
+        apply_to_job(job, load_rules(session))  # the rules decide again, as before the Hide
+    elif data.hidden is not None:
         # A manual choice (hide or unhide) is final: filter rules no longer touch this job.
-        job.hidden = hidden
+        job.hidden = data.hidden
         job.hidden_by = "manual"
-        reason = (upd.pop("hidden_reason", None) or "").strip()
-        job.hidden_reason = (reason or "Hidden manually") if hidden else ""
-    for k, v in upd.items():
-        setattr(job, k, v)
+        reason = (data.hidden_reason or "").strip()
+        job.hidden_reason = (reason or "Hidden manually") if data.hidden else ""
     session.add(job)
-    if upd:
-        Scorer(session).score(job)
     session.commit()
     return {"ok": True}
 

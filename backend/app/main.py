@@ -1,19 +1,39 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from sqlmodel import Session
 
-from api import (ai, applications, automations, dashboard, documents, experience, export, filters, jobs, notifications,
-                 profile, resumes, settings, skill_gaps, skills, sources)
+from api import (
+    ai,
+    applications,
+    automations,
+    dashboard,
+    documents,
+    experience,
+    export,
+    filters,
+    jobs,
+    notifications,
+    profile,
+    resumes,
+    settings,
+    skill_gaps,
+    skills,
+    sources,
+)
 from app import security
 from app.db import create_db, engine
 from filters.service import seed_if_empty as seed_filters
 from matcher.service import rescore_all
 from scheduler import service as scheduler
 from scheduler.automations import seed as seed_automations
-from skills.service import remove_retired_aliases, seed_if_empty as seed_skills
+from skills.service import remove_retired_aliases
+from skills.service import seed_if_empty as seed_skills
 from sources.health import seed as seed_sources
 from sources.ingest import tidy_stored_locations
+
+log = logging.getLogger("jobfinder")
 
 
 def init_db() -> None:

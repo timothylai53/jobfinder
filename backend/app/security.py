@@ -13,7 +13,7 @@ import re
 
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import PlainTextResponse
-from starlette.types import ASGIApp, Receive, Scope, Send
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 ALLOWED_HOSTS = {"127.0.0.1", "localhost"}
 _DEFAULT_ORIGINS = "http://localhost:5730,http://127.0.0.1:5730"
@@ -52,7 +52,7 @@ class LocalOnlyMiddleware:
                 await PlainTextResponse("Cross-site request refused.", 403)(scope, receive, send)
                 return
 
-        async def with_headers(message: dict) -> None:
+        async def with_headers(message: Message) -> None:
             if message["type"] == "http.response.start":
                 h = list(message.get("headers", []))
                 present = {k.lower() for k, _ in h}

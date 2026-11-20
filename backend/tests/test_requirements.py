@@ -115,8 +115,9 @@ def test_score_soft_skills_toggle(m):
 
 def test_settings_toggle_round_trip_rescores(client):
     jid = client.post("/api/jobs/manual", json={"title": "Dev", "description": "Requirements:\n- Python\n- Teamwork"}).json()["id"]
-    names = lambda: [i["name"] for c in client.get(f"/api/jobs/{jid}").json()["match"]["breakdown"]["categories"]
-                     if c["key"] == "required_skills" for i in c["items"]]
+    def names():
+        return [i["name"] for c in client.get(f"/api/jobs/{jid}").json()["match"]["breakdown"]["categories"]
+                if c["key"] == "required_skills" for i in c["items"]]
     assert names() == ["Python"]
     s = client.get("/api/settings").json()
     assert s["scoring"]["score_soft_skills"] is False
@@ -149,8 +150,9 @@ def test_new_seed_skills_added_once_never_readded(client):
 
 def test_equivalent_stays_within_family(m):
     jd = "Requirements\n- Must be proficient in SQL & Relational Database (MS SQL / MySQL or equivalent)"
-    g = lambda ev: items(score_job(jd, "", Candidate(skill_evidence=ev), m), "required_skills")[
-        "One of: Microsoft SQL Server / MySQL (or equivalent)"]
+    def g(ev):
+        return items(score_job(jd, "", Candidate(skill_evidence=ev), m), "required_skills")[
+            "One of: Microsoft SQL Server / MySQL (or equivalent)"]
     assert g({"PostgreSQL": ["B2"]})["detail"] == "equivalent: PostgreSQL, from B2"
     assert g({"Firebase": ["B3"], "MongoDB": ["B1"]})["status"] == "not_met"  # NoSQL is not equivalent to MySQL
     # languages have no family: any language counts for "C#/ Java or equivalent"

@@ -36,6 +36,8 @@ def missed(auto: Automation, now_local: datetime) -> bool:
     if not (auto.enabled and auto.mode == "scheduled" and is_daily(auto.schedule)):
         return False
     due = last_due(auto.schedule, now_local)
+    if due is None:
+        return False
     if auto.last_run_at is None:
         return True
     last = auto.last_run_at if auto.last_run_at.tzinfo else auto.last_run_at.replace(tzinfo=now_local.tzinfo)

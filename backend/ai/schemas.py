@@ -5,7 +5,6 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 TASKS = ("parse_resume", "deep_analysis", "tailor_resume", "cover_letter", "interview_prep")
-ITEM_TYPES = ("work", "project", "education", "achievement", "certification", "publication")
 
 
 class Requirement(BaseModel):

@@ -1,6 +1,6 @@
 """JobStreet module against saved fixtures and a mocked transport. No network."""
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 import pytest
@@ -10,7 +10,7 @@ from sources.fake import FIXTURES, jobstreet_handler
 from sources.http import PoliteClient, RateLimited, SchemaChanged, set_transport_factory
 from sources.jobstreet import JobStreetSource, job_id_from_url
 
-NOW = datetime(2026, 11, 8, 9, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 8, 9, 0, tzinfo=UTC)
 
 
 @pytest.fixture
@@ -118,7 +118,7 @@ def test_schema_change_is_reported(calls):
 
 
 def test_old_listings_dropped(calls):
-    jobs = JobStreetSource(PoliteClient(sleep=lambda s: None), now=datetime(2026, 11, 13, tzinfo=timezone.utc)).fetch(profile(days=7))
+    jobs = JobStreetSource(PoliteClient(sleep=lambda s: None), now=datetime(2026, 11, 13, tzinfo=UTC)).fetch(profile(days=7))
     assert {j.extra["external_ids"]["jobstreet"] for j in jobs} == {"90000001", "90000003"}  # 95667394 is 9 days old
 
 

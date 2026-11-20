@@ -1,7 +1,7 @@
 """Sources (health + limits), search profiles, and "Fetch now"."""
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.db import engine, get_session
 from models import SearchProfile, SearchProfileBase, Source
@@ -71,7 +71,7 @@ def _clean_profile(data: SearchProfileBase) -> SearchProfileBase:
 
 @router.get("/search-profiles", response_model=list[SearchProfile])
 def list_profiles(session: Session = Depends(get_session)):
-    return session.exec(select(SearchProfile).order_by(SearchProfile.id)).all()
+    return session.exec(select(SearchProfile).order_by(col(SearchProfile.id))).all()
 
 
 @router.post("/search-profiles", response_model=SearchProfile)

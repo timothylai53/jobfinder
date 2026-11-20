@@ -7,13 +7,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.settings_store import get_ai, get_general
 from filters.service import reapply_all
 from matcher.service import Scorer
 from models import Application, Automation, AutomationRun, Document, Job, MatchResult
-from models._base import utcnow
+from models._base import require_id, utcnow
 from notifications.service import notify
 from sources.base import locations_compatible
 from sources.ingest import is_summary_only, low_confidence
@@ -62,7 +62,7 @@ def task_fetch_jobs(session: Session, **opts) -> tuple[int, str, bool]:
 
 def merge_duplicates(session: Session) -> int:
     """Jobs with the same company + title and compatible locations become one (oldest kept)."""
-    jobs = session.exec(select(Job).order_by(Job.id)).all()
+    jobs = session.exec(select(Job).order_by(col(Job.id))).all()
     removed = 0
     keep_by_base: dict[str, list[Job]] = {}
     for job in jobs:
@@ -71,14 +71,20 @@ def merge_duplicates(session: Session) -> int:
         if target is None:
             keep_by_base.setdefault(base, []).append(job)
             continue
+        # Deleting the duplicate would cascade-delete its documents (tailored resumes, letters, analyses), and with
+        # two tracker entries one would be lost. Such pairs stay separate; the user can delete one by hand.
+        app = session.exec(select(Application).where(Application.job_id == job.id)).first()
+        target_app = session.exec(select(Application).where(Application.job_id == target.id)).first()
+        has_docs = session.exec(select(Document.id).where(Document.job_id == job.id)).first() is not None
+        if has_docs or (app and target_app):
+            continue
         target.urls = list(dict.fromkeys([*target.urls, *job.urls]))
         target.sources = list(dict.fromkeys([*target.sources, *job.sources]))
         target.external_ids = {**job.external_ids, **target.external_ids}
         if len(job.description) > len(target.description) and "Summary only" not in job.description:
             target.description = job.description
-        app = session.exec(select(Application).where(Application.job_id == job.id)).first()
-        if app and not session.exec(select(Application).where(Application.job_id == target.id)).first():
-            app.job_id = target.id  # keep my tracker entry
+        if app:
+            app.job_id = require_id(target)  # keep my tracker entry (the target has none, checked above)
         session.delete(job)  # its MatchResult goes with it (ON DELETE CASCADE)
         removed += 1
     session.commit()
@@ -109,10 +115,10 @@ def task_high_match_alert(session: Session, **_) -> tuple[int, str, bool]:
     scores = {m.job_id: m.total for m in results if not low_confidence(m)}  # rough scores never alert
     # Summary-only jobs have a rough score: not alerted (and not marked), so pasting the full JD can still alert later
     hits = [j for j in session.exec(select(Job).where(Job.hidden == False, Job.high_match_notified == False)).all()  # noqa: E712
-            if scores.get(j.id, 0) >= threshold and j.id not in tracked and not is_summary_only(j)]
-    hits.sort(key=lambda j: -scores[j.id])
+            if scores.get(require_id(j), 0) >= threshold and j.id not in tracked and not is_summary_only(j)]
+    hits.sort(key=lambda j: -scores[require_id(j)])
     for j in hits[:10]:
-        notify(session, "high_match", f"High match ({scores[j.id]}): {j.title}" + (f" at {j.company}" if j.company else ""),
+        notify(session, "high_match", f"High match ({scores[require_id(j)]}): {j.title}" + (f" at {j.company}" if j.company else ""),
                f"/jobs/{j.id}")
     if len(hits) > 10:
         notify(session, "high_match", f"…and {len(hits) - 10} more high-match jobs", "/jobs")
@@ -154,9 +160,9 @@ def task_ollama_deep_analysis(session: Session, **_) -> tuple[int, str, bool]:
     done = set(session.exec(select(Document.job_id).where(Document.type == "deep_analysis")).all())
     quick = {m.job_id: m for m in session.exec(select(MatchResult).where(MatchResult.method == "quick")).all()}
     todo = [j for j in session.exec(select(Job).where(Job.hidden == False)).all()  # noqa: E712
-            if j.id not in done and j.id in quick and quick[j.id].total >= threshold
-            and not low_confidence(quick[j.id]) and not is_summary_only(j)]
-    todo.sort(key=lambda j: -quick[j.id].total)
+            if j.id not in done and j.id in quick and quick[require_id(j)].total >= threshold
+            and not low_confidence(quick[require_id(j)]) and not is_summary_only(j)]
+    todo.sort(key=lambda j: -quick[require_id(j)].total)
     todo = todo[:cfg.auto_analysis_max_per_run]
     analysed, problems = 0, []
     for job in todo:
@@ -174,7 +180,7 @@ def task_ollama_deep_analysis(session: Session, **_) -> tuple[int, str, bool]:
         if t.status != "parsed":
             problems.append(f"{job.title}: the model's reply didn't match the format")
             continue
-        save_analysis(session, job.id, "deep_analysis", t.result, "ollama", t.id, t.flags)
+        save_analysis(session, require_id(job), "deep_analysis", t.result or {}, "ollama", t.id, t.flags)
         analysed += 1
     msg = f"{analysed} job(s) analysed with {cfg.ollama_model}" if todo else "no new jobs at or above the threshold"
     if problems:
@@ -197,7 +203,7 @@ def start_run(engine, key: str, trigger: str) -> int:
         run = AutomationRun(automation_key=key, trigger=trigger)
         session.add(run)
         session.commit()
-        return run.id
+        return require_id(run)
 
 
 def run_in_background(engine, key: str, trigger: str = "manual", **opts) -> int:
@@ -212,6 +218,8 @@ def run_automation(engine, key: str, trigger: str = "manual", run_id: int | None
     run_id = run_id or start_run(engine, key, trigger)
     with Session(engine) as session:
         run = session.get(AutomationRun, run_id)
+        if run is None:  # the log row was deleted before the work started: nothing to record into
+            return run_id
         if not _locks[key].acquire(blocking=False):
             run.result, run.message, run.finished_at = "skipped", "already running", utcnow()
             session.commit()
@@ -221,7 +229,7 @@ def run_automation(engine, key: str, trigger: str = "manual", run_id: int | None
             run.result, run.items_processed, run.message = ("error" if failed else "ok"), items, message
         except Exception as e:  # noqa: BLE001 - a failing automation is logged, never crashes the app
             session.rollback()
-            run = session.get(AutomationRun, run_id)
+            run = session.get(AutomationRun, run_id) or run
             run.result, run.error = "error", f"{e.__class__.__name__}: {e}"
         finally:
             _locks[key].release()

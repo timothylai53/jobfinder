@@ -4,6 +4,7 @@ from sqlmodel import Session, select
 
 from app.db import get_session
 from models import Application, Job, MatchResult
+from models._base import require_id
 
 router = APIRouter(prefix="/api/skill-gaps", tags=["skill-gaps"])
 
@@ -19,7 +20,7 @@ def aggregate(jobs: list[Job], matches: dict[int, MatchResult]) -> tuple[list[di
             row["jobs"].append({"id": job.id, "title": job.title, "company": job.company, "score": score, "kind": kind})
 
     for job in jobs:
-        m = matches.get(job.id)
+        m = matches.get(require_id(job))
         if not m:
             continue
         for cat in m.breakdown.get("categories", []):

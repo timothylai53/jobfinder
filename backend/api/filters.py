@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.db import get_session
 from filters.service import reapply_all
@@ -22,7 +22,7 @@ def _validate(data: FilterRuleBase) -> None:
 
 @router.get("", response_model=list[FilterRule])
 def list_rules(session: Session = Depends(get_session)):
-    return session.exec(select(FilterRule).order_by(FilterRule.id)).all()
+    return session.exec(select(FilterRule).order_by(col(FilterRule.id))).all()
 
 
 @router.post("", response_model=FilterRule)

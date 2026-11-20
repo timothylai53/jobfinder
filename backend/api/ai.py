@@ -3,13 +3,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session
 
-from ai import ollama
+from ai import ollama, service
 from ai import prompt_templates as templates
-from ai import service
 from ai.schemas import TASKS
 from app.db import engine, get_session
 from app.settings_store import AISettings, get_ai, set_ai
 from models import AITask
+from models._base import require_id
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -85,7 +85,7 @@ def create_task(data: TaskIn, session: Session = Depends(get_session)):
     except service.AIUnavailable as e:
         raise HTTPException(409, str(e)) from e
     if t.provider == "ollama":
-        service.run_ollama_in_background(engine, t.id)
+        service.run_ollama_in_background(engine, require_id(t))
     return t
 
 
@@ -135,6 +135,6 @@ def rerun_ollama(task_id: int, session: Session = Depends(get_session)):
     t.provider, t.status = "ollama", "running"
     session.add(t)
     session.commit()
-    service.run_ollama_in_background(engine, t.id)
+    service.run_ollama_in_background(engine, require_id(t))
     session.refresh(t)
     return t

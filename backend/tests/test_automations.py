@@ -1,6 +1,6 @@
 """Automations, scheduler catch-up, the Phase 2 APIs and Skill Gaps. No network (fake sources)."""
 import time
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 
 import httpx
 import pytest
@@ -190,7 +190,7 @@ def test_sources_api(client):
     from app.db import engine
     with Session(engine) as s:
         src = s.get(Source, "indeed")
-        src.status, src.paused_until, src.last_error = "paused", datetime.now(timezone.utc) + timedelta(hours=5), "x"
+        src.status, src.paused_until, src.last_error = "paused", datetime.now(UTC) + timedelta(hours=5), "x"
         s.commit()
     assert {r["key"]: r for r in client.get("/api/sources").json()}["indeed"]["status"] == "paused"
     assert client.post("/api/sources/indeed/resume").json()["status"] == "ok"

@@ -5,13 +5,14 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.config import UPLOADS_DIR
 from app.db import get_session
 from app.settings_store import next_item_code
 from matcher.service import get_profile, rescore_all
 from models import BaseResume, ExperienceItem, ExperienceItemBase
+from models._base import require_id
 from resume_parser.extract_text import UnsupportedFile, extract_text
 from resume_parser.sections import parse_resume_text
 from skills.service import build_matcher
@@ -55,7 +56,8 @@ async def parse_upload(file: UploadFile = File(...), session: Session = Depends(
 
 
 def item_key(type_: str, title: str, org: str, start: str, end: str) -> tuple:
-    sq = lambda s: re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
+    def sq(s: str) -> str:
+        return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
     return (sq(type_), sq(title), sq(org), sq(start), sq(end))
 
 
@@ -101,7 +103,7 @@ def import_resume(req: ImportRequest, session: Session = Depends(get_session)):
     session.add(p)
     codes = []
     for it in req.items:
-        item = ExperienceItem(**it.model_dump(exclude={"resume_ids"}), resume_ids=[resume.id], code=next_item_code(session))
+        item = ExperienceItem(**it.model_dump(exclude={"resume_ids"}), resume_ids=[require_id(resume)], code=next_item_code(session))
         session.add(item)
         codes.append(item.code)
     session.commit()
@@ -121,9 +123,9 @@ class ResumeOut(BaseModel):
 def list_resumes(session: Session = Depends(get_session)):
     items = session.exec(select(ExperienceItem)).all()
     return [
-        ResumeOut(id=r.id, name=r.name, original_file_path=r.original_file_path, created_at=r.created_at.isoformat(),
-                  item_ids=[i.id for i in items if r.id in i.resume_ids])
-        for r in session.exec(select(BaseResume).order_by(BaseResume.id)).all()
+        ResumeOut(id=require_id(r), name=r.name, original_file_path=r.original_file_path, created_at=r.created_at.isoformat(),
+                  item_ids=[require_id(i) for i in items if r.id in i.resume_ids])
+        for r in session.exec(select(BaseResume).order_by(col(BaseResume.id))).all()
     ]
 
 
@@ -159,7 +161,7 @@ def create_resume(req: ResumeUpdate, session: Session = Depends(get_session)):
     session.flush()
     for i in session.exec(select(ExperienceItem)).all():
         if i.id in req.item_ids:
-            i.resume_ids = [*i.resume_ids, r.id]
+            i.resume_ids = [*i.resume_ids, require_id(r)]
     session.commit()
     return {"id": r.id}
 

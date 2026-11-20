@@ -9,8 +9,17 @@ import re
 
 from matcher import education
 from resume_parser.patterns import (
-    BULLET, CERT_LINE, DATE_RANGE, SINGLE_DATE, SPACED_SEP, SPLIT_HEADER, STRIP, YEAR_ONLY, DraftItem,
-    heading_kind, norm_date,
+    BULLET,
+    CERT_LINE,
+    DATE_RANGE,
+    SINGLE_DATE,
+    SPACED_SEP,
+    SPLIT_HEADER,
+    STRIP,
+    YEAR_ONLY,
+    DraftItem,
+    heading_kind,
+    norm_date,
 )
 from skills.matcher import SkillMatcher
 
@@ -24,7 +33,7 @@ _SUBHEADING = re.compile(r"^[A-Z][A-Za-z&]*(?:\s[A-Z][A-Za-z&]*){0,2}$")  # 1-3 
 
 def full_width(lines: list[str]) -> int:
     """Typical width of a full line in this document (95th percentile, links ignored)."""
-    lens = sorted(len(l.strip()) for l in lines if l.strip() and "http" not in l)
+    lens = sorted(len(line.strip()) for line in lines if line.strip() and "http" not in line)
     return lens[int(len(lens) * 0.95)] if lens else 0
 
 

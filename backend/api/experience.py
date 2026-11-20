@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app import config
 from app.db import get_session
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/experience", tags=["experience"])
 
 @router.get("", response_model=list[ExperienceItem])
 def list_items(session: Session = Depends(get_session)):
-    return session.exec(select(ExperienceItem).order_by(ExperienceItem.id)).all()
+    return session.exec(select(ExperienceItem).order_by(col(ExperienceItem.id))).all()
 
 
 @router.post("", response_model=ExperienceItem)

@@ -1,4 +1,6 @@
+from collections.abc import Sequence
 from datetime import date, timedelta
+from typing import Any
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
@@ -7,7 +9,8 @@ from sqlmodel import Session, select
 from app.db import get_session
 from app.settings_store import get_general, get_snoozed, set_snoozed
 from models import STATUSES, Application, Document, Job, MatchResult, Notification, Source, StatusHistory
-from models._base import utcnow
+from models._base import require_id, utcnow
+from sources.ingest import is_summary_only, low_confidence
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 RESPONSE_STATUSES = {"Interview", "Offer", "Rejected"}
@@ -24,7 +27,7 @@ def weekly_counts(applied: list[date], today: date, weeks: int = 8) -> list[dict
     return out
 
 
-def response_rate(apps: list[Application], history: list[StatusHistory]) -> float | None:
+def response_rate(apps: Sequence[Application], history: Sequence[StatusHistory]) -> float | None:
     """Share of applied applications that reached Interview / Offer / Rejected."""
     applied_ids = {a.id for a in apps if a.applied_at or a.status in RESPONSE_STATUSES | {"Applied"}}
     applied_ids |= {h.application_id for h in history if h.to_status == "Applied"}
@@ -60,10 +63,11 @@ def dashboard(session: Session = Depends(get_session)):
     tracked = {a.job_id for a in apps}
     since = utcnow() - timedelta(days=7)
     jobs = {j.id: j for j in session.exec(select(Job).where(Job.hidden == False)).all()}  # noqa: E712
-    high = []
+    high: list[dict[str, Any]] = []
     for m in session.exec(select(MatchResult).where(MatchResult.method == "quick", MatchResult.total >= threshold)).all():
         j = jobs.get(m.job_id)
-        if j and j.id not in tracked and j.fetched_at >= since:
+        if (j and j.id not in tracked and j.fetched_at >= since and not is_summary_only(j)
+                and not low_confidence(m)):
             high.append({"id": j.id, "title": j.title, "company": j.company, "score": m.total})
     high.sort(key=lambda x: -x["score"])
     today = date.today()
@@ -73,14 +77,14 @@ def dashboard(session: Session = Depends(get_session)):
         if doc.job_id is not None and (doc.job_id not in latest_resume or doc.version > latest_resume[doc.job_id].version):
             latest_resume[doc.job_id] = doc
     ready, to_tailor = [], []
-    for a in sorted(apps, key=lambda a: a.id):
+    for a in sorted(apps, key=lambda a: a.id or 0):
         j = jobs.get(a.job_id)
         if a.status != "Saved" or j is None:
             continue
         row = {"job_id": j.id, "title": j.title, "company": j.company}
-        doc = latest_resume.get(j.id)
-        if doc:
-            ready.append({**row, "document_id": doc.id, "version": doc.version})
+        latest = latest_resume.get(require_id(j))
+        if latest:
+            ready.append({**row, "document_id": latest.id, "version": latest.version})
         else:
             to_tailor.append(row)
     return {

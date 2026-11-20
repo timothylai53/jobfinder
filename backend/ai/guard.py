@@ -130,7 +130,8 @@ def strip_header(text: str, header: list[str]) -> tuple[str, str]:
             break
         parts += 1
         named += not re.fullmatch(_DATE, m.group(0), re.I)
-        pos = sep.match(text, m.end()).end()
+        gap = sep.match(text, m.end())  # _SEP can match nothing, so this always matches
+        pos = gap.end() if gap else m.end()
         last_sep = text[m.end():pos]
     rest = text[pos:].strip()
     if not named or not rest:  # dates alone ("2024: built ...") are left as written

@@ -2,13 +2,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.db import get_session
 from app.settings_store import get_general
 from documents import cover_template, render
 from documents.service import CoverLetterIn, DocumentError, ResumeIn, save_analysis, save_cover_letter, save_resume
-from models import AITask, Application, Document, Job
+from models import AITask, Application, Document, Job, MatchResult
 
 # The preview shows text from job ads and AI replies (escaped by Jinja). As a second wall, the page may run no
 # script and load nothing: only its own inline styles.
@@ -24,7 +24,7 @@ def _out(doc: Document) -> dict:
 @router.get("/jobs/{job_id}/documents")
 def list_documents(job_id: int, session: Session = Depends(get_session)):
     docs = session.exec(select(Document).where(Document.job_id == job_id)
-                        .order_by(Document.type, Document.version.desc())).all()
+                        .order_by(col(Document.type), col(Document.version).desc())).all()
     return [_out(d) for d in docs]
 
 
@@ -96,6 +96,10 @@ def delete_document(doc_id: int, session: Session = Depends(get_session)):
     for app in session.exec(select(Application).where(Application.job_id == doc.job_id)).all():
         if doc.id in (app.resume_version_id, app.cover_letter_version_id):
             raise HTTPException(409, "This version is recorded as sent with your application. Unlink it first.")
+    if doc.type == "deep_analysis":  # its MatchResult(method="deep") points at this document
+        for m in session.exec(select(MatchResult).where(MatchResult.job_id == doc.job_id, MatchResult.method == "deep")).all():
+            if m.breakdown.get("document_id") == doc.id:
+                session.delete(m)
     session.delete(doc)
     session.commit()
     return {"ok": True}

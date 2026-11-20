@@ -10,7 +10,7 @@ The exact shapes are confirmed in the supervised smoke test (Phase 2 plan, optio
 """
 import re
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sources.base import NormalizedJob
 from sources.http import PoliteClient, RateLimited, SchemaChanged, SourceError, save_debug
@@ -86,7 +86,7 @@ class JobStreetSource:
         self.known_ids = known_ids or set()
         self.host, self.site_key, self.locale, self.tz = SITES[country]
         self.country = country
-        self.now = now or datetime.now(timezone.utc)
+        self.now = now or datetime.now(UTC)
         self._session = str(uuid.uuid4())  # random per run; not tied to me
         self._details_failed = False  # one non-block GraphQL failure -> no more detail requests this run
         self.notes: list[str] = []
@@ -192,7 +192,7 @@ class JobStreetSource:
 
     def fetch(self, search_profile) -> list[NormalizedJob]:
         cap = min(self.max_results, getattr(search_profile, "max_results", 0) or self.max_results)
-        wheres = [l for l in search_profile.locations if l.strip().lower() != "remote"] or [""]
+        wheres = [loc for loc in search_profile.locations if loc.strip().lower() != "remote"] or [""]
         # Always ask for a full page (one request either way), so cards removed by the job-type / date
         # filters don't trigger another page. Page 2 only when the cap itself is larger than a page.
         pages = 1 if cap <= PAGE_SIZE else MAX_PAGES_PER_QUERY
@@ -208,7 +208,9 @@ class JobStreetSource:
                         saved = dump_unexpected("jobstreet-search", getattr(self, "last_search", raw))
                         raise SchemaChanged(f"JobStreet search: job cards have no id/title; saved to {saved}")
                     for p in parsed:
-                        if p["id"] not in cards and self._wanted(p, search_profile) and len(cards) < cap:
+                        # Stored cards are skipped here, not after the cap: they must not use up the run's budget.
+                        if (p["id"] not in cards and p["id"] not in self.known_ids and self._wanted(p, search_profile)
+                                and len(cards) < cap):
                             cards[p["id"]] = p
                     if len(raw) < PAGE_SIZE:
                         break  # last page

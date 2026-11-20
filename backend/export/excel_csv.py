@@ -4,9 +4,10 @@ import io
 
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from models import Application, Job, MatchResult
+from models._base import require_id
 
 JOB_COLUMNS = ["id", "title", "company", "location", "work_arrangement", "score", "gates", "salary_min", "salary_max",
                "salary_currency", "job_type", "posted_date", "sources", "urls", "hidden", "hidden_reason",
@@ -36,8 +37,8 @@ def job_rows(session: Session) -> list[dict]:
     scores = {m.job_id: m for m in session.exec(select(MatchResult).where(MatchResult.method == "quick")).all()}
     apps = {a.job_id: a for a in session.exec(select(Application)).all()}
     rows = []
-    for j in session.exec(select(Job).order_by(Job.id)).all():
-        m, a = scores.get(j.id), apps.get(j.id)
+    for j in session.exec(select(Job).order_by(col(Job.id))).all():
+        m, a = scores.get(require_id(j)), apps.get(require_id(j))
         d = j.model_dump()
         d.update(score=m.total if m else None, gates=m.gate_flags if m else [],
                  application_status=a.status if a else "")
@@ -49,7 +50,7 @@ def application_rows(session: Session) -> list[dict]:
     jobs = {j.id: j for j in session.exec(select(Job)).all()}
     scores = {m.job_id: m.total for m in session.exec(select(MatchResult).where(MatchResult.method == "quick")).all()}
     rows = []
-    for a in session.exec(select(Application).order_by(Application.id)).all():
+    for a in session.exec(select(Application).order_by(col(Application.id))).all():
         j = jobs.get(a.job_id)
         d = a.model_dump()
         d.update(job_title=j.title if j else "", company=j.company if j else "", score=scores.get(a.job_id))

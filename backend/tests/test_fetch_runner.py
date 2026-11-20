@@ -1,6 +1,6 @@
 """JobSpy source + the fetch runner, end to end against fixtures. No network: JobSpy's scrape function and
 the HTTP transport are both replaced."""
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import pytest
@@ -11,7 +11,7 @@ from sources.fake import fake_handler
 from sources.http import RateLimited, SourceError, set_transport_factory
 from sources.jobspy_source import JobSpySource, fake_scrape
 
-NOW = datetime(2026, 11, 8, 9, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 8, 9, 0, tzinfo=UTC)
 NO_SLEEP = lambda s: None  # noqa: E731
 
 
@@ -160,7 +160,7 @@ def test_rate_limit_pauses_one_source_others_continue(client, fake_net):
     from app.db import engine
     with Session(engine) as s:
         js = s.get(Source, "jobstreet")
-        assert js.status == "paused" and js.paused_until.replace(tzinfo=timezone.utc) == NOW + timedelta(hours=24)
+        assert js.status == "paused" and js.paused_until.replace(tzinfo=UTC) == NOW + timedelta(hours=24)
         assert any("JobStreet paused" in n.message for n in s.exec(select(Notification)).all())
     fake_net.clear()
     res = run(now=NOW + timedelta(hours=3))

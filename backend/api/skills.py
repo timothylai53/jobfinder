@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.db import get_session
 from matcher.service import rescore_all
@@ -24,7 +24,7 @@ def _check_unique(session: Session, name: str, exclude_id: int | None = None):
 
 @router.get("", response_model=list[Skill])
 def list_skills(session: Session = Depends(get_session)):
-    return session.exec(select(Skill).order_by(Skill.category, Skill.name)).all()
+    return session.exec(select(Skill).order_by(col(Skill.category), col(Skill.name))).all()
 
 
 @router.post("", response_model=Skill)

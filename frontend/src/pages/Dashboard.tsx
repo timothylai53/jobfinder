@@ -60,7 +60,7 @@ function NextSteps({ steps }: { steps: NextStep[] }) {
     mutationFn: (s: NextStep) => api.patch(`/api/jobs/${s.jobId}`, { hidden: true, hidden_reason: 'Not interested' }),
     onSuccess: (_d, s) => {
       refresh()
-      toast({ message: 'Job hidden: not interested.', undo: () => api.patch(`/api/jobs/${s.jobId}`, { hidden: false }).then(refresh) })
+      toast({ message: 'Job hidden: not interested.', undo: () => api.patch(`/api/jobs/${s.jobId}`, { restore: true }).then(refresh) })
     },
   })
   return (

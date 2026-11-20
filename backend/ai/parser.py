@@ -60,7 +60,7 @@ def extract_json_text(reply: str) -> str:
     if not reply or not reply.strip():
         raise ReplyError("The reply is empty. Paste the whole reply from the chat.")
     blocks = _FENCE.findall(reply)
-    for lang, body in sorted(blocks, key=lambda b: 0 if b[0] else 1):  # ```json blocks first
+    for _lang, body in sorted(blocks, key=lambda b: 0 if b[0] else 1):  # ```json blocks first
         found = _balanced(body)
         if found:
             return found

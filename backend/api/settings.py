@@ -3,8 +3,16 @@ from pydantic import BaseModel
 from sqlmodel import Session
 
 from app.db import get_session
-from app.settings_store import (GeneralSettings, default_location_map, get_general, get_location_map, get_scoring,
-                                set_general, set_location_map, set_scoring)
+from app.settings_store import (
+    GeneralSettings,
+    default_location_map,
+    get_general,
+    get_location_map,
+    get_scoring,
+    set_general,
+    set_location_map,
+    set_scoring,
+)
 from matcher.scoring import ScoringConfig
 from matcher.service import rescore_all
 

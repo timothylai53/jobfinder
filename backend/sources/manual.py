@@ -71,8 +71,8 @@ def _num(v) -> float | None:
 
 def _from_jobposting(jp: dict, url: str) -> NormalizedJob:
     org = jp.get("hiringOrganization") or {}
-    sal = jp.get("baseSalary") if isinstance(jp.get("baseSalary"), dict) else {}
-    val = sal.get("value") if isinstance(sal.get("value"), dict) else {}
+    sal: dict = jp["baseSalary"] if isinstance(jp.get("baseSalary"), dict) else {}
+    val: dict = sal["value"] if isinstance(sal.get("value"), dict) else {}
     etype = jp.get("employmentType") or ""
     return NormalizedJob(
         title=str(jp.get("title") or "").strip(),
@@ -101,7 +101,7 @@ def extract_from_html(html: str, url: str = "") -> NormalizedJob:
     # 2. generic page: h1 / og:title + main/article text
     def meta(name: str) -> str:
         m = soup.find("meta", attrs={"property": name}) or soup.find("meta", attrs={"name": name})
-        return (m.get("content") or "").strip() if m else ""
+        return str(m.get("content") or "").strip() if m else ""
 
     title = (soup.h1.get_text(strip=True) if soup.h1 else "") or meta("og:title")
     if not title and soup.title and soup.title.string:
@@ -120,15 +120,19 @@ def check_public_url(url: str) -> None:
     """SSRF guard: only http(s) URLs whose host resolves to public internet addresses. Refuses this machine
     (127.0.0.1, localhost, Ollama's port), the home network (192.168.x.x, 10.x.x.x) and link-local/cloud metadata
     addresses (169.254.x.x). Called before the first request and again on every redirect."""
-    parts = urlsplit(url)
+    try:
+        parts = urlsplit(url)
+        port = parts.port
+    except ValueError as e:  # e.g. a port above 65535 or a broken [IPv6] host
+        raise FetchError("That link isn't a valid web address. Paste the JD text instead.") from e
     if parts.scheme not in ("http", "https") or not parts.hostname:
         raise FetchError("URL must start with http:// or https://")
     try:
-        infos = socket.getaddrinfo(parts.hostname, parts.port or (443 if parts.scheme == "https" else 80))
+        infos = socket.getaddrinfo(parts.hostname, port or (443 if parts.scheme == "https" else 80))
     except (socket.gaierror, UnicodeError) as e:
         raise FetchError(f"Could not find the site {parts.hostname!r}. Paste the JD text instead.") from e
     for info in infos:
-        ip = ipaddress.ip_address(info[4][0].split("%")[0])
+        ip = ipaddress.ip_address(str(info[4][0]).split("%")[0])  # drop an IPv6 zone like "%eth0"
         if not ip.is_global:
             raise FetchError("That address is on this computer or a private network, so it is not fetched. "
                              "Paste the JD text instead.")

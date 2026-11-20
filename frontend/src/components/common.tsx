@@ -64,13 +64,16 @@ export function Field({ label, children, className }: { label: string; children:
 /** Comma-separated text box bound to a string[]; commits on blur so typing commas is easy. */
 export function ListInput({ value, onChange, placeholder }: { value: string[]; onChange: (v: string[]) => void; placeholder?: string }) {
   const [text, setText] = useState(value.join(', '))
-  useEffect(() => setText(value.join(', ')), [value])
+  // Follow outside changes (a reload after saving), but not the echo of our own typing, which would eat ", ".
+  useEffect(() => {
+    setText((t) => (parseList(t).join('|') === value.join('|') ? t : value.join(', ')))
+  }, [value])
   return (
     <Input
       value={text}
       placeholder={placeholder}
-      onChange={(e) => setText(e.target.value)}
-      onBlur={() => onChange(parseList(text))}
+      onChange={(e) => { setText(e.target.value); onChange(parseList(e.target.value)) }}
+      onBlur={() => setText(parseList(text).join(', '))}
     />
   )
 }

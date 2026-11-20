@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.db import engine, get_session
 from models import Automation, AutomationRun
@@ -25,7 +25,7 @@ def list_automations(session: Session = Depends(get_session)):
         if a is None:
             continue
         last = session.exec(select(AutomationRun).where(AutomationRun.automation_key == key)
-                            .order_by(AutomationRun.id.desc())).first()
+                            .order_by(col(AutomationRun.id).desc())).first()
         out.append(_out(a, last))
     return out
 
@@ -63,7 +63,7 @@ def run_now(key: str):
 
 @router.get("/runs", response_model=list[AutomationRun])
 def runs(limit: int = 50, session: Session = Depends(get_session)):
-    return session.exec(select(AutomationRun).order_by(AutomationRun.id.desc()).limit(min(limit, 200))).all()
+    return session.exec(select(AutomationRun).order_by(col(AutomationRun.id).desc()).limit(min(limit, 200))).all()
 
 
 @router.get("/runs/{run_id}", response_model=AutomationRun)
