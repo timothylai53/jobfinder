@@ -110,6 +110,7 @@ def shoot(base: str) -> None:
         page.wait_for_load_state("networkidle")
         page.get_by_role("button", name="More").click()  # this job is past "Tailor", so it lives in the More menu
         page.get_by_role("button", name="Tailor resume (new version)").click()
+        page.get_by_role("button", name="Build prompt").click()  # Start from: the whole bank
         page.get_by_placeholder("Paste the chat's reply here", exact=False).fill(FABRICATED_REPLY)
         page.get_by_role("button", name="Check reply").click()
         page.get_by_text("flagged in red", exact=False).first.wait_for()

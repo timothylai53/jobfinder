@@ -8,7 +8,7 @@ import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { groupItems, toggleGroup, typeSummary } from '@/lib/baseResumes'
-import { formatDate } from '@/lib/score'
+import { dateRange, formatDate } from '@/lib/score'
 
 const PURPOSE = 'A base resume is a starting set of bank items: one for software roles, one for IT support.'
 
@@ -103,8 +103,9 @@ function Row({ resume, items, onEdit, onDuplicate, onDelete }: {
         )}
       </div>
       <dl className="flex gap-6 text-sm">
-        <div><dt className="text-muted-foreground">Items</dt><dd className="tabular-nums">{chosen.length}</dd></div>
-        <div><dt className="text-muted-foreground">Last changed</dt><dd>{formatDate(resume.updated_at)}</dd></div>
+        <div className="w-12"><dt className="text-muted-foreground">Items</dt><dd className="tabular-nums">{chosen.length}</dd></div>
+        <div className="w-28"><dt className="text-muted-foreground">Last changed</dt><dd>{formatDate(resume.updated_at)}</dd></div>
+        <div className="w-28"><dt className="text-muted-foreground">Last used</dt><dd>{resume.last_used_at ? formatDate(resume.last_used_at) : 'Never'}</dd></div>
       </dl>
       {!renaming && (
         <div className="flex items-center gap-1">
@@ -200,7 +201,7 @@ function Group({ label, items, selected, onChange }: {
               <span className="min-w-0 flex-1">
                 <span className="font-medium">{it.title}</span>
                 {it.organization && <span className="text-muted-foreground"> · {it.organization}</span>}
-                {(it.start || it.end) && <span className="block text-sm text-muted-foreground">{[it.start, it.end].filter(Boolean).join(' – ')}</span>}
+                {(it.start || it.end) && <span className="block text-sm text-muted-foreground">{dateRange(it.start, it.end)}</span>}
               </span>
               <span className="text-xs text-muted-foreground tabular-nums">{it.code}</span>
             </label>

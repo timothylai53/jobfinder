@@ -57,6 +57,8 @@ export interface BaseResume {
   created_at: string
   /** Last rename or change of its selection (created_at if never changed). */
   updated_at: string
+  /** Last time a resume was tailored from it; null = never. */
+  last_used_at: string | null
   item_ids: number[]
 }
 
@@ -379,6 +381,8 @@ export interface AiTask<R = Record<string, unknown>> {
   result: R | null
   error_message: string
   document_id: number | null
+  /** tailor_resume: the base resume whose items were the only ones in the prompt (null = whole bank). */
+  base_resume_id?: number | null
   created_at: string
   updated_at: string
 }

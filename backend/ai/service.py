@@ -12,7 +12,7 @@ from ai.parser import parse_reply, validate
 from ai.schemas import TASKS
 from app.settings_store import get_ai
 from matcher.service import build_candidate, get_profile
-from models import AITask, ExperienceItem, Job
+from models import AITask, BaseResume, ExperienceItem, Job
 from models._base import utcnow
 from skills.service import build_matcher
 
@@ -41,7 +41,7 @@ def facts(session: Session) -> guard.Facts:
 
 
 def create(session: Session, task: str, job_id: int | None = None, resume_text: str = "",
-           provider: str | None = None) -> AITask:
+           provider: str | None = None, base_resume_id: int | None = None) -> AITask:
     cfg = get_ai(session)
     if cfg.mode == "off":
         raise AIUnavailable("AI is switched off in Settings. The template cover letter still works.")
@@ -57,9 +57,23 @@ def create(session: Session, task: str, job_id: int | None = None, resume_text: 
             raise AIUnavailable("Job not found")
     elif not resume_text.strip():
         raise AIUnavailable("There is no resume text to parse")
+    item_ids: set[int] | None = None
+    if base_resume_id is not None:
+        # Tailoring from a base resume: only its items reach the prompt. The guard still knows the whole bank, so a
+        # real item the AI wasn't shown is checked against its own text rather than called unknown.
+        if task != "tailor_resume":
+            raise AIUnavailable("Only Tailor resume can start from a base resume")
+        base = session.get(BaseResume, base_resume_id)
+        if base is None:
+            raise AIUnavailable("Base resume not found")
+        item_ids = {i.id for i in session.exec(select(ExperienceItem)).all() if base_resume_id in i.resume_ids and i.id}
+        if not item_ids:
+            raise AIUnavailable(f"{base.name} has no bank items yet. Add some on the Resume page, or start from the whole bank.")
+        base.last_used_at = utcnow()
+        session.add(base)
     t = AITask(task=task, job_id=job.id if job else None, provider=provider,
-               status="running" if provider == "ollama" else "waiting",
-               prompt=prompts.build(session, task, job, resume_text), source_text=resume_text)
+               status="running" if provider == "ollama" else "waiting", base_resume_id=base_resume_id,
+               prompt=prompts.build(session, task, job, resume_text, item_ids), source_text=resume_text)
     session.add(t)
     session.commit()
     session.refresh(t)

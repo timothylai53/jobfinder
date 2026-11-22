@@ -4,6 +4,7 @@ import { api } from '@/api/client'
 import type { ExperienceItem, ExperienceItemInput, Profile } from '@/api/types'
 import { ErrorText, PageHeader } from '@/components/common'
 import BaseResumes from '@/components/BaseResumes'
+import { dateRange } from '@/lib/score'
 import ItemEditor from '@/components/ItemEditor'
 import ResumeUpload from '@/components/ResumeUpload'
 import { Badge } from '@/components/ui/badge'
@@ -48,7 +49,7 @@ function BankItem({ item }: { item: ExperienceItem }) {
               {item.title} {item.organization && <span className="font-normal text-muted-foreground">· {item.organization}</span>}
             </div>
             <div className="text-xs text-muted-foreground">
-              {item.type} {(item.start || item.end) && `· ${item.start}${item.start && item.end ? ' – ' : ''}${item.end}`}
+              {item.type} {(item.start || item.end) && `· ${dateRange(item.start, item.end)}`}
             </div>
             <ul className="mt-1 list-disc pl-5">
               {item.bullets.map((b, i) => <li key={i}>{b}</li>)}

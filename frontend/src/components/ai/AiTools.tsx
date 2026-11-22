@@ -4,12 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '@/api/client'
 import type {
-  AiTask, AiTaskType, CoverLetterResult, DeepAnalysisResult, DocumentRow, ExperienceItem, InterviewPrepResult, TailorResult, TemplateDraft,
+  AiTask, AiTaskType, BaseResume, CoverLetterResult, DeepAnalysisResult, DocumentRow, ExperienceItem, InterviewPrepResult, TailorResult, TemplateDraft,
 } from '@/api/types'
-import { ErrorText, Notice } from '@/components/common'
+import { ErrorText, Field, NativeSelect, Notice } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { TASK_LABEL } from '@/lib/ai'
+import { defaultStartFrom, typeSummary } from '@/lib/baseResumes'
 import { cn } from '@/lib/utils'
 import AiTaskFlow, { useAiSettings } from './AiTaskFlow'
 import { DeepAnalysisView, InterviewPrepView } from './AnalysisViews'
@@ -49,11 +50,43 @@ function SaveResult({ task, onSaved, children }: { task: AiTask; onSaved: (d: Do
 
 export interface JobInfo { id: number; title: string; summaryOnly: boolean; lowConfidence: string }
 
+/** Tailor resume, step 0: which items the AI may use. Defaults to the base resume used last (or the whole bank). */
+function StartFrom({ usable, onStart, onCancel }: { usable: BaseResume[]; onStart: (id: number | null) => void; onCancel: () => void }) {
+  const bank = useQuery({ queryKey: ['experience'], queryFn: () => api.get<ExperienceItem[]>('/api/experience') })
+  const [choice, setChoice] = useState<string | null>(null)
+  if (!bank.data) return <p className="text-sm text-muted-foreground">Loading…</p>
+  const value = choice ?? String(defaultStartFrom(usable) ?? '')
+  const picked = usable.find((r) => String(r.id) === value)
+  const items = (bank.data ?? []).filter((i) => !picked || picked.item_ids.includes(i.id))
+  return (
+    <div className="flex flex-col gap-3">
+      <Field label="Start from" className="max-w-md">
+        <NativeSelect value={value} onChange={setChoice}
+          options={[{ value: '', label: 'Whole bank' }, ...usable.map((r) => ({ value: String(r.id), label: r.name }))]} />
+      </Field>
+      <p className="text-sm text-muted-foreground">
+        {picked ? `Only ${picked.name}'s ${items.length} items go to the AI (${typeSummary(items)}). You can still add any other bank item in the review.`
+          : `All ${items.length} bank items go to the AI.`}
+      </p>
+      <div className="flex gap-2">
+        <Button onClick={() => onStart(picked ? picked.id : null)}>Build prompt</Button>
+        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+      </div>
+    </div>
+  )
+}
+
 function TaskDialog({ task, job, provider, onClose }: { task: AiTaskType; job: JobInfo; provider: 'copy_paste' | 'ollama'; onClose: () => void }) {
   const qc = useQueryClient()
   const rough = (task === 'tailor_resume' || task === 'cover_letter') && (job.summaryOnly || !!job.lowConfidence)
   const [go, setGo] = useState(!rough)
   const [saved, setSaved] = useState<DocumentRow | null>(null)
+  // Tailoring asks where to start (a base resume or the whole bank) before the prompt is built.
+  const [base, setBase] = useState<{ id: number | null } | null>(null)
+  const resumes = useQuery({ queryKey: ['resumes'], queryFn: () => api.get<BaseResume[]>('/api/resumes'), enabled: task === 'tailor_resume' })
+  const usable = (resumes.data ?? []).filter((r) => r.item_ids.length > 0)
+  // With no base resume that has items there is nothing to choose: the whole bank is used straight away.
+  const choosing = task === 'tailor_resume' && !base && (!resumes.data || usable.length > 0)
   const done = (d: DocumentRow) => {
     setSaved(d)
     for (const k of [['documents', job.id], ['job', String(job.id)]]) qc.invalidateQueries({ queryKey: k })
@@ -85,8 +118,11 @@ function TaskDialog({ task, job, provider, onClose }: { task: AiTaskType; job: J
           </Notice>
         ) : saved ? (
           <Saved doc={saved} onClose={onClose} />
+        ) : choosing ? (
+          resumes.data ? <StartFrom usable={usable} onStart={(id) => setBase({ id })} onCancel={onClose} />
+            : <ErrorText error={resumes.error} />
         ) : (
-          <AiTaskFlow task={task} jobId={job.id} provider={provider}>
+          <AiTaskFlow task={task} jobId={job.id} provider={provider} baseResumeId={base?.id ?? null}>
             {(t) =>
               task === 'tailor_resume' ? <TailorReview task={t as unknown as AiTask<TailorResult>} onSaved={done} />
               : task === 'cover_letter' ? <CoverLetterEditor jobId={job.id} initial={t.result as unknown as CoverLetterResult} flags={t.flags} source={t.provider} aiTaskId={t.id} onSaved={done} />

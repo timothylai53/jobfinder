@@ -12,6 +12,15 @@ class BaseResume(SQLModel, table=True):
     raw_text: str = ""
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime | None = None  # last rename or change of its item selection
+    last_used_at: datetime | None = None  # last time a resume was tailored from it
+
+
+def date_parts(start: str, end: str) -> list[str]:
+    """The dates to print for an item: ["2024"] for 2024-2024 (any case or spacing), else the non-empty ones."""
+    s, e = (start or "").strip(), (end or "").strip()
+    if s and e and " ".join(s.lower().split()) == " ".join(e.lower().split()):
+        return [s]
+    return [d for d in (s, e) if d]
 
 
 class ExperienceItemBase(SQLModel):

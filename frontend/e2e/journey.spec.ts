@@ -92,6 +92,9 @@ test('first-time journey: from an empty app to an application on the Kanban', as
     }, null, 2) + '\n```'
 
     await page.locator('header').getByRole('button', { name: 'Tailor resume' }).click()
+    // The imported resume is a base resume, so tailoring asks where to start; nothing used yet = the whole bank.
+    await expect(page.getByLabel('Start from')).toHaveValue('')
+    await page.getByRole('button', { name: 'Build prompt' }).click()
     await page.getByPlaceholder("Paste the chat's reply here", { exact: false }).fill(reply)
     await page.getByRole('button', { name: 'Check reply' }).click()
     await expect(page.getByText(/flagged in red: possibly invented/)).toBeVisible() // B99, Kubernetes
@@ -181,6 +184,43 @@ test('the reorganised editors: base resumes, run log, skill dictionary, location
     await expect(section.getByText('Helpdesk', { exact: true })).toBeVisible()
     const names = (await (await request.get('/api/resumes')).json()).map((r: { name: string }) => r.name)
     expect(names).toEqual(expect.arrayContaining(['IT support', 'Helpdesk']))
+  })
+
+  await test.step('tailor from a base resume: only its items in the prompt, the rest offered in the review, last used', async () => {
+    const bank: BankItem[] = await (await request.get('/api/experience')).json()
+    const edu = bank.find((b) => b.type === 'education')!
+    const work = bank.find((b) => b.type === 'work')!
+    const apps: { job_id: number }[] = await (await request.get('/api/applications')).json()
+    await page.goto(`/jobs/${apps[0].job_id}`)
+    await page.getByRole('button', { name: 'More' }).click()
+    await page.getByRole('button', { name: 'Tailor resume (new version)' }).click()
+    await page.getByLabel('Start from').selectOption({ label: 'IT support' })
+    await expect(page.getByText(/^Only IT support's \d+ items go to the AI/)).toBeVisible()
+    const created = page.waitForResponse((r) => r.url().endsWith('/api/ai/tasks') && r.request().method() === 'POST')
+    await page.getByRole('button', { name: 'Build prompt' }).click()
+    const task = await (await created).json()
+    expect(task.base_resume_id).toBeTruthy()
+    expect(task.prompt).toContain(`[${edu.code}] education:`)
+    expect(task.prompt).not.toContain(`[${work.code}]`)
+
+    const reply = '```json\n' + JSON.stringify({
+      summary: 'Software engineering student with a strong academic record.', skills_order: [],
+      sections: [{ section: 'Education', items: [{ source_id: edu.code, text: edu.title }] }], omitted_ids: [], notes: '',
+    }) + '\n```'
+    await page.getByPlaceholder("Paste the chat's reply here", { exact: false }).fill(reply)
+    await page.getByRole('button', { name: 'Check reply' }).click()
+    await expect(page.getByRole('heading', { name: /^Other bank items/ })).toBeVisible()
+    await expect(page.getByRole('checkbox', { name: new RegExp(work.title) })).toBeVisible() // can still be ticked in
+    await page.keyboard.press('Escape')
+
+    await page.goto('/resume')
+    const row = page.getByRole('region', { name: 'Base resumes' }).getByRole('listitem').filter({ hasText: /^IT support/ })
+    await expect(row.getByText('Never')).toHaveCount(0) // Last used is now a date
+    await page.goto(`/jobs/${apps[0].job_id}`)
+    await page.getByRole('button', { name: 'More' }).click()
+    await page.getByRole('button', { name: 'Tailor resume (new version)' }).click()
+    await expect(page.getByLabel('Start from')).toHaveValue(String(task.base_resume_id)) // the last one used is the default
+    await page.keyboard.press('Escape')
   })
 
   await test.step('run log: one row per source with aligned numbers, filter and details', async () => {

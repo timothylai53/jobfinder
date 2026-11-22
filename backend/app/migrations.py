@@ -18,6 +18,8 @@ ADDED_COLUMNS = [
     ("profile", "portfolio_url", "VARCHAR NOT NULL DEFAULT ''"),
     ("baseresume", "updated_at", "DATETIME"),
     ("automationrun", "details", "JSON NOT NULL DEFAULT '[]'"),
+    ("baseresume", "last_used_at", "DATETIME"),
+    ("aitask", "base_resume_id", "INTEGER"),
 ]
 
 

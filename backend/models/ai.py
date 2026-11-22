@@ -25,6 +25,7 @@ class AITask(SQLModel, table=True):
     result: dict | None = Field(default=None, sa_column=Column(JSON))
     error_message: str = ""  # provider failures (Ollama not running, model missing, timeout)
     document_id: int | None = None
+    base_resume_id: int | None = None  # tailor_resume: the prompt held only this base resume's items
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
 

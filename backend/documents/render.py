@@ -9,6 +9,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from models import Document
+from models.resume import date_parts
 
 TEMPLATES = Path(__file__).resolve().parent / "templates"
 _env = Environment(loader=FileSystemLoader(TEMPLATES), autoescape=select_autoescape(["html"]), trim_blocks=True,
@@ -37,7 +38,7 @@ def layout_entry(e: dict) -> dict:
     """Print each fact once: dates the title/organization already contain aren't printed again, and a bullet
     that only repeats the header ("Semester 2, Session 2022/2023" under a title that says so) is left out."""
     named = set(_words(f"{e.get('title', '')} {e.get('organization', '')}"))
-    dates = [d for d in dict.fromkeys([e.get("start", ""), e.get("end", "")]) if d and d.strip()]
+    dates = date_parts(e.get("start", ""), e.get("end", ""))
     header = named | {w for d in dates for w in _words(d)}
     return {**e, "dates": [d for d in dates if not set(_words(d)) <= named],
             "bullets": [b for b in e.get("bullets", []) if not repeats(b, header)]}

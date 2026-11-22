@@ -1,5 +1,5 @@
 /** Base resumes: how their bank items are grouped, counted and searched. */
-import type { ExperienceItem, ItemType } from '@/api/types'
+import type { BaseResume, ExperienceItem, ItemType } from '@/api/types'
 
 /** Groups in resume order, with the words used in the one-line summary ("2 education · 3 projects"). */
 export const GROUPS: { type: ItemType; label: string; one: string; many: string }[] = [
@@ -36,4 +36,17 @@ export function toggleGroup(selected: Set<number>, ids: number[], on: boolean): 
     else next.delete(id)
   }
   return next
+}
+
+/** "Start from" default for tailoring: the most recently used base resume that still has items, else null (whole bank). */
+export function defaultStartFrom(resumes: BaseResume[]): number | null {
+  const used = resumes.filter((r) => r.last_used_at && r.item_ids.length > 0)
+  used.sort((a, b) => Date.parse(b.last_used_at!) - Date.parse(a.last_used_at!))
+  return used[0]?.id ?? null
+}
+
+/** The review's "left out" list, split: the base resume's own items first, then the rest of the bank. */
+export function splitLeftOut(unused: string[], baseCodes: Set<string> | null): { inBase: string[]; others: string[] } {
+  if (!baseCodes) return { inBase: unused, others: [] }
+  return { inBase: unused.filter((c) => baseCodes.has(c.toUpperCase())), others: unused.filter((c) => !baseCodes.has(c.toUpperCase())) }
 }

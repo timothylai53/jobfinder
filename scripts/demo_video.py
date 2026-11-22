@@ -47,6 +47,7 @@ def record(base: str) -> Path:
         pause(2600)  # every point explained
 
         page.locator("header").get_by_role("button", name="Tailor resume").click()
+        page.get_by_role("button", name="Build prompt").click()  # Start from: the whole bank
         page.get_by_placeholder("Paste the chat's reply here", exact=False).fill(FABRICATED_REPLY)
         pause(900)
         page.get_by_role("button", name="Check reply").click()

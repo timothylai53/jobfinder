@@ -72,6 +72,39 @@ def test_prompt_has_bank_ids_jd_profile_rules_and_schema_but_no_contacts(setup):
     assert "Ali Bin Contoh" in p and "ali.contoh@example.com" not in p and "012-345 6789" not in p
 
 
+
+def test_tailoring_from_a_base_resume_uses_only_its_items(setup):
+    client, job_id = setup
+    ids = {i["code"]: i["id"] for i in client.get("/api/experience").json()}
+    rid = client.post("/api/resumes", json={"name": "Software roles", "item_ids": [ids["B1"], ids["B3"]]}).json()["id"]
+    assert next(r for r in client.get("/api/resumes").json() if r["id"] == rid)["last_used_at"] is None
+    t = new_task(client, job_id, base_resume_id=rid)
+    p = t["prompt"]
+    assert "[B1] work:" in p and "[B3] education:" in p
+    assert "[B2]" not in p and "[B4]" not in p and "[B5]" not in p
+    assert t["base_resume_id"] == rid
+    assert next(r for r in client.get("/api/resumes").json() if r["id"] == rid)["last_used_at"] is not None
+    whole = new_task(client, job_id)  # no base resume: the whole bank, as before
+    assert "[B5] publication:" in whole["prompt"] and whole["base_resume_id"] is None
+
+
+def test_base_resume_problems_are_explained(setup):
+    client, job_id = setup
+    empty = client.post("/api/resumes", json={"name": "Empty", "item_ids": []}).json()["id"]
+    r = client.post("/api/ai/tasks", json={"task": "tailor_resume", "job_id": job_id, "base_resume_id": empty})
+    assert r.status_code == 409 and "Empty has no bank items yet" in r.json()["detail"]
+    r = client.post("/api/ai/tasks", json={"task": "tailor_resume", "job_id": job_id, "base_resume_id": 999})
+    assert r.status_code == 409 and r.json()["detail"] == "Base resume not found"
+    r = client.post("/api/ai/tasks", json={"task": "cover_letter", "job_id": job_id, "base_resume_id": empty})
+    assert r.status_code == 409
+
+
+def test_a_same_year_range_is_printed_once(setup):
+    client, job_id = setup
+    p = new_task(client, job_id)["prompt"]
+    assert "Campus Food Ordering App | Universiti Contoh | 2023\n" in p and "2023 - 2023" not in p
+
+
 @pytest.mark.parametrize("task", ["deep_analysis", "cover_letter", "interview_prep"])
 def test_every_job_task_builds_a_prompt(setup, task):
     client, job_id = setup

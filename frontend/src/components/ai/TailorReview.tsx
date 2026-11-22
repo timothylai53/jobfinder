@@ -2,12 +2,14 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { Check, Scissors, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { api } from '@/api/client'
-import type { AiTask, DocumentRow, ExperienceItem, GuardFlag, TailorResult } from '@/api/types'
+import type { AiTask, BaseResume, DocumentRow, ExperienceItem, GuardFlag, TailorResult } from '@/api/types'
 import { ErrorText, FlagIcon } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { acceptedSections, blocksSave, flagsAt, flagTone, isWarning, sentences, splitRow, tailorRows, type TailorRow, unusedCodes } from '@/lib/ai'
+import { splitLeftOut } from '@/lib/baseResumes'
+import { dateRange } from '@/lib/score'
 import { cn } from '@/lib/utils'
 
 function FlagList({ flags }: { flags: GuardFlag[] }) {
@@ -29,6 +31,11 @@ export default function TailorReview({ task, onSaved }: { task: AiTask<TailorRes
   const [extra, setExtra] = useState<string[]>([])
   const flaggedSkills = result.skills_order.filter((_, i) => flagsAt(task.flags, `skills_order.${i}`).length)
   const unused = unusedCodes((bank.data ?? []).map((b) => b.code), rows)
+  // Tailored from a base resume: its own unused items first, then the rest of the bank (which the AI never saw).
+  const resumes = useQuery({ queryKey: ['resumes'], queryFn: () => api.get<BaseResume[]>('/api/resumes'), enabled: !!task.base_resume_id })
+  const base = resumes.data?.find((r) => r.id === task.base_resume_id)
+  const baseCodes = base ? new Set((bank.data ?? []).filter((b) => base.item_ids.includes(b.id)).map((b) => b.code.toUpperCase())) : null
+  const leftOut = splitLeftOut(unused, baseCodes)
   const update = (key: string, patch: Partial<TailorRow>) => setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)))
   const summaryFlags = flagsAt(task.flags, 'summary')
 
@@ -118,18 +125,17 @@ export default function TailorReview({ task, onSaved }: { task: AiTask<TailorRes
       </section>
 
       {unused.length > 0 && (
-        <section className="flex flex-col gap-1">
+        <section className="flex flex-col gap-2">
           <h3 className="font-medium">Bank items the AI left out</h3>
           <p className="text-sm text-muted-foreground">Tick any you want on this resume as written in your bank (education and certifications are often worth keeping).</p>
-          {unused.map((c) => {
-            const b = byCode.get(c.toUpperCase())
-            return (
-              <label key={c} className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={extra.includes(c)} onChange={(e) => setExtra(e.target.checked ? [...extra, c] : extra.filter((x) => x !== c))} />
-                [{c}] {b?.type}: {b?.title}
-              </label>
-            )
-          })}
+          {base && leftOut.inBase.length > 0 && <h4 className="text-sm font-medium">From {base.name}</h4>}
+          <LeftOutList codes={leftOut.inBase} byCode={byCode} extra={extra} setExtra={setExtra} />
+          {leftOut.others.length > 0 && (
+            <>
+              <h4 className="mt-1 text-sm font-medium">Other bank items <span className="font-normal text-muted-foreground">(not in {base?.name ?? 'this base resume'}, so the AI didn't see them)</span></h4>
+              <LeftOutList codes={leftOut.others} byCode={byCode} extra={extra} setExtra={setExtra} />
+            </>
+          )}
         </section>
       )}
 
@@ -143,5 +149,31 @@ export default function TailorReview({ task, onSaved }: { task: AiTask<TailorRes
         </Button>
       </div>
     </div>
+  )
+}
+
+function LeftOutList({ codes, byCode, extra, setExtra }: {
+  codes: string[]; byCode: Map<string, ExperienceItem>; extra: string[]; setExtra: (x: string[]) => void
+}) {
+  return (
+    <ul className="flex flex-col gap-1">
+      {codes.map((c) => {
+        const b = byCode.get(c.toUpperCase())
+        return (
+          <li key={c}>
+            <label className="flex items-start gap-2 text-sm">
+              <input type="checkbox" className="mt-0.5 size-4 accent-foreground" checked={extra.includes(c)}
+                onChange={(e) => setExtra(e.target.checked ? [...extra, c] : extra.filter((x) => x !== c))} />
+              <span>
+                <span className="font-medium">{b?.title}</span>
+                {b?.organization && <span className="text-muted-foreground"> · {b.organization}</span>}
+                {b && (b.start || b.end) && <span className="text-muted-foreground"> · {dateRange(b.start, b.end)}</span>}
+                <span className="ml-1.5 text-xs text-muted-foreground">{c}</span>
+              </span>
+            </label>
+          </li>
+        )
+      })}
+    </ul>
   )
 }

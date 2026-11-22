@@ -117,6 +117,7 @@ class ResumeOut(BaseModel):
     original_file_path: str
     created_at: str
     updated_at: str  # last change (falls back to created_at)
+    last_used_at: str | None  # last tailored from
     item_ids: list[int]
 
 
@@ -126,6 +127,7 @@ def list_resumes(session: Session = Depends(get_session)):
     return [
         ResumeOut(id=require_id(r), name=r.name, original_file_path=r.original_file_path, created_at=r.created_at.isoformat(),
                   updated_at=(r.updated_at or r.created_at).isoformat(),
+                  last_used_at=r.last_used_at.isoformat() if r.last_used_at else None,
                   item_ids=[require_id(i) for i in items if r.id in i.resume_ids])
         for r in session.exec(select(BaseResume).order_by(col(BaseResume.id))).all()
     ]

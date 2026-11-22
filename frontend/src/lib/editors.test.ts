@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import type { AutomationRunRow, ExperienceItem, Skill } from '@/api/types'
-import { groupItems, toggleGroup, typeSummary } from './baseResumes'
+import type { AutomationRunRow, BaseResume, ExperienceItem, Skill } from '@/api/types'
+import { defaultStartFrom, groupItems, splitLeftOut, toggleGroup, typeSummary } from './baseResumes'
+import { dateRange } from './score'
 import { addTown, findTowns, removeTown, resetState, statesWith } from './locations'
 import { metaText, parseLegacyLine, plainNote, runRows } from './runlog'
 import { skillCategories, visibleSkills } from './skills'
@@ -103,5 +104,25 @@ describe('skill dictionary', () => {
     expect(visibleSkills(skills, '', '', 'category', false).map((s) => s.name)).toEqual(['Angular', 'React', 'Python'])
     expect(visibleSkills(skills, '', '', 'name', true).map((s) => s.name)).toEqual(['React', 'Python', 'Angular'])
     expect(skillCategories([...skills, { id: 4, name: 'X', category: 'custom', aliases: [] }])).toContain('custom')
+  })
+})
+
+describe('tailoring from a base resume', () => {
+  const r = (id: number, last: string | null, items: number[]): BaseResume =>
+    ({ id, name: `R${id}`, original_file_path: '', created_at: '', updated_at: '', last_used_at: last, item_ids: items })
+  it('defaults to the most recently used base resume that has items, else the whole bank', () => {
+    expect(defaultStartFrom([r(1, '2026-11-01T10:00:00', [1]), r(2, '2026-11-20T10:00:00', [2]), r(3, null, [3])])).toBe(2)
+    expect(defaultStartFrom([r(1, '2026-11-01T10:00:00', [1]), r(2, '2026-11-20T10:00:00', [])])).toBe(1)
+    expect(defaultStartFrom([r(1, null, [1])])).toBeNull()
+  })
+  it('lists the base resume’s own left-out items first, then the rest of the bank', () => {
+    expect(splitLeftOut(['B2', 'B4', 'B5'], new Set(['B1', 'B2']))).toEqual({ inBase: ['B2'], others: ['B4', 'B5'] })
+    expect(splitLeftOut(['B2', 'B4'], null)).toEqual({ inBase: ['B2', 'B4'], others: [] })
+  })
+  it('prints a same-year range once', () => {
+    expect(dateRange('2024', '2024')).toBe('2024')
+    expect(dateRange('Jan 2024', 'jan  2024')).toBe('Jan 2024')
+    expect(dateRange('Jun 2025', 'Sep 2025')).toBe('Jun 2025 – Sep 2025')
+    expect(dateRange('', '2024')).toBe('2024')
   })
 })

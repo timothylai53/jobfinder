@@ -38,6 +38,14 @@ def test_migration_adds_the_new_columns(tmp_path):
     con.commit()
     con.close()
     eng = create_engine(f"sqlite:///{db}")
-    assert migrations.run(eng) == ["baseresume.updated_at", "automationrun.details"]
+    assert migrations.run(eng) == ["baseresume.updated_at", "automationrun.details", "baseresume.last_used_at"]
     with eng.connect() as c:
         assert c.execute(text("SELECT details FROM automationrun")).scalar() == "[]"
+
+
+def test_date_parts():
+    from models.resume import date_parts
+    assert date_parts("2024", "2024") == ["2024"]
+    assert date_parts("Jan 2024 ", "jan  2024") == ["Jan 2024"]
+    assert date_parts("2023", "2024") == ["2023", "2024"]
+    assert date_parts("", "2024") == ["2024"] and date_parts("", "") == []

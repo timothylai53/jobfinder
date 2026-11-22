@@ -42,6 +42,8 @@ interface Props {
   jobId?: number
   resumeText?: string
   provider: 'copy_paste' | 'ollama'
+  /** tailor_resume: only this base resume's items go into the prompt (undefined/null = whole bank). */
+  baseResumeId?: number | null
   /** Rendered once the reply is valid: the task's review screen. */
   children: (t: AiTask) => ReactNode
 }
@@ -51,7 +53,7 @@ interface Props {
  * fabrication guard) -> review. With Ollama the reply arrives by itself; on failure the same prompt can be used
  * with Copy-Paste instead.
  */
-export default function AiTaskFlow({ task, jobId, resumeText, provider, children }: Props) {
+export default function AiTaskFlow({ task, jobId, resumeText, provider, baseResumeId, children }: Props) {
   const qc = useQueryClient()
   const started = useRef(false)
   const [taskId, setTaskId] = useState<number | null>(null)
@@ -61,7 +63,7 @@ export default function AiTaskFlow({ task, jobId, resumeText, provider, children
   const [elapsed, setElapsed] = useState(0)
 
   const create = useMutation({
-    mutationFn: () => api.post<AiTask>('/api/ai/tasks', { task, job_id: jobId ?? null, resume_text: resumeText ?? '', provider }),
+    mutationFn: () => api.post<AiTask>('/api/ai/tasks', { task, job_id: jobId ?? null, resume_text: resumeText ?? '', provider, base_resume_id: baseResumeId ?? null }),
     onSuccess: (t) => { setTaskId(t.id); qc.setQueryData(['ai-task', t.id], t) },
   })
   useEffect(() => {

@@ -74,6 +74,7 @@ class TaskIn(BaseModel):
     job_id: int | None = None
     resume_text: str = ""
     provider: str | None = None  # None = the global AI mode; per-action override (brief §6.6)
+    base_resume_id: int | None = None  # tailor_resume only: use just this base resume's items
 
 
 @router.post("/tasks", response_model=AITask)
@@ -81,7 +82,7 @@ def create_task(data: TaskIn, session: Session = Depends(get_session)):
     if data.task not in TASKS:
         raise HTTPException(422, f"task must be one of {', '.join(TASKS)}")
     try:
-        t = service.create(session, data.task, data.job_id, data.resume_text, data.provider)
+        t = service.create(session, data.task, data.job_id, data.resume_text, data.provider, data.base_resume_id)
     except service.AIUnavailable as e:
         raise HTTPException(409, str(e)) from e
     if t.provider == "ollama":

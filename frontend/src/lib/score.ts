@@ -96,3 +96,12 @@ export function formatMonth(iso: string | null | undefined): string {
   const d = toDate(iso)
   return d ? MONTH.format(d).replace('Sept', 'Sep') : ''
 }
+
+/** "Jun 2025 – Sep 2025", "2024" (not "2024 – 2024"), or just the one date that is set. */
+export function dateRange(start: string, end: string): string {
+  const s = start.trim()
+  const e = end.trim()
+  const norm = (x: string) => x.toLowerCase().split(/\s+/).join(' ')
+  if (s && e && norm(s) === norm(e)) return s
+  return [s, e].filter(Boolean).join(' – ')
+}
