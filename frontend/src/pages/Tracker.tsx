@@ -66,7 +66,7 @@ function Card({ app }: { app: ApplicationRow }) {
 function Column({ status, apps }: { status: Status; apps: ApplicationRow[] }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
   return (
-    <div ref={setNodeRef} className={cn('flex min-h-64 w-60 shrink-0 flex-col gap-2 rounded-lg bg-muted/60 p-2', isOver && 'ring-2 ring-ring')}>
+    <div ref={setNodeRef} role="region" aria-label={`${status} column`} className={cn('flex min-h-64 w-60 shrink-0 flex-col gap-2 rounded-lg bg-muted/60 p-2', isOver && 'ring-2 ring-ring')}>
       <div className="flex justify-between px-1 text-sm font-medium">
         {status}
         <span className="text-muted-foreground">{apps.length}</span>

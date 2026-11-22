@@ -17,9 +17,10 @@ def _db(path):
 def test_one_automatic_backup_per_day_and_it_is_a_real_copy(tmp_path):
     db, out = _db(tmp_path / "jobfinder.db"), tmp_path / "backups"
     first = daily_backup(db, out, date(2026, 11, 20))
-    assert first is not None and first.name.startswith(AUTO_PREFIX)
+    assert first is not None and first.name.startswith(f"{AUTO_PREFIX}20261120-")  # named for the day it covers
     assert sqlite3.connect(first).execute("SELECT x FROM t").fetchone() == (42,)
-    assert daily_backup(db, out, date(2026, 11, 20)) is None  # same day: nothing new
+    assert daily_backup(db, out, date(2026, 11, 20)) is None  # same day: nothing new (whatever the real clock says)
+    assert daily_backup(db, out, date(2026, 11, 21)) is not None  # the next day: a new one
 
 
 def test_keeps_the_newest_14_automatic_and_every_manual_backup(tmp_path):

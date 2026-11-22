@@ -17,5 +17,6 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    exclude: ['e2e/**', 'node_modules/**'], // Playwright end-to-end specs run with `npm run e2e`
   },
 })

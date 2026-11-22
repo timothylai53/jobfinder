@@ -13,9 +13,9 @@ AUTO_PREFIX = "jobfinder-auto-"
 KEEP_AUTO = 14
 
 
-def backup_db(db_path: Path, backups_dir: Path, prefix: str = MANUAL_PREFIX) -> Path:
+def backup_db(db_path: Path, backups_dir: Path, prefix: str = MANUAL_PREFIX, now: datetime | None = None) -> Path:
     backups_dir.mkdir(parents=True, exist_ok=True)
-    stamp = f"{datetime.now():%Y%m%d-%H%M%S}"
+    stamp = f"{now or datetime.now():%Y%m%d-%H%M%S}"
     dest = backups_dir / f"{prefix}{stamp}.db"
     n = 1
     while dest.exists():
@@ -45,13 +45,14 @@ def prune_auto(backups_dir: Path, keep: int = KEEP_AUTO) -> list[Path]:
 
 
 def daily_backup(db_path: Path, backups_dir: Path, today: date | None = None) -> Path | None:
-    """At most one automatic backup per day. Returns the new file, or None if today's exists or there is no DB yet."""
+    """At most one automatic backup per day. Returns the new file, or None if today's exists or there is no DB yet.
+    The day that is checked and the day in the new file's name come from the same moment, so they always agree."""
     if not db_path.exists():
         return None
-    today = today or date.today()
-    if backups_dir.exists() and any(p.name.startswith(f"{AUTO_PREFIX}{today:%Y%m%d}") for p in _auto_backups(backups_dir)):
+    now = datetime.combine(today, datetime.now().time()) if today else datetime.now()
+    if backups_dir.exists() and any(p.name.startswith(f"{AUTO_PREFIX}{now:%Y%m%d}") for p in _auto_backups(backups_dir)):
         return None
-    dest = backup_db(db_path, backups_dir, AUTO_PREFIX)
+    dest = backup_db(db_path, backups_dir, AUTO_PREFIX, now)
     prune_auto(backups_dir)
     return dest
 

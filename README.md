@@ -95,7 +95,8 @@ Data flow: fetch → normalise → dedupe → filter → save the full ad → qu
 - **Backend:** Python 3.12, FastAPI, SQLModel/SQLAlchemy, Pydantic v2, SQLite, APScheduler, httpx, python-jobspy, pdfplumber, python-docx, Jinja2, Playwright (headless Chromium for PDFs), openpyxl.
 - **Frontend:** React, Vite, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, React Router, dnd-kit.
 - **Tests:** pytest (**449 tests**) and Vitest (**46 tests**). An autouse fixture blocks every real HTTP request and the real JobSpy call, so the suite never touches a live site. PDF tests render real PDFs offline and read them back.
-- **CI:** GitHub Actions on `ubuntu-latest`: backend ruff (lint), mypy (types) and pytest (with Playwright Chromium); frontend Vitest and production build.
+- **End-to-end:** Playwright drives the real UI and API in Chromium on fake data (`frontend/e2e/`): first-run checklist → profile → upload a resume → import a job by smart paste → score and verdict → "I have this" → save → Copy-Paste tailor with a fake AI reply (flags visible) → PDF → mark as applied → Kanban, plus hide/undo and snooze. Own ports and a throwaway data folder; any non-localhost request fails the test. Run with `npm run e2e` in `frontend/`.
+- **CI:** GitHub Actions on `ubuntu-latest`: backend ruff (lint), mypy (types) and pytest (with Playwright Chromium); frontend Vitest and production build; then the end-to-end tests.
 
 ## How it was built (with Claude Code)
 

@@ -15,3 +15,8 @@ demo_data/
 
 # Private notes (privacy audit, publish steps): never committed
 private/
+
+# End-to-end test data (fake, recreated on every run) and Playwright reports
+e2e_data/
+frontend/test-results/
+frontend/playwright-report/
