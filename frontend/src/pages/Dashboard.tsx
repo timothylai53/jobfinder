@@ -68,13 +68,12 @@ function NextSteps({ steps }: { steps: NextStep[] }) {
       <h2 id="next-steps" className="mb-3 text-lg font-semibold">Next steps</h2>
       <ErrorText error={snooze.error || notInterested.error} />
       {steps.length === 0 ? (
-        <div className="rounded-xl border bg-background px-5 py-6">
-          <p className="font-medium">Nothing waiting on you.</p>
-          <p className="mt-1 text-muted-foreground">New matches and follow-ups show up here. Fetch jobs or import one to keep going.</p>
-          <Button asChild variant="outline" className="mt-4"><Link to="/jobs">Go to jobs</Link></Button>
+        <div className="rounded-lg border bg-background px-5 py-6">
+          <p>You're all caught up. New matches and follow-ups will show up here.</p>
+          <Button asChild variant="outline" className="mt-4"><Link to="/jobs">Find jobs</Link></Button>
         </div>
       ) : (
-        <ol className="divide-y rounded-xl border bg-background">
+        <ol className="divide-y rounded-lg border bg-background">
           {steps.map((s, i) => (
             <li key={s.key} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3">
               {s.tone === 'fix'
@@ -114,7 +113,7 @@ function Stats({ d }: { d: DashboardT }) {
   ]
   return (
     <section aria-label="Applications so far">
-      <Link to="/tracker" className="group flex flex-wrap rounded-xl border bg-background transition-colors hover:border-primary/40">
+      <Link to="/tracker" className="group flex flex-wrap rounded-lg border bg-background transition-colors hover:border-foreground/25">
         {items.map(([label, value], i) => (
           <div key={label} className={cn('min-w-28 flex-1 px-5 py-3.5', i > 0 && 'border-l')}>
             <div className="text-sm text-muted-foreground">{label}</div>
@@ -137,7 +136,7 @@ function WeeklyChart({ weeks }: { weeks: DashboardT['applications_per_week'] }) 
         {weeks.map((w) => (
           <div key={w.week_start} className="flex flex-1 flex-col items-center gap-1">
             <span className="text-sm tabular-nums text-muted-foreground">{w.count || ''}</span>
-            <div className="w-full rounded-t bg-primary/75" style={{ height: `${(w.count / max) * 88}px`, minHeight: w.count ? 4 : 1 }} />
+            <div className="w-full rounded-t-sm bg-chart-2" style={{ height: `${(w.count / max) * 88}px`, minHeight: w.count ? 4 : 1 }} />
           </div>
         ))}
       </div>
@@ -174,11 +173,11 @@ function FirstRun({ steps }: { steps: ReturnType<typeof setupSteps> }) {
     <section aria-labelledby="get-started" className="max-w-3xl">
       <h2 id="get-started" className="text-lg font-semibold">Get started in three steps</h2>
       <p className="mb-4 text-muted-foreground">Scores and AI only ever use what you add here.</p>
-      <ol className="divide-y rounded-xl border bg-background">
+      <ol className="divide-y rounded-lg border bg-background">
         {steps.map((s, i) => (
           <li key={s.key} className="flex items-start gap-4 px-5 py-4">
             {s.done
-              ? <CheckCircle2 role="img" className="mt-0.5 size-5 shrink-0 text-primary" aria-label="Done" />
+              ? <CheckCircle2 role="img" className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-label="Done" />
               : <Circle role="img" className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-label="To do" />}
             <div className="min-w-0 flex-1">
               <p className={cn('font-medium', s.done && 'text-muted-foreground line-through decoration-1')}>{i + 1}. {s.title}</p>

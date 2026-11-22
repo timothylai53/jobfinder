@@ -19,7 +19,7 @@ const EMPTY: JobDraft = {
 
 type FieldState = 'found' | 'check' | 'fill' | 'undisclosed' | 'none'
 const BADGE: Record<Exclude<FieldState, 'none'>, { text: string; cls: string }> = {
-  found: { text: 'found in paste', cls: 'bg-accent text-accent-foreground' },
+  found: { text: 'found in paste', cls: 'bg-selected text-foreground' },
   check: { text: 'please check', cls: 'border border-attention-edge bg-attention-bg text-attention' },
   fill: { text: 'fill in', cls: 'bg-muted text-muted-foreground' },
   undisclosed: { text: 'not disclosed in ad', cls: 'bg-muted text-muted-foreground' },

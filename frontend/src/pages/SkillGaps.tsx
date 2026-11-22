@@ -19,8 +19,8 @@ function GapList({ rows, max }: { rows: SkillGapRow[]; max: number }) {
             <span className="w-6 text-right text-sm text-muted-foreground tabular-nums">{i + 1}</span>
             <span className="w-64 shrink-0 font-medium">{g.skill}</span>
             <span className="flex h-3 flex-1 overflow-hidden rounded-full bg-muted" aria-hidden>
-              <span className="bg-primary" style={{ width: `${(g.required / max) * 100}%` }} />
-              <span className="bg-primary/40" style={{ width: `${(g.preferred / max) * 100}%` }} />
+              <span className="bg-chart-4" style={{ width: `${(g.required / max) * 100}%` }} />
+              <span className="bg-chart-1" style={{ width: `${(g.preferred / max) * 100}%` }} />
             </span>
             <span className="w-48 text-right text-sm tabular-nums">
               {g.required > 0 && <>required in {g.required}</>}
@@ -61,7 +61,7 @@ export default function SkillGaps() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex rounded-lg border bg-background p-0.5 text-[15px]">
           {(['saved', 'scored'] as const).map((s) => (
-            <button key={s} onClick={() => setScope(s)} className={cn('rounded-md px-3 py-1', scope === s && 'bg-accent font-medium text-accent-foreground')}>
+            <button key={s} onClick={() => setScope(s)} className={cn('rounded-md px-3 py-1', scope === s && 'bg-selected font-medium text-foreground')}>
               {s === 'saved' ? 'Jobs in my tracker' : 'All jobs scoring at least'}
             </button>
           ))}
@@ -83,7 +83,7 @@ export default function SkillGaps() {
           <summary className="cursor-pointer font-medium">Soft skills asked for ({d.soft_skills.length}), not scored</summary>
           <p className="mt-1 text-sm text-muted-foreground">Listed apart because soft skills don't count toward the score unless you turn on “Score soft skills”.</p>
           <ul className="mt-2 flex flex-wrap gap-2">
-            {d.soft_skills.map((s) => <li key={s.skill} className="rounded-full bg-secondary px-2.5 py-0.5 text-sm">{s.skill} · {s.total}</li>)}
+            {d.soft_skills.map((s) => <li key={s.skill} className="rounded-sm bg-secondary px-2 py-0.5 text-sm">{s.skill} · {s.total}</li>)}
           </ul>
         </details>
       )}

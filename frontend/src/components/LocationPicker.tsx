@@ -80,14 +80,14 @@ export default function LocationPicker({
         {value.map((v) => {
           const parent = stateOf.get(v.toLowerCase())
           return (
-            <span key={v} className="inline-flex items-center gap-1 rounded-full bg-accent py-0.5 pr-1 pl-2.5 text-sm text-accent-foreground">
+            <span key={v} className="inline-flex items-center gap-1 rounded-md bg-selected py-0.5 pr-1 pl-2.5 text-sm text-foreground">
               {v}
               {locationMap[v] && <span className="text-xs opacity-75">whole state</span>}
               {parent && <span className="text-xs opacity-75">{parent}</span>}
               <button
                 type="button"
                 aria-label={`Remove ${v}`}
-                className="rounded-full p-0.5 hover:bg-primary/15"
+                className="rounded-sm p-0.5 hover:bg-foreground/10"
                 onClick={(e) => {
                   e.stopPropagation()
                   onChange(value.filter((x) => x !== v))
@@ -146,7 +146,7 @@ export default function LocationPicker({
                   covered && 'cursor-default text-muted-foreground',
                 )}
               >
-                <span className={cn('flex size-4 items-center justify-center rounded border', isSel ? 'border-primary bg-primary text-primary-foreground' : 'border-input')}>
+                <span className={cn('flex size-4 items-center justify-center rounded border', isSel ? 'border-foreground bg-foreground text-background' : 'border-input')}>
                   {isSel && <Check className="size-3" />}
                 </span>
                 <span className="flex-1">{o.value}</span>

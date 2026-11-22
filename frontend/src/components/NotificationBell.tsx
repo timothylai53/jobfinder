@@ -43,23 +43,23 @@ export default function NotificationBell() {
       >
         <Bell className="size-5" />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-4 rounded-full bg-primary px-1 text-center text-[11px] leading-4 font-semibold text-primary-foreground">
+          <span className="absolute -top-0.5 -right-0.5 min-w-4 rounded-full bg-foreground px-1 text-center text-[11px] leading-4 font-semibold text-background">
             {unread > 99 ? '99+' : unread}
           </span>
         )}
       </button>
       {open && (
-        <div className="absolute top-9 left-0 z-40 w-80 rounded-lg border bg-popover shadow-lg">
+        <div className="absolute top-9 left-0 z-40 w-80 rounded-lg border bg-popover shadow-pop">
           <div className="flex items-center justify-between border-b px-3 py-2">
             <span className="font-semibold">Notifications</span>
             {unread > 0 && (
-              <button className="text-sm text-primary hover:underline" onClick={() => readAll.mutate()}>Mark all read</button>
+              <button className="text-sm text-foreground underline underline-offset-2" onClick={() => readAll.mutate()}>Mark all read</button>
             )}
           </div>
           <ul className="max-h-96 overflow-y-auto">
             {items.length === 0 && <li className="px-3 py-4 text-sm text-muted-foreground">Nothing yet. New high-match jobs, follow-ups and source problems show up here.</li>}
             {items.map((n) => (
-              <li key={n.id} className={cn('border-b last:border-0', !n.read && 'bg-accent/50')}>
+              <li key={n.id} className={cn('border-b last:border-0', !n.read && 'bg-selected/60')}>
                 <Link
                   to={n.link || '#'}
                   onClick={() => {

@@ -58,11 +58,11 @@ export default function ResumeUpload({ onSaved }: { onSaved?: (msg: string) => v
           if (f) parse.mutate(f)
         }}
         className={cn(
-          'flex cursor-pointer items-center gap-4 rounded-lg border-2 border-dashed bg-card px-5 py-5 transition-colors hover:border-primary',
-          dragging && 'border-primary bg-accent',
+          'flex cursor-pointer items-center gap-4 rounded-lg border-2 border-dashed bg-card px-5 py-5 transition-colors hover:border-foreground/40',
+          dragging && 'border-foreground/60 bg-selected',
         )}
       >
-        <FileUp className="size-7 shrink-0 text-primary" />
+        <FileUp className="size-7 shrink-0 text-muted-foreground" aria-hidden />
         <div className="flex-1">
           <div className="font-semibold">{parse.isPending ? 'Reading your resume…' : 'Upload your resume'}</div>
           <div className="text-sm text-muted-foreground">PDF or DOCX, up to 10 MB. Drop it here or click to choose. You review everything before it is saved.</div>

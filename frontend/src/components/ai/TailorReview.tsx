@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 
 function FlagList({ flags }: { flags: GuardFlag[] }) {
   if (!flags.length) return null
-  return <ul className="text-sm">{flags.map((f, i) => <li key={i} className={isWarning(f) ? 'text-amber-700' : 'text-red-700'}><FlagIcon />{f.message}</li>)}</ul>
+  return <ul className="text-sm">{flags.map((f, i) => <li key={i} className={isWarning(f) ? 'text-attention' : 'text-danger'}><FlagIcon />{f.message}</li>)}</ul>
 }
 
 /**
@@ -46,7 +46,7 @@ export default function TailorReview({ task, onSaved }: { task: AiTask<TailorRes
     <div className="flex flex-col gap-4">
       <section className="flex flex-col gap-1">
         <h3 className="font-medium">Summary</h3>
-        <Textarea rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} className={cn(summaryFlags.length && 'border-red-400')} />
+        <Textarea rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} className={cn(summaryFlags.length && 'border-danger-edge')} />
         <FlagList flags={summaryFlags} />
       </section>
 
@@ -61,10 +61,10 @@ export default function TailorReview({ task, onSaved }: { task: AiTask<TailorRes
           ))}
           {flaggedSkills.filter((s) => !skills.includes(s)).map((s) => (
             <button key={s} title="Not in your bank or profile. Click to add it anyway." onClick={() => setSkills([...skills, s])}
-              className="rounded-md border border-red-300 bg-red-50 px-2 py-0.5 text-sm text-red-700 line-through">{s}</button>
+              className="rounded-md border border-danger-edge bg-danger-bg px-2 py-0.5 text-sm text-danger line-through">{s}</button>
           ))}
         </div>
-        {flaggedSkills.length > 0 && <p className="text-sm text-red-700">Crossed out: not in your bank or profile, left out.</p>}
+        {flaggedSkills.length > 0 && <p className="text-sm text-danger">Crossed out: not in your bank or profile, left out.</p>}
       </section>
 
       <section className="flex flex-col gap-2">
@@ -79,7 +79,7 @@ export default function TailorReview({ task, onSaved }: { task: AiTask<TailorRes
           return (
             <div key={r.key}>
               {header && <h3 className="mt-2 mb-1 border-b pb-1 font-semibold">{r.section}</h3>}
-              <div className={cn('grid grid-cols-2 gap-3 rounded-lg border p-2', flagTone(r.flags) === 'red' && 'border-red-300 bg-red-50/40', flagTone(r.flags) === 'amber' && 'border-amber-300 bg-amber-50/40', r.decision === 'rejected' && 'opacity-60')}>
+              <div className={cn('grid grid-cols-2 gap-3 rounded-lg border p-2', flagTone(r.flags) === 'red' && 'border-danger-edge bg-danger-bg/40', flagTone(r.flags) === 'amber' && 'border-attention-edge bg-attention-bg/40', r.decision === 'rejected' && 'opacity-60')}>
                 <div className="text-sm">
                   {b ? (
                     <>
@@ -87,7 +87,7 @@ export default function TailorReview({ task, onSaved }: { task: AiTask<TailorRes
                       <ul className="mt-1 list-disc pl-4 text-muted-foreground">{b.bullets.map((x, i) => <li key={i}>{x}</li>)}</ul>
                     </>
                   ) : (
-                    <div className="font-medium text-red-700">No bank item “{r.source_id || 'none'}”: nothing to compare with.</div>
+                    <div className="font-medium text-danger">No bank item “{r.source_id || 'none'}”: nothing to compare with.</div>
                   )}
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -104,10 +104,10 @@ export default function TailorReview({ task, onSaved }: { task: AiTask<TailorRes
                       </Button>
                     )}
                     <div className="ml-auto flex gap-1">
-                      <Button size="sm" variant={r.decision === 'accepted' ? 'default' : 'outline'} disabled={unsavable}
+                      <Button size="sm" variant={r.decision === 'accepted' ? 'selected' : 'outline'} aria-pressed={r.decision === 'accepted'} disabled={unsavable}
                         title={unsavable ? 'Give it the ID of a real bank item first' : undefined}
                         onClick={() => update(r.key, { decision: 'accepted' })}><Check className="size-4" /> Accept</Button>
-                      <Button size="sm" variant={r.decision === 'rejected' ? 'secondary' : 'outline'} onClick={() => update(r.key, { decision: 'rejected' })}><X className="size-4" /> Reject</Button>
+                      <Button size="sm" variant={r.decision === 'rejected' ? 'selected' : 'outline'} aria-pressed={r.decision === 'rejected'} onClick={() => update(r.key, { decision: 'rejected' })}><X className="size-4" /> Reject</Button>
                     </div>
                   </div>
                 </div>

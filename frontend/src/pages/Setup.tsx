@@ -50,11 +50,11 @@ export default function Setup() {
                 aria-current={i === step ? 'step' : undefined}
                 className={cn(
                   'flex w-full items-center gap-2 border-t-4 pt-2 text-left text-[15px]',
-                  i < step ? 'border-primary text-foreground' : i === step ? 'border-primary font-semibold' : 'border-border text-muted-foreground',
+                  i < step ? 'border-foreground text-foreground' : i === step ? 'border-foreground font-semibold' : 'border-border text-muted-foreground',
                 )}
               >
                 <span className={cn('flex size-6 shrink-0 items-center justify-center rounded-full text-sm',
-                  i < step ? 'bg-primary text-primary-foreground' : i === step ? 'border-2 border-primary text-primary' : 'border border-input')}>
+                  i < step ? 'bg-foreground text-background' : i === step ? 'border-2 border-foreground text-foreground' : 'border border-input')}>
                   {i < step ? <Check className="size-3.5" /> : i + 1}
                 </span>
                 {s.title}
@@ -75,7 +75,7 @@ export default function Setup() {
             <ProfileTab onSaved={next} saveLabel="Save and continue" />
             <p className="text-sm text-muted-foreground">
               Not sure yet? Skip this step. The resume in the next step can fill your name, contact and education for you.{' '}
-              <button className="text-primary underline" onClick={next}>Skip this step</button>
+              <button className="text-foreground underline underline-offset-2" onClick={next}>Skip this step</button>
             </p>
           </>
         )}
@@ -83,12 +83,12 @@ export default function Setup() {
           <>
             <ResumeUpload onSaved={next} />
             <p className="text-sm text-muted-foreground">
-              No resume to hand? <button className="text-primary underline" onClick={next}>Skip this step</button>. You can add Experience Bank items by hand later.
+              No resume to hand? <button className="text-foreground underline underline-offset-2" onClick={next}>Skip this step</button>. You can add Experience Bank items by hand later.
             </p>
           </>
         )}
         {step === 2 && (
-          <div className="rounded-xl border bg-card p-4"><PreferredLocations onSaved={next} saveLabel="Save and continue" /></div>
+          <div className="rounded-lg border bg-card p-4"><PreferredLocations onSaved={next} saveLabel="Save and continue" /></div>
         )}
         {step === 3 && (
           <Card>

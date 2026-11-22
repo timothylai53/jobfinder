@@ -216,7 +216,7 @@ function MoreMenu({ items, label, onPick }: { items: typeof MORE; label: string;
         {label} <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} aria-hidden />
       </Button>
       {open && (
-        <ul id="ai-more" className="absolute right-0 z-40 mt-1 w-72 rounded-lg border bg-popover p-1 shadow-[0_8px_24px_-8px_rgb(23_33_43/0.18)]">
+        <ul id="ai-more" className="absolute right-0 z-40 mt-1 w-72 rounded-lg border bg-popover p-1 shadow-pop">
           {items.map(({ open: o, label, icon: Icon }) => (
             <li key={o}>
               <button type="button" className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-[15px] hover:bg-muted focus-visible:bg-muted"

@@ -7,14 +7,14 @@ export const STATUS_LABEL: Record<ItemStatus, string> = {
   not_specified: 'not specified',
 }
 
-/** Tailwind classes for a 0-100 score badge. The accent marks good matches; amber a partial one; weak scores stay
- * neutral, and only a failed hard gate is red. */
+/** Tailwind colour classes for a 0-100 score badge (the tab's fill, text and 2px base line). The accent marks good
+ * matches; amber a partial one; weak scores stay neutral, and only a failed hard gate is red. */
 export function scoreTone(score: number | null, gated = false): string {
-  if (score === null) return 'bg-muted text-muted-foreground'
-  if (gated) return 'bg-red-50 text-red-800 ring-1 ring-inset ring-red-200'
-  if (score >= 70) return 'bg-accent text-accent-foreground ring-1 ring-inset ring-primary/25'
-  if (score >= 50) return 'bg-attention-bg text-attention ring-1 ring-inset ring-attention-edge/40'
-  return 'bg-muted text-foreground ring-1 ring-inset ring-border'
+  if (score === null) return 'bg-muted text-muted-foreground border-border'
+  if (gated) return 'bg-danger-bg text-danger border-danger'
+  if (score >= 70) return 'bg-accent text-accent-foreground border-primary'
+  if (score >= 50) return 'bg-attention-bg text-attention border-attention'
+  return 'bg-score-weak text-foreground border-foreground/45'
 }
 
 export function formatSalary(min: number | null, max: number | null, currency: string): string {

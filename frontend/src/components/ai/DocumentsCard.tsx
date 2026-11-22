@@ -31,13 +31,13 @@ export default function DocumentsCard({ jobId, application }: { jobId: number; a
     <div className="flex flex-col gap-2">
       {rows.length === 0 && <p className="text-muted-foreground">No versions yet. Tailor a resume, or write a cover letter from the template.</p>}
       {rows.length > 0 && (
-        <ul className="divide-y rounded-xl border bg-background">
+        <ul className="divide-y rounded-lg border bg-background">
           {rows.map((d) => (
             <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
               <span className="font-medium">{DOC_LABEL[d.type]} v{d.version}</span>
               <span className="text-sm text-muted-foreground">{SOURCE[d.source]}, {formatDate(d.created_at)}</span>
               {d.type === 'deep_analysis' && <span className="text-sm text-muted-foreground">fit {(d.content as unknown as DeepAnalysisResult).overall_fit}/100</span>}
-              {sent.has(d.id) && <span className="rounded bg-accent px-1.5 text-[13px] font-medium text-accent-foreground">sent with application</span>}
+              {sent.has(d.id) && <span className="rounded-sm bg-selected px-1.5 text-[13px] font-medium text-foreground">sent with application</span>}
               <div className="ml-auto flex gap-1">
                 {d.printable ? (
                   <>

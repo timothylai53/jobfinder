@@ -87,7 +87,7 @@ function ItemCard({ row, onChange, onRemove, onFocus }: {
           </div>
         ))}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <Button variant="ghost" size="sm" className="text-primary" onClick={() => set('bullets', [...row.bullets, ''])}>
+          <Button variant="ghost" size="sm" onClick={() => set('bullets', [...row.bullets, ''])}>
             <Plus /> Add bullet
           </Button>
           <label className="flex min-w-72 flex-1 items-center gap-2 text-sm text-muted-foreground">
@@ -127,7 +127,7 @@ function SourcePanel({ text, unparsed, highlight }: { text: string; unparsed: Se
               className={cn(
                 'rounded px-2 py-0.5 whitespace-pre-wrap',
                 isUnparsed && 'bg-attention-bg text-attention',
-                isHl && !isUnparsed && 'bg-accent text-accent-foreground',
+                isHl && !isUnparsed && 'bg-selected',
                 !l.trim() && 'h-3',
               )}
             >
@@ -237,7 +237,7 @@ export default function ResumeReview({ draft, onSaved, onCancel }: {
           </ul>
         </div>
       ) : (
-        <div className="rounded-lg border bg-accent px-4 py-3 text-[15px] text-accent-foreground">Everything was placed. Give it a quick read, then save.</div>
+        <div className="rounded-lg border bg-background px-4 py-3 text-[15px]">Everything was placed. Give it a quick read, then save.</div>
       )}
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
@@ -295,7 +295,7 @@ export default function ResumeReview({ draft, onSaved, onCancel }: {
             <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
               {field('Skills', <ListInput value={prof.skills ?? []} onChange={(v) => setP('skills', v)} />)}
               <div className="flex flex-wrap gap-1.5">
-                {(prof.skills ?? []).map((s) => <span key={s} className="rounded-full bg-secondary px-2.5 py-0.5 text-sm">{s}</span>)}
+                {(prof.skills ?? []).map((s) => <span key={s} className="rounded-sm bg-secondary px-2 py-0.5 text-sm">{s}</span>)}
               </div>
               {field('Languages', <ListInput value={prof.languages ?? []} onChange={(v) => setP('languages', v)} />)}
             </div>

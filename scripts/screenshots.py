@@ -65,7 +65,7 @@ def run_on_demo(action) -> None:
     procs = [
         subprocess.Popen([str(PY), "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(API)],
                          cwd=ROOT / "backend", env=env),
-        subprocess.Popen("npx vite --host 127.0.0.1 --port %d --strictPort" % UI, cwd=ROOT / "frontend", env=env, shell=True),
+        subprocess.Popen(f"npx vite --host 127.0.0.1 --port {UI} --strictPort", cwd=ROOT / "frontend", env=env, shell=True),
     ]
     try:
         wait(f"http://127.0.0.1:{API}/api/health")

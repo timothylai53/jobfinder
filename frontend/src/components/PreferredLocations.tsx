@@ -42,7 +42,7 @@ export default function PreferredLocations({ onSaved, saveLabel = 'Save location
         A whole state covers every town listed under it. Choose “Remote” if remote jobs are fine. Jobs outside these get 0 of 5 location points.
       </p>
       <div className="flex items-center justify-end gap-2">
-        {save.isSuccess && <span className="text-sm text-primary">Saved. Jobs rescored.</span>}
+        {save.isSuccess && <span className="text-sm text-muted-foreground">Saved. Jobs rescored.</span>}
         <ErrorText error={save.error} />
         <Button onClick={() => save.mutate()} disabled={save.isPending}>{saveLabel}</Button>
       </div>

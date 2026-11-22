@@ -49,7 +49,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toast && (
           <div
             key={toast.id}
-            className="pointer-events-auto flex items-center gap-3 rounded-lg bg-foreground py-2 pr-2 pl-4 text-[15px] text-background shadow-[0_10px_30px_-12px_rgb(23_33_43/0.5)]"
+            className="jf-fade-in pointer-events-auto flex items-center gap-3 rounded-lg bg-foreground py-2 pr-2 pl-4 text-[15px] text-background shadow-pop"
             onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
             onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}
           >

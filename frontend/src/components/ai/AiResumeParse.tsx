@@ -23,7 +23,7 @@ export default function AiResumeParse({ draft, onDraft }: { draft: ResumeDraft; 
   if (!mode || mode === 'off') return null
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-card px-3 py-2 text-sm">
-      <Sparkles className="size-4 text-primary" />
+      <Sparkles className="size-4 text-muted-foreground" aria-hidden />
       <span className="flex-1">Layout not read well? Let an AI structure it instead ({mode === 'ollama' ? 'Ollama on this laptop' : 'Copy-Paste'}). You still review everything.</span>
       <Button size="sm" variant="outline" onClick={() => { setN(n + 1); setOpen(true) }}>Parse with AI</Button>
       {open && (
@@ -40,7 +40,7 @@ export default function AiResumeParse({ draft, onDraft }: { draft: ResumeDraft; 
                   <div className="flex flex-col gap-2 text-sm">
                     <div>The AI found <strong>{r.items.length} items</strong>{r.profile.name && <> for <strong>{r.profile.name}</strong></>}.</div>
                     {t.flags.length > 0 && (
-                      <ul className="text-red-700">{t.flags.map((f, i) => <li key={i}><FlagIcon />{f.path}: {f.message}</li>)}</ul>
+                      <ul className="text-danger">{t.flags.map((f, i) => <li key={i}><FlagIcon />{f.path}: {f.message}</li>)}</ul>
                     )}
                     <div className="flex justify-end">
                       <Button onClick={() => { onDraft(parsedToDraft(r, draft, bank.data ?? [])); setOpen(false) }}>Use this in the review screen</Button>

@@ -14,10 +14,10 @@ import { formatDateTime } from '@/lib/score'
 export function sourceStatus(s: SourceRow): { text: string; tone: string } {
   if (s.running) return { text: 'Fetching now…', tone: 'text-attention' }
   if (!s.enabled) return { text: 'Off', tone: 'text-muted-foreground' }
-  if (s.status === 'paused') return { text: `Paused until ${formatDateTime(s.paused_until)}`, tone: 'text-red-700' }
+  if (s.status === 'paused') return { text: `Paused until ${formatDateTime(s.paused_until)}`, tone: 'text-danger' }
   if (s.status === 'error') return { text: 'Last run failed', tone: 'text-attention' }
   if (s.runs_today >= s.max_runs_per_day) return { text: 'Daily limit reached', tone: 'text-muted-foreground' }
-  return { text: 'Ready', tone: 'text-primary' }
+  return { text: 'Ready', tone: 'text-foreground' }
 }
 
 /** "Fetch now": pick sources (and an optional small cap), then watch the run's per-source results. */
@@ -150,7 +150,7 @@ export default function FetchNowDialog() {
             </p>
             <ul className="flex flex-col gap-1 rounded-lg border bg-muted/40 p-3 text-sm">
               {(run.data?.message || '').split('\n').filter(Boolean).map((line, i) => <li key={i}>{line}</li>)}
-              {run.data?.error && <li className="text-red-700">{run.data.error}</li>}
+              {run.data?.error && <li className="text-danger">{run.data.error}</li>}
               {!done && <li className="text-muted-foreground">Waiting for results…</li>}
             </ul>
             {done && (

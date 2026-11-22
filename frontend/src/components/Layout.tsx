@@ -8,6 +8,7 @@ import { api } from '@/api/client'
 import { cn } from '@/lib/utils'
 import NotificationBell from './NotificationBell'
 import { ToastProvider } from './Toast'
+import { LogoMark } from './common'
 
 // The four places a job search happens, then the tools you visit now and then.
 const MAIN = [
@@ -29,9 +30,9 @@ function Item({ to, label, icon: Icon, end, small }: { to: string; label: string
       end={end}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-2.5 rounded-md px-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground',
+          'flex items-center gap-2.5 rounded-md px-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
           small ? 'py-1.5 text-sm' : 'py-2 text-[15px]',
-          isActive && 'bg-accent font-medium text-accent-foreground hover:bg-accent hover:text-accent-foreground',
+          isActive && 'bg-selected font-medium text-foreground hover:bg-selected',
         )
       }
     >
@@ -60,10 +61,10 @@ export default function Layout() {
   return (
     <ToastProvider>
     <div className="flex min-h-screen bg-fog">
-      <a href="#main" className="sr-only z-50 rounded bg-background px-3 py-2 focus:not-sr-only focus:fixed focus:top-2 focus:left-2">Skip to content</a>
+      <a href="#main" className="sr-only z-50 rounded-md border bg-background px-3 py-2 focus:not-sr-only focus:fixed focus:top-2 focus:left-2">Skip to content</a>
       <aside className="sticky top-0 z-30 flex h-screen w-52 shrink-0 flex-col border-r bg-background px-3 py-4">
         <div className="mb-5 flex items-center justify-between px-2.5">
-          <span className="text-lg font-semibold tracking-tight">JobFinder</span>
+          <span className="flex items-center gap-2 font-heading text-[19px] leading-none font-semibold tracking-[-0.01em]"><LogoMark />JobFinder</span>
           <NotificationBell />
         </div>
         <nav aria-label="Main" className="flex flex-col gap-0.5">
@@ -74,7 +75,7 @@ export default function Layout() {
         </nav>
         <p className="mt-3 px-2.5 text-[13px] leading-snug text-muted-foreground">
           {health.isError ? (
-            <span className="text-red-700">Backend not reachable. Is start.bat running?</span>
+            <span className="text-danger">Backend not reachable. Is start.bat running?</span>
           ) : (
             'Runs on this laptop only'
           )}

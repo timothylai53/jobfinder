@@ -10,7 +10,7 @@ export default function Breakdown({ data }: { data: BreakdownT }) {
   return (
     <div className="flex flex-col gap-4">
       {data.gates.length > 0 && (
-        <div role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-[15px] text-red-900">
+        <div role="alert" className="rounded-lg bg-danger-bg px-4 py-3 text-[15px] text-danger">
           {data.capped && <p className="font-medium">Score capped at {data.total} (it would be {data.raw_total}) because a hard requirement failed:</p>}
           <ul className="mt-1 flex flex-col gap-1">
             {data.gates.map((g) => <li key={g.key} className="flex items-center gap-2"><StatusMark status="not_met" />{g.message}</li>)}

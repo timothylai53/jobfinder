@@ -55,7 +55,7 @@ test('first-time journey: from an empty app to an application on the Kanban', as
     jobUrl = page.url()
     await expect(page.getByRole('heading', { name: 'Junior Software Engineer' })).toBeVisible()
     await expect(page.getByText(/^(Strong|Partial|Weak) match: .*required skills/)).toBeVisible()
-    await expect(page.getByRole('heading', { name: "What you're missing" })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /^You're missing|^Nothing missing$/ })).toBeVisible()
   })
 
   await test.step('"I have this" adds a missing skill and rescores at once', async () => {

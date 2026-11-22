@@ -114,7 +114,7 @@ export default function Jobs() {
                 <TableCell>
                   <ScoreBadge score={j.score} gated={j.gate_flags.length > 0} rough={j.summary_only || !!j.low_confidence} />
                   {(j.summary_only || j.low_confidence) && (
-                    <div className="mt-0.5 text-[11px] leading-tight whitespace-nowrap text-muted-foreground" title={j.low_confidence || undefined}>
+                    <div className="mt-0.5 text-xs leading-tight whitespace-nowrap text-muted-foreground" title={j.low_confidence || undefined}>
                       {j.summary_only ? 'rough (summary only)' : 'low confidence'}
                     </div>
                   )}

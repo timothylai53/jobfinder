@@ -48,7 +48,7 @@ export function AiSettingsTab() {
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={() => status.mutate(s.ollama_model)} disabled={status.isPending}>{status.isPending ? 'Checking…' : 'Check Ollama'}</Button>
           {st && (
-            <span className={cn('flex items-center gap-1.5 text-sm', st.running && st.installed ? 'text-primary' : 'text-attention')}>
+            <span className={cn('flex items-center gap-1.5 text-sm', st.running && st.installed ? 'text-foreground' : 'text-attention')}>
               {st.running && st.installed ? <CheckCircle2 className="size-4" /> : <CircleAlert className="size-4" />}
               {st.message}{st.running && st.models.length > 0 && ` Installed: ${st.models.join(', ')}.`}
             </span>
@@ -98,7 +98,7 @@ export function PromptTemplatesTab() {
       <CardContent className="flex flex-col gap-3">
         <div className="flex flex-wrap gap-1">
           {(q.data ?? []).map((x) => (
-            <Button key={x.name} size="sm" variant={x.name === name ? 'default' : 'outline'} onClick={() => setName(x.name)}>
+            <Button key={x.name} size="sm" variant={x.name === name ? 'selected' : 'outline'} aria-pressed={x.name === name} onClick={() => setName(x.name)}>
               {TASK_LABEL[x.name] ?? 'Fix-up'}{x.edited && ' •'}
             </Button>
           ))}

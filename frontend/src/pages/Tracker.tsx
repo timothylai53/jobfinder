@@ -44,7 +44,7 @@ function Card({ app }: { app: ApplicationRow }) {
       style={style}
       {...listeners}
       {...attributes}
-      className={cn('cursor-grab rounded-md border bg-background p-2 text-sm shadow-xs', isDragging && 'z-10 opacity-80 shadow-md')}
+      className={cn('cursor-grab rounded-md border bg-background p-2 text-sm', isDragging && 'z-10 opacity-90 shadow-pop')}
     >
       <div className="flex items-start justify-between gap-2">
         <Link to={`/jobs/${app.job_id}`} className="font-medium hover:underline" onPointerDown={(e) => e.stopPropagation()}>
@@ -55,7 +55,7 @@ function Card({ app }: { app: ApplicationRow }) {
       <div className="text-xs text-muted-foreground">{app.company}</div>
       {app.applied_at && <div className="text-xs text-muted-foreground">Applied {formatDate(app.applied_at)}</div>}
       {app.follow_up_at && app.status === 'Applied' && (
-        <div className={cn('text-xs', isOverdue(app) ? 'font-medium text-red-600' : 'text-muted-foreground')}>
+        <div className={cn('text-xs', isOverdue(app) ? 'font-medium text-danger' : 'text-muted-foreground')}>
           Follow up {formatDate(app.follow_up_at)}
         </div>
       )}
@@ -166,7 +166,7 @@ function AppTable({ apps, onMove }: { apps: ApplicationRow[]; onMove: (id: numbe
                   <ScoreBadge score={a.score} />
                 </TableCell>
                 <TableCell>{formatDate(a.applied_at)}</TableCell>
-                <TableCell className={cn(isOverdue(a) && 'font-medium text-red-600')}>{formatDate(a.follow_up_at)}</TableCell>
+                <TableCell className={cn(isOverdue(a) && 'font-medium text-danger')}>{formatDate(a.follow_up_at)}</TableCell>
                 <TableCell className="max-w-64 truncate" title={a.notes}>
                   {a.notes}
                 </TableCell>
@@ -198,10 +198,10 @@ export default function Tracker() {
   return (
     <div>
       <PageHeader title="Tracker" lead="Where each application stands. Drag a card to change its status.">
-        <Button variant={view === 'kanban' ? 'default' : 'outline'} onClick={() => setV('kanban')}>
+        <Button variant={view === 'kanban' ? 'selected' : 'outline'} aria-pressed={view === 'kanban'} onClick={() => setV('kanban')}>
           Kanban
         </Button>
-        <Button variant={view === 'table' ? 'default' : 'outline'} onClick={() => setV('table')}>
+        <Button variant={view === 'table' ? 'selected' : 'outline'} aria-pressed={view === 'table'} onClick={() => setV('table')}>
           Table
         </Button>
       </PageHeader>

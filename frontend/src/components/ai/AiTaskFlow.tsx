@@ -102,7 +102,7 @@ export default function AiTaskFlow({ task, jobId, resumeText, provider, children
     <div className="flex flex-col gap-4">
       {t.provider === 'ollama' && running && (
         <div className="flex items-center gap-3 rounded-lg border bg-muted/40 px-3 py-3 text-[15px]">
-          <Loader2 className="size-5 animate-spin text-primary" />
+          <Loader2 className="size-5 animate-spin text-muted-foreground" />
           <div>
             <div className="font-medium">Asking {settings.data?.ollama_model ?? 'Ollama'} on this laptop… {elapsed} s</div>
             <div className="text-sm text-muted-foreground">The first run loads the model and can take a minute or two. You can close this and come back.</div>
@@ -144,7 +144,7 @@ export default function AiTaskFlow({ task, jobId, resumeText, provider, children
       )}
 
       {t.status === 'invalid' && t.errors.length > 0 && (
-        <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
+        <div className="rounded-lg border border-danger-edge bg-danger-bg px-3 py-2 text-sm text-danger">
           <div className="mb-1 font-medium">The reply doesn't match the format yet. Fix it above and check again, or ask the chat to fix it:</div>
           <ul className="mb-2 list-disc pl-5">
             {t.errors.map((e, i) => <li key={i}><code className="font-mono">{e.path}</code>: {e.message}</li>)}
@@ -161,9 +161,9 @@ export default function AiTaskFlow({ task, jobId, resumeText, provider, children
       {parsed && t.result && (
         <>
           {(t.repairs.length > 0 || t.flags.length > 0) && (
-            <div className={cn('rounded-lg px-3 py-2 text-sm', red ? 'border border-red-300 bg-red-50 text-red-900' : amber ? 'border border-amber-300 bg-amber-50 text-amber-900' : 'bg-muted')}>
+            <div className={cn('rounded-lg px-3 py-2 text-sm', red ? 'border border-danger-edge bg-danger-bg text-danger' : amber ? 'border border-attention-edge bg-attention-bg text-attention' : 'bg-muted')}>
               {red > 0 && <div className="font-medium">{red} item{red === 1 ? '' : 's'} flagged in red: possibly invented (an ID, skill or number that isn't in your bank or profile). Check each one.</div>}
-              {amber > 0 && <div className="font-medium text-amber-800">{amber} in amber: worth a look (a skill not in that bullet's bank item, a repeated title/date removed, or several bullets in one).</div>}
+              {amber > 0 && <div className="font-medium text-attention">{amber} in amber: worth a look (a skill not in that bullet's bank item, a repeated title/date removed, or several bullets in one).</div>}
               {t.repairs.length > 0 && <div className="text-muted-foreground">Fixed in the reply automatically: {t.repairs.join(', ')}.</div>}
             </div>
           )}

@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { formatDate, formatDateTime, formatSalary } from '@/lib/score'
-import { gaps, primaryStep, scoreVerdict } from '@/lib/verdict'
+import { gapNote, gaps, missingTitle, primaryStep, scoreVerdict } from '@/lib/verdict'
 import { pendingDeletes } from '@/lib/pendingDeletes'
 import { safeHttpUrl } from '@/lib/url'
 import { cn } from '@/lib/utils'
@@ -92,18 +92,18 @@ export default function JobDetail() {
       <header className="flex flex-wrap items-start gap-x-6 gap-y-4">
         <ScoreBadge size="lg" score={match?.total ?? null} gated={(match?.gate_flags.length ?? 0) > 0} rough={summaryOnly || !!lowConfidence} />
         <div className="min-w-0 flex-1 basis-96">
-          <h1 className="text-2xl font-semibold tracking-tight text-balance">{job.title}</h1>
+          <h1 className="text-[28px] leading-tight font-semibold text-balance">{job.title}</h1>
           <p className="mt-0.5 text-[15px] text-muted-foreground">
             {[job.company, job.work_arrangement ? `${job.location} (${job.work_arrangement})` : job.location, salary, job.job_type].filter(Boolean).join(', ')}
           </p>
-          {verdict && <p className={cn('mt-3 max-w-[65ch] text-[17px] leading-snug', verdict.tone === 'blocked' && 'text-red-800')}>{verdict.text}</p>}
+          {verdict && <p className={cn('mt-3 max-w-[65ch] text-[17px] leading-snug', verdict.tone === 'blocked' && 'text-danger')}>{verdict.text}</p>}
         </div>
         <div className="flex flex-col items-end gap-2">
           <PrimaryAction application={application} jobId={job.id} onSave={() => save.mutate()} saving={save.isPending}
             onTailor={() => dialog.start('tailor_resume')} onApplied={(body) => patchApp.mutate(body)} />
           <div className="flex gap-1">
             <Button size="sm" variant="ghost" onClick={() => hide.mutate(!job.hidden)}>{job.hidden ? 'Unhide' : 'Hide'}</Button>
-            <Button size="sm" variant="ghost" className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={remove}>Delete</Button>
+            <Button size="sm" variant="ghost" className="text-danger hover:bg-danger-bg hover:text-danger" onClick={remove}>Delete</Button>
           </div>
         </div>
       </header>
@@ -133,7 +133,7 @@ export default function JobDetail() {
 
         <TabsContent value="overview" className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
           <section aria-labelledby="missing">
-            <h2 id="missing" className="mb-3 text-lg font-semibold">What you're missing</h2>
+            <h2 id="missing" className="mb-3 text-lg font-semibold">{match ? missingTitle(match.breakdown) : "What you're missing"}</h2>
             {!match ? <p className="text-muted-foreground">Not scored yet.</p> : <Missing breakdown={match.breakdown} onChanged={invalidate} />}
           </section>
           <div className="flex flex-col gap-8">
@@ -141,7 +141,7 @@ export default function JobDetail() {
               <h2 id="application" className="mb-3 text-lg font-semibold">Application</h2>
               {application
                 ? <ApplicationForm application={application} history={history} onPatch={(b) => patchApp.mutate(b)} />
-                : <p className="text-muted-foreground">Not in the tracker yet. Save it to track your application.</p>}
+                : <p className="text-muted-foreground">Not in your tracker yet. Use Save to tracker above.</p>}
             </section>
             <section aria-labelledby="ai-tools">
               <h2 id="ai-tools" className="mb-1 text-lg font-semibold">Resume and letters</h2>
@@ -249,14 +249,14 @@ function Missing({ breakdown, onChanged }: { breakdown: Parameters<typeof gaps>[
   }
   const list = gaps(breakdown)
   if (breakdown.gates.length === 0 && list.length === 0) {
-    return <p className="flex items-center gap-2"><StatusMark status="met" /> Nothing. Every requirement the ad states is met.</p>
+    return <p className="flex items-center gap-2"><StatusMark status="met" /> You meet every requirement the ad lists.</p>
   }
   return (
     <>
       <ErrorText error={add.error} />
       <ul className="flex flex-col gap-2.5">
         {breakdown.gates.map((g) => (
-          <li key={g.key} className="flex items-start gap-2.5 text-red-800"><StatusMark status="not_met" className="mt-1" /><span className="font-medium">{g.message}</span></li>
+          <li key={g.key} className="flex items-start gap-2.5 text-danger"><StatusMark status="not_met" className="mt-1" /><span className="font-medium">{g.message}</span></li>
         ))}
         {list.map(({ category, categoryKey, item }, i) => {
           const isSkill = categoryKey.endsWith('_skills') && item.status === 'not_met'
@@ -266,7 +266,7 @@ function Missing({ breakdown, onChanged }: { breakdown: Parameters<typeof gaps>[
               <StatusMark status={item.status} className="mt-1" />
               <span className="min-w-0 flex-1">
                 <span className="font-medium">{item.name}</span>
-                <span className="block text-sm text-muted-foreground">{category}{item.detail ? `: ${item.detail}` : ''}</span>
+                <span className="block text-sm text-muted-foreground">{gapNote(categoryKey, category, item.detail)}</span>
               </span>
               {isSkill && (
                 <span className="flex flex-wrap gap-1">

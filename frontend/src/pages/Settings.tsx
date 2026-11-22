@@ -95,7 +95,7 @@ export function ProfileTab({ onSaved, saveLabel = 'Save profile' }: { onSaved?: 
           </Field>
           <Field label="Notes" className="sm:col-span-2"><Textarea rows={2} value={p.notes} onChange={(e) => set('notes', e.target.value)} /></Field>
           <div className="flex items-center justify-end gap-2 sm:col-span-2">
-            {save.isSuccess && <span className="text-sm text-primary">Saved. Jobs rescored.</span>}
+            {save.isSuccess && <span className="text-sm text-muted-foreground">Saved. Jobs rescored.</span>}
             <ErrorText error={save.error} />
             <Button type="submit" disabled={save.isPending}>{saveLabel}</Button>
           </div>
@@ -227,7 +227,7 @@ function ScoringTab() {
           </Field>
         </div>
         <div className="flex items-center justify-end gap-2">
-          {save.isSuccess && <span className="text-sm text-primary">Saved.</span>}
+          {save.isSuccess && <span className="text-sm text-muted-foreground">Saved.</span>}
           <ErrorText error={save.error} />
           <Button variant="outline" onClick={() => defaults.data && setS({ ...s, scoring: defaults.data })}>Reset scoring to defaults</Button>
           <Button onClick={() => save.mutate(s)} disabled={save.isPending}>Save</Button>
@@ -255,7 +255,7 @@ function LocationsTab() {
         </p>
         <Textarea rows={18} className="font-mono text-xs" value={text} onChange={(e) => setText(e.target.value)} />
         <div className="flex items-center justify-end gap-2">
-          {save.isSuccess && <span className="text-sm text-primary">Saved, jobs rescored.</span>}
+          {save.isSuccess && <span className="text-sm text-muted-foreground">Saved, jobs rescored.</span>}
           <ErrorText error={q.error || save.error} />
           <Button variant="outline" onClick={() => defaults.data && setText(mapToText(defaults.data))}>Reset to defaults</Button>
           <Button disabled={!q.data || save.isPending} onClick={() => save.mutate()}>Save</Button>
@@ -359,7 +359,7 @@ function ExportTab() {
           </p>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => backup.mutate()} disabled={backup.isPending}>Backup database now</Button>
-            {backup.data && <span className="text-sm text-primary">Saved {backup.data.name}</span>}
+            {backup.data && <span className="text-sm text-muted-foreground">Saved {backup.data.name}</span>}
             <ErrorText error={backup.error || status.error} />
           </div>
         </div>
@@ -398,7 +398,7 @@ function ResumeLayoutTab() {
 
 const SECTIONS = [
   { group: 'Basic', id: 'profile', title: 'Profile', desc: 'Your experience, education and languages. The quick score compares every job against this.', el: <ProfileTab /> },
-  { group: 'Basic', id: 'locations', title: 'Preferred locations', desc: 'Where you want to work. Pick whole states, specific towns, or Remote.', el: <div className="rounded-xl border bg-card p-4"><PreferredLocations /></div> },
+  { group: 'Basic', id: 'locations', title: 'Preferred locations', desc: 'Where you want to work. Pick whole states, specific towns, or Remote.', el: <div className="rounded-lg border bg-card p-4"><PreferredLocations /></div> },
   { group: 'Basic', id: 'search-profiles', title: 'Search profiles', desc: 'What to search for: keywords, locations, job type and how recent. Used by Fetch now and the daily fetch.', el: <SearchProfiles /> },
   { group: 'Basic', id: 'sources', title: 'Job sources', desc: 'Which sites to fetch from, their health, and how much each may fetch per run and per day.', el: <JobSources /> },
   { group: 'Basic', id: 'filters', title: 'Filter rules', desc: 'Hide jobs you never want to see, such as senior roles or certain companies.', el: <FiltersTab /> },
@@ -443,7 +443,7 @@ export default function Settings() {
                       aria-current={s.id === id ? 'page' : undefined}
                       className={cn(
                         'w-full rounded-md px-3 py-1.5 text-left text-[15px] hover:bg-muted',
-                        s.id === id && 'bg-accent font-medium text-accent-foreground',
+                        s.id === id && 'bg-selected font-medium text-foreground',
                       )}
                     >
                       {s.title}

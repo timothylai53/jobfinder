@@ -9,7 +9,7 @@ export function PageHeader({ title, lead, children }: { title: string; lead?: Re
   return (
     <div className="mb-2 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-[28px] leading-tight font-semibold">{title}</h1>
         {lead && <p className="mt-1 text-[15px] text-muted-foreground">{lead}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">{children}</div>
@@ -20,7 +20,7 @@ export function PageHeader({ title, lead, children }: { title: string; lead?: Re
 const MARK = {
   met: { Icon: CircleCheck, cls: 'text-primary' },
   partial: { Icon: TriangleAlert, cls: 'text-attention' },
-  not_met: { Icon: CircleX, cls: 'text-red-700' },
+  not_met: { Icon: CircleX, cls: 'text-danger' },
   not_specified: { Icon: CircleMinus, cls: 'text-muted-foreground' },
 } as const
 
@@ -35,19 +35,33 @@ export function StatusMark({ status, className }: { status: ItemStatus; classNam
   return <Icon role="img" aria-label={STATUS_LABEL[status]} className={cn('size-4 shrink-0', cls, className)} />
 }
 
-/** rough: the job was saved from a search card only, so the score is an estimate (dashed outline, ~). */
+/** The score badge: a small index-card tab (rounded top, flat 2px base line in the score's colour), the same shape
+ * everywhere. rough: the job was saved from a search card only, so the score is an estimate (dashed base line, ~). */
 export function ScoreBadge({ score, gated, rough, size = 'md' }: { score: number | null; gated?: boolean; rough?: boolean; size?: 'md' | 'lg' }) {
   return (
     <span
-      className={cn('inline-flex justify-center font-semibold tabular-nums', scoreTone(score, gated),
-        size === 'lg' ? 'min-w-20 rounded-xl px-3 py-2 text-4xl leading-none tracking-tight' : 'min-w-11 rounded-md px-1.5 py-0.5 text-sm',
-        rough && 'border border-dashed border-current opacity-80')}
+      className={cn('inline-flex justify-center rounded-t-md rounded-b-none border-b-2 font-heading font-semibold tabular-nums',
+        scoreTone(score, gated),
+        size === 'lg' ? 'min-w-20 rounded-t-lg px-3 pt-2.5 pb-2 text-4xl leading-none tracking-tight' : 'min-w-11 px-1.5 pt-0.5 text-sm',
+        rough && 'border-dashed')}
       title={rough ? 'Rough score (summary only): paste the full JD for a real score' : gated ? 'A hard gate failed (score capped)' : undefined}
     >
       {rough && score !== null ? '~' : ''}
       {score ?? '–'}
       {gated && <span className="sr-only"> (hard requirement failed)</span>}
     </span>
+  )
+}
+
+/** The JobFinder mark: an index card with a green tab and two ruled lines. Drawn on a 32-unit grid with 2.4-unit
+ * strokes so it still reads at 16 px (the favicon is the same drawing). */
+export function LogoMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" aria-hidden className={cn('size-6 shrink-0', className)}>
+      <path d="M19 6h7a2 2 0 0 1 2 2v1H19z" fill="var(--primary)" />
+      <rect x="4" y="9" width="24" height="17" rx="2.5" fill="none" stroke="currentColor" strokeWidth="2.4" />
+      <path d="M9 16h14M9 21h9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+    </svg>
   )
 }
 
@@ -109,10 +123,10 @@ export function NativeSelect({
 
 export function ErrorText({ error }: { error: unknown }) {
   if (!error) return null
-  return <p className="text-sm text-red-600">{error instanceof Error ? error.message : String(error)}</p>
+  return <p className="text-sm text-danger">{error instanceof Error ? error.message : String(error)}</p>
 }
 
 export function Notice({ children, tone = 'info' }: { children: ReactNode; tone?: 'info' | 'ok' | 'warn' }) {
-  const cls = { info: 'bg-blue-50 text-blue-900', ok: 'bg-green-50 text-green-900', warn: 'bg-amber-50 text-amber-900' }[tone]
-  return <div className={cn('rounded-md px-3 py-2 text-sm', cls)}>{children}</div>
+  const cls = { info: 'border bg-background', ok: 'border bg-background', warn: 'border border-attention-edge/50 bg-attention-bg text-attention' }[tone]
+  return <div className={cn('rounded-md px-3.5 py-2.5 text-sm', cls)}>{children}</div>
 }

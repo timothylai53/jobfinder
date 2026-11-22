@@ -3,7 +3,7 @@ import type { Breakdown, Dashboard } from '@/api/types'
 import { formatDate, formatDateTime } from './score'
 import { isFirstRun, nextSteps, setupSteps } from './today'
 import { safeHttpUrl } from './url'
-import { gaps, primaryStep, scoreVerdict } from './verdict'
+import { gapNote, gaps, missingTitle, primaryStep, scoreVerdict } from './verdict'
 
 const dash = (over: Partial<Dashboard> = {}): Dashboard => ({
   status_counts: { Saved: 0, Applied: 0, Interview: 0, Offer: 0, Rejected: 0, Withdrawn: 0 },
@@ -92,6 +92,24 @@ describe('score verdict', () => {
   })
   it('lists only the partial and missing items as gaps', () => {
     expect(gaps(breakdown()).map((g) => g.item.name)).toEqual(['Degree or higher'])
+  })
+  it('explains each gap in plain words', () => {
+    expect(gapNote('required_skills', 'Required skills', 'not in Experience Bank or profile')).toBe('Required skill, not in your bank yet')
+    expect(gapNote('preferred_skills', 'Preferred skills', 'none of these in Experience Bank or profile')).toBe('Nice to have, not in your bank yet')
+    expect(gapNote('required_skills', 'Required skills', 'equivalent: Vue, from B3')).toBe('Required skill, close match: Vue, from B3')
+    expect(gapNote('education', 'Education', 'you have Degree (in progress)')).toBe('Education: you have Degree (in progress)')
+  })
+  it('titles the gaps in plain words', () => {
+    const allMet = breakdown()
+    allMet.categories = [allMet.categories[0]]
+    expect(missingTitle(allMet)).toBe('Nothing missing')
+    expect(missingTitle(breakdown())).toBe("You're missing 1 requirement")
+    const b = breakdown()
+    b.categories[0].items[2].status = 'not_met'
+    b.categories[0].items[3].status = 'not_met'
+    expect(missingTitle(b)).toBe("You're missing 2 skills and 1 other requirement")
+    b.categories.pop()
+    expect(missingTitle(b)).toBe("You're missing 2 skills")
   })
 })
 

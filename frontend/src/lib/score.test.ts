@@ -5,8 +5,8 @@ describe('scoreTone', () => {
   it('accent for good matches, amber for partial, neutral for weak, red only for a failed gate', () => {
     expect(scoreTone(85)).toContain('bg-accent')
     expect(scoreTone(55)).toContain('attention')
-    expect(scoreTone(30)).not.toMatch(/red|accent|attention/)
-    expect(scoreTone(85, true)).toContain('red')
+    expect(scoreTone(30)).not.toMatch(/danger|accent|primary|attention/)
+    expect(scoreTone(85, true)).toContain('danger')
     expect(scoreTone(null)).toContain('muted')
   })
 })

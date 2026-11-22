@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { formatDateTime } from '@/lib/score'
 
 const RESULT_TONE: Record<string, string> = {
-  ok: 'bg-accent text-accent-foreground', error: 'bg-red-100 text-red-800',
+  ok: 'bg-selected text-foreground', error: 'bg-danger-bg text-danger',
   skipped: 'bg-muted text-muted-foreground', running: 'bg-attention-bg text-attention',
 }
 
@@ -115,7 +115,7 @@ export default function Automations() {
                   <td className="px-3 py-2"><span className={cn('rounded px-1.5 text-xs', RESULT_TONE[r.result])}>{r.result}</span></td>
                   <td className="px-3 py-2 tabular-nums">{r.items_processed}</td>
                   <td className="px-3 py-2 text-sm">
-                    {r.error ? <span className="text-red-700">{r.error}</span> : (
+                    {r.error ? <span className="text-danger">{r.error}</span> : (
                       <button className="text-left hover:underline" onClick={() => setOpen(open === r.id ? null : r.id)}>
                         {open === r.id ? <pre className="font-sans whitespace-pre-wrap">{r.message}</pre> : r.message.split('\n')[0]}
                       </button>

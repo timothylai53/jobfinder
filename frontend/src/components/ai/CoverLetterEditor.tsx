@@ -38,10 +38,10 @@ export default function CoverLetterEditor({ jobId, initial, flags = [], source, 
           <div className="flex items-start gap-2">
             <Textarea rows={4} value={p.text} aria-label={`Paragraph ${i + 1}`}
               onChange={(e) => setParas(paras.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))}
-              className={cn('text-[15px]', p.flags.length && 'border-red-400 bg-red-50/40')} />
+              className={cn('text-[15px]', p.flags.length && 'border-danger-edge bg-danger-bg/40')} />
             <Button variant="ghost" size="sm" aria-label={`Remove paragraph ${i + 1}`} onClick={() => setParas(paras.filter((_, j) => j !== i))}><Trash2 className="size-4" /></Button>
           </div>
-          {p.flags.map((f, k) => <span key={k} className="text-sm text-red-700"><FlagIcon />{f.message}</span>)}
+          {p.flags.map((f, k) => <span key={k} className="text-sm text-danger"><FlagIcon />{f.message}</span>)}
         </div>
       ))}
       <Button variant="outline" size="sm" className="self-start" onClick={() => setParas([...paras, { text: '', flags: [] }])}><Plus className="size-4" /> Add paragraph</Button>
@@ -49,7 +49,7 @@ export default function CoverLetterEditor({ jobId, initial, flags = [], source, 
       <p className="text-sm text-muted-foreground">
         Based on bank items: {initial.used_ids.join(', ') || 'none'}. Your name and contact details are added from your profile.
       </p>
-      {idFlags.map((f, k) => <span key={k} className="text-sm text-red-700"><FlagIcon />{f.message}</span>)}
+      {idFlags.map((f, k) => <span key={k} className="text-sm text-danger"><FlagIcon />{f.message}</span>)}
       <div className="flex items-center justify-end gap-2">
         <ErrorText error={save.error} />
         <Button disabled={save.isPending || !paras.some((p) => p.text.trim())} onClick={() => save.mutate()}>

@@ -9,7 +9,7 @@ function Ids({ ids, flags, path }: { ids: string[]; flags: GuardFlag[]; path: st
     <span className="text-[13px]">
       {ids.map((id, i) => {
         const bad = flagsAt(flags, `${path}.${i}`).length > 0
-        return <span key={i} title={bad ? 'Not in your Experience Bank' : undefined} className={cn('mr-1 rounded px-1', bad ? 'bg-red-100 text-red-700 line-through' : 'bg-muted')}>{id}</span>
+        return <span key={i} title={bad ? 'Not in your Experience Bank' : undefined} className={cn('mr-1 rounded px-1', bad ? 'bg-danger-bg text-danger line-through' : 'bg-muted')}>{id}</span>
       })}
     </span>
   )
@@ -34,13 +34,13 @@ export function DeepAnalysisView({ data, flags = [] }: { data: DeepAnalysisResul
         {data.requirements.map((r, i) => {
           const f = flagsAt(flags, `requirements.${i}`).filter((x) => x.path === `requirements.${i}`)
           return (
-            <li key={i} className={cn('rounded-md border px-2 py-1.5 text-sm', f.length && 'border-red-300 bg-red-50/40')}>
+            <li key={i} className={cn('rounded-md border px-2 py-1.5 text-sm', f.length && 'border-danger-edge bg-danger-bg/40')}>
               <StatusMark status={r.status} className="mr-1.5 inline-block align-[-3px]" />
               <span className="font-medium">{r.text}</span>
               <span className="ml-1 text-[13px] text-muted-foreground">({r.type})</span>{' '}
               <Ids ids={r.evidence_ids} flags={flags} path={`requirements.${i}.evidence_ids`} />
               {r.note && <div className="text-muted-foreground">{r.note}</div>}
-              {f.map((x, k) => <div key={k} className="text-red-700"><FlagIcon />{x.message}</div>)}
+              {f.map((x, k) => <div key={k} className="text-danger"><FlagIcon />{x.message}</div>)}
             </li>
           )
         })}

@@ -152,6 +152,7 @@ cd frontend && npx vitest run && npm run build
 
 - [SECURITY.md](SECURITY.md): threat model, every control, and known limits.
 - [LEARNING.md](LEARNING.md): how each part works, explained simply, with likely interview questions.
+- [DESIGN.md](DESIGN.md): the visual identity (tokens, type, logo, score badge, voice); the three options considered are in [docs/design-options/](docs/design-options/).
 - [DECISIONS.md](DECISIONS.md): every design decision with its reason.
 
 ## License

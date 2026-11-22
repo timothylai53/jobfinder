@@ -52,6 +52,27 @@ export function gaps(b: Breakdown): { category: string; categoryKey: string; ite
     c.items.filter((i) => i.status === 'partial' || i.status === 'not_met').map((item) => ({ category: c.label, categoryKey: c.key, item })))
 }
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+
+/** The Overview heading, in plain words: "You're missing 2 skills", "You're missing 1 skill and 1 other requirement". */
+export function missingTitle(b: Breakdown): string {
+  const list = gaps(b)
+  const skills = list.filter((g) => g.categoryKey.endsWith('_skills')).length
+  const other = list.length - skills + b.gates.length
+  if (skills === 0 && other === 0) return 'Nothing missing'
+  if (other === 0) return `You're missing ${plural(skills, 'skill')}`
+  if (skills === 0) return `You're missing ${plural(other, 'requirement')}`
+  return `You're missing ${plural(skills, 'skill')} and ${plural(other, 'other requirement')}`
+}
+
+/** The small line under a gap, in plain words: "Required skill, not in your bank yet" instead of the scorer's label. */
+export function gapNote(categoryKey: string, category: string, detail: string): string {
+  const kind = { required_skills: 'Required skill', preferred_skills: 'Nice to have' }[categoryKey]
+  if (kind && /^(none of these|not) in Experience Bank or profile$/.test(detail)) return `${kind}, not in your bank yet`
+  if (kind && detail.startsWith('equivalent: ')) return `${kind}, close match: ${detail.slice(12)}`
+  return detail ? `${kind ?? category}: ${detail}` : kind ?? category
+}
+
 export type PrimaryStep = 'save' | 'tailor' | 'download' | 'mark_applied' | 'done'
 
 /** The one next action for a job: Save to tracker → Tailor resume → Download resume → Mark as applied. */

@@ -173,7 +173,7 @@ function ClearBank({ count }: { count: number }) {
       {clear.data && <span className="text-sm text-muted-foreground">Cleared. Backup saved as {clear.data.backup}.</span>}
       <ErrorText error={clear.error} />
       {count > 0 && (
-        <Button variant="ghost" size="sm" className="text-red-700 hover:bg-red-50 hover:text-red-800" disabled={clear.isPending} onClick={() => ask() && clear.mutate()}>
+        <Button variant="ghost" size="sm" className="text-danger hover:bg-danger-bg hover:text-danger" disabled={clear.isPending} onClick={() => ask() && clear.mutate()}>
           Clear bank…
         </Button>
       )}
@@ -201,7 +201,7 @@ export default function ResumeBank() {
           <ClearBank count={list.length} />
         </div>
         <ErrorText error={items.error} />
-        {list.length > 0 && <ul className="divide-y rounded-xl border bg-background">{list.map((it) => <BankItem key={it.id} item={it} />)}</ul>}
+        {list.length > 0 && <ul className="divide-y rounded-lg border bg-background">{list.map((it) => <BankItem key={it.id} item={it} />)}</ul>}
         {adding ? <NewItem onClose={() => setAdding(false)} /> : (
           <Button variant="outline" className="self-start" onClick={() => setAdding(true)}>Add item</Button>
         )}
