@@ -192,3 +192,51 @@ def test_automation_skips_when_ai_is_off(client, fake_ollama):
         run = s.get(AutomationRun, run_id)
         assert run.result == "ok" and "AI is switched off" in run.message
     assert fake_ollama["seen"] == []
+
+
+# ---------- GPU that can't run Ollama's CUDA build (seen for real on a GTX 1050, 22 Nov) ----------
+
+GPU_CRASH = ("llama-server process has terminated: exit status 0xc0000409: CUDA error: a PTX JIT compilation failed")
+
+
+@pytest.fixture
+def gpu_broken():
+    """A fake Ollama whose GPU runner crashes like the real one; it only answers when asked to use the CPU."""
+    calls = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        calls.append(body["options"].get("num_gpu"))
+        if body["options"].get("num_gpu") != 0:
+            return httpx.Response(500, json={"error": GPU_CRASH})
+        return httpx.Response(200, json={"message": {"role": "assistant", "content": '{"ok": true}'}})
+
+    ollama.reset_gpu_fallback()
+    ollama.set_transport_factory(lambda: httpx.MockTransport(handler))
+    yield calls
+    ollama.set_transport_factory(None)
+    ollama.reset_gpu_fallback()
+
+
+def test_gpu_crash_falls_back_to_the_cpu_and_stays_there(gpu_broken):
+    assert ollama.generate("p", "qwen2.5:3b", 30) == '{"ok": true}'
+    assert gpu_broken == [None, 0]  # tried the GPU, crashed, retried on the CPU
+    assert ollama.generate("p", "qwen2.5:3b", 30) == '{"ok": true}'
+    assert gpu_broken == [None, 0, 0]  # the next call goes straight to the CPU
+
+
+def test_other_server_errors_are_not_retried():
+    calls = []
+
+    def handler(request):
+        calls.append(1)
+        return httpx.Response(500, json={"error": "something else went wrong"})
+
+    ollama.reset_gpu_fallback()
+    ollama.set_transport_factory(lambda: httpx.MockTransport(handler))
+    try:
+        with pytest.raises(ollama.OllamaError, match="something else went wrong"):
+            ollama.generate("p", "qwen2.5:3b", 30)
+        assert calls == [1]
+    finally:
+        ollama.set_transport_factory(None)

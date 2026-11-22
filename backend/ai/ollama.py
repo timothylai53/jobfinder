@@ -17,10 +17,26 @@ NOT_RUNNING = ("Ollama is not running. Install it from ollama.com and start it (
 class OllamaError(Exception):
     def __init__(self, kind: str, message: str):
         super().__init__(message)
-        self.kind = kind  # not_running / model_missing / timeout / error
+        self.kind = kind  # not_running / model_missing / timeout / gpu / error
 
 
 _transport_factory: Callable[[], httpx.BaseTransport] | None = None
+
+# Some GPUs can't run Ollama's CUDA build (seen on a GTX 1050 with an older driver: "CUDA error: a PTX JIT
+# compilation failed", the runner crashes with HTTP 500). Then the same request is retried on the CPU
+# (num_gpu = 0), and later requests in this run go straight to the CPU instead of crashing first.
+_GPU_FAILURE_MARKERS = ("cuda error", "ptx jit", "llama-server process", "llama runner process", "cublas", "out of memory")
+_cpu_only = False
+
+
+def _gpu_failed(detail: str) -> bool:
+    return any(m in detail.lower() for m in _GPU_FAILURE_MARKERS)
+
+
+def reset_gpu_fallback() -> None:
+    """Forget an earlier GPU failure (tests, or after updating the graphics driver)."""
+    global _cpu_only
+    _cpu_only = False
 
 
 def set_transport_factory(factory: Callable[[], httpx.BaseTransport] | None) -> None:
@@ -57,8 +73,27 @@ def status(model: str) -> dict:
 
 def generate(prompt: str, model: str, timeout_s: float) -> str:
     """One chat turn. Returns the model's reply text. Raises OllamaError with a user-facing message."""
+    global _cpu_only
+    try:
+        return _chat(prompt, model, timeout_s, cpu=_cpu_only)
+    except OllamaError as e:
+        if _cpu_only or e.kind != "gpu":
+            raise
+    _cpu_only = True  # the GPU runner crashed: this run uses the CPU from now on
+    try:
+        return _chat(prompt, model, timeout_s, cpu=True)
+    except OllamaError as e:
+        if e.kind == "gpu":
+            raise OllamaError("error", f"Ollama failed on both the GPU and the CPU: {e}") from e
+        raise
+
+
+def _chat(prompt: str, model: str, timeout_s: float, cpu: bool) -> str:
+    options: dict = {"temperature": 0.2, "num_ctx": 8192}
+    if cpu:
+        options["num_gpu"] = 0  # no layers on the GPU
     body = {"model": model, "messages": [{"role": "user", "content": prompt}], "stream": False,
-            "format": "json", "options": {"temperature": 0.2, "num_ctx": 8192}}
+            "format": "json", "options": options}
     try:
         with _client(timeout_s) as c:
             r = c.post("/api/chat", json=body)
@@ -77,7 +112,8 @@ def generate(prompt: str, model: str, timeout_s: float) -> str:
             detail = r.json().get("error", "")
         except ValueError:
             pass
-        raise OllamaError("error", f"Ollama returned HTTP {r.status_code}{': ' + detail if detail else ''}.")
+        kind = "gpu" if r.status_code >= 500 and _gpu_failed(detail) else "error"
+        raise OllamaError(kind, f"Ollama returned HTTP {r.status_code}{': ' + detail if detail else ''}.")
     try:
         return r.json()["message"]["content"]
     except (ValueError, KeyError, TypeError) as e:

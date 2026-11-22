@@ -345,7 +345,7 @@ export interface PromptTemplate {
 }
 
 export interface FieldError { path: string; message: string }
-export interface GuardFlag { path: string; kind: 'unknown_id' | 'missing_id' | 'unknown_skill' | 'not_in_source' | 'new_number' | 'skill_not_in_item' | 'header_removed' | 'several_bullets'; message: string }
+export interface GuardFlag { path: string; kind: 'unknown_id' | 'missing_id' | 'unknown_skill' | 'not_in_source' | 'new_number' | 'skill_not_in_item' | 'header_removed' | 'several_bullets' | 'placeholder'; message: string }
 
 export interface AiTask<R = Record<string, unknown>> {
   id: number

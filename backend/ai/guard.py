@@ -9,7 +9,7 @@
 - parse_resume: titles, organizations and skills that don't appear in the resume text it was given.
 
 Each flag: {"path": "sections.0.items.2", "kind": "unknown_id" | "missing_id" | "unknown_skill" | "not_in_source" |
-"new_number" | "skill_not_in_item", "message": "..."} so the review screen can show it in red next to the right item.
+"new_number" | "skill_not_in_item" | "placeholder", "message": "..."} so the review screen can show it in red next to the right item.
 """
 import re
 from dataclasses import dataclass, field
@@ -178,8 +178,24 @@ def tidy_tailor(data: dict, facts: Facts) -> list[dict]:
     return flags
 
 
+_ONLY_DOTS = re.compile(r"^[\s.…]*$")
+
+
+def _placeholders(flags: list, data, path: str = "") -> None:
+    """Text the model left as the example's placeholder ("...", "…"): it must not reach a resume or a letter."""
+    if isinstance(data, dict):
+        for k, v in data.items():
+            _placeholders(flags, v, f"{path}.{k}" if path else k)
+    elif isinstance(data, list):
+        for i, v in enumerate(data):
+            _placeholders(flags, v, f"{path}.{i}")
+    elif isinstance(data, str) and data and _ONLY_DOTS.match(data):
+        flags.append(_flag(path, "placeholder", f"left as \"{data.strip()}\" (the example's placeholder): write it or remove it"))
+
+
 def check(task: str, data: dict, facts: Facts, source_text: str = "") -> list[dict]:
     flags: list[dict] = []
+    _placeholders(flags, data)
     if task == "tailor_resume":
         for i, sk in enumerate(data.get("skills_order", [])):
             ok, name = _skill_known(sk, facts)

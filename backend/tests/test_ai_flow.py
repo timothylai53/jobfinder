@@ -458,3 +458,17 @@ def test_links_in_resume_and_cover_letter_headers_not_in_prompts(setup):
                                                               "paragraphs": ["I am applying."], "closing": "Sincerely,"}).json()
     assert '<a href="https://github.com/alicontoh">github.com/alicontoh</a>' in client.get(f"/api/documents/{letter['id']}/html").text
     assert "alicontoh" not in new_task(client, job_id)["prompt"]  # links stay out of AI prompts
+
+
+def test_placeholders_copied_from_the_example_are_flagged(setup):
+    """qwen2.5:3b returned the example's "..." as the summary (real run, 22 Nov): it's flagged, and the prompt warns."""
+    client, job_id = setup
+    t = new_task(client, job_id)
+    assert 'Never return "..." as a value.' in t["prompt"]
+    reply = {"summary": "...", "skills_order": ["Python"],
+             "sections": [{"section": "Experience", "items": [{"source_id": "B1", "text": "…"},
+                                                              {"source_id": "B1", "text": "Developed REST APIs"}]}]}
+    t = client.post(f"/api/ai/tasks/{t['id']}/edited", json={"data": reply}).json()
+    flagged = {(f["path"], f["kind"]) for f in t["flags"]}
+    assert {("summary", "placeholder"), ("sections.0.items.0.text", "placeholder")} <= flagged
+    assert not any(f["path"] == "sections.0.items.1" for f in t["flags"])

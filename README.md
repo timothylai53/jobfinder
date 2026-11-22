@@ -143,7 +143,7 @@ cd frontend && npx vitest run && npm run build
 
 - **Windows-first.** `setup.bat`/`start.bat` are Windows scripts. The code and tests also run on Linux (CI), but there's no Linux/macOS launcher.
 - **Scrapers are fragile by nature.** Sites change their endpoints. JobStreet job pages refused requests during testing, so JobStreet details come from its search API only, and some jobs stay "summary only" until you paste the full ad. Glassdoor coverage for Malaysia is thin.
-- **Ollama hasn't been tested with a real model yet**, only against a mocked API. Small 3B models may miss JSON fields more often than web chats; the tolerant parser and fix-up prompt exist for that.
+- **Local AI is slow on a small laptop and needs reviewing.** Measured with Ollama and `qwen2.5:3b` on a GTX 1050 laptop: the GPU build crashed, so JobFinder falls back to the CPU by itself. Each task then takes **about 1 minute**, and all 18 test replies were valid JSON with no repairs needed. The content is weaker than a web chat's, though: the model sometimes left the example's "..." in place, listed skills from the ad that weren't in the bank, or invented a claim ("led a team of 3"). The guard flagged everything except that last one, so review every item (`scripts/ollama_check.py` re-runs the measurement on the demo data).
 - **The quick score is rules, not understanding.** It depends on the skill dictionary and on how the ad is written. That's why it shows its working and marks thin ads as low confidence.
 - **The fabrication guard can't catch everything** (see above). You still review each item.
 - **Single user, single laptop**, by design. No accounts, no sync, one resume layout (PDF and Word share it).
