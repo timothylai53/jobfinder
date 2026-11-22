@@ -9,6 +9,7 @@ Personal, single-user job finder (see `PROJECT_BRIEF.md`). Phases 1–3 are done
 3. **No personal data in the repo.** Never put the user's real resume or personal details in fixtures, tests or commits. Use fake people and data (e.g. "Ali Bin Contoh", "Syarikat Contoh Bhd").
 4. **Decisions, tests, commits.**
    - Log every judgment call in `DECISIONS.md` (next number, decision, reason).
-   - Run the full test suite before every commit: backend `pytest` (in `backend/`) and frontend `npx vitest run` + `npm run build` (in `frontend/`).
-   - Commit locally. **Never push.**
+   - Run the full test suite before every commit: backend `pytest`, `ruff check . ../scripts` and `mypy .` (in `backend/`); frontend `npm run lint`, `npx vitest run`, `npm run build` and `npm run e2e` (in `frontend/`).
+   - Pushing `main` to `origin` is allowed, but only after the full suite above has passed. Then confirm CI is green.
+   - **Never push `private-history`**, and never commit or push anything in `private/` (it is gitignored: keep it that way).
 5. **Dependencies.** Ask before adding any dependency not already in `backend/requirements.txt` or `frontend/package.json`.
