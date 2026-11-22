@@ -56,7 +56,8 @@ def wait(url: str, seconds: int = 60) -> None:
     raise RuntimeError(f"{url} did not start")
 
 
-def main() -> None:
+def run_on_demo(action) -> None:
+    """Seed demo_data, start the backend and Vite on the demo ports, run `action(base_url)`, always stop both."""
     target = safe_target(None)
     subprocess.run([str(PY), str(ROOT / "scripts" / "seed_demo.py"), str(target)], check=True)
     env = {**os.environ, **demo_env(target), "JOBFINDER_API": f"http://127.0.0.1:{API}",
@@ -69,7 +70,7 @@ def main() -> None:
     try:
         wait(f"http://127.0.0.1:{API}/api/health")
         wait(f"http://127.0.0.1:{UI}/")
-        shoot(f"http://127.0.0.1:{UI}")
+        action(f"http://127.0.0.1:{UI}")
     finally:
         for p in procs:
             if os.name == "nt":
@@ -124,6 +125,10 @@ def shoot(base: str) -> None:
         page.screenshot(path=str(OUT / "resume-preview.png"), full_page=True)
         browser.close()
     print(f"Screenshots in {OUT}")
+
+
+def main() -> None:
+    run_on_demo(shoot)
 
 
 if __name__ == "__main__":

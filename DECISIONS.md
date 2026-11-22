@@ -314,3 +314,9 @@ Decisions made while building, each with the reason. Newest at the bottom of eac
 | 186 | **Kanban columns are named regions** ("Applied column" …): better for screen readers, and the test can check the right column. A negative check (pointing the test at "Offer column") failed as it should. | A test that can't fail proves nothing. |
 | 187 | **CI job `e2e`** runs after the backend and frontend jobs. It installs Python and Node, Chromium for both Playwrights (the backend renders the PDF with Python Playwright), runs `npm run e2e` and uploads the Playwright report only on failure. In CI each test may retry once. | Task 1. |
 | 188 | **Bug found by the date change:** `daily_backup()` checked "already backed up today?" with one date but named the file from the clock, so a fixed test date and a different real day disagreed (in real use, only possible across midnight). Now both come from the same moment, and the test also covers the next day. | Found when the suite ran on 22 Nov with a test fixed to 20 Nov. |
+
+## Demo GIF (2026-11-22)
+
+| # | Decision | Reason |
+|---|---|---|
+| 189 | **`docs/demo.gif` (4.2 MB, 20 s, 960 px, 10 fps) and `docs/demo.mp4` (0.5 MB)** sit at the top of the README.<br>• **Recorded** by `scripts/demo_video.py` with Playwright video on the fake demo data, using the screenshot script's offline servers (now shared as `run_on_demo()`).<br>• **Flow:** Today → a saved job's score and one-line verdict → Score details → the Copy-Paste tailor review with red and amber flags → the resume in its print layout.<br>• **Conversion:** ffmpeg, already installed on this laptop as a one-off tool, not a project dependency. The GIF uses a two-pass palette (96 colours, rectangle diff), and the MP4 is H.264 (CRF 30). The script stops with the install command if ffmpeg is missing. | Task 2. The MP4 is linked for a sharper view; GitHub shows the GIF inline. The flow takes 20 s at a readable pace, so no padding was added to reach 30. |

@@ -1,5 +1,9 @@
 # JobFinder
 
+![JobFinder demo: Today, a job's score and verdict, the tailored-resume review with red and amber flags, and the printed resume](docs/demo.gif)
+
+<sub>20-second demo on fake data: Today → a job's explainable score → Copy-Paste tailor review where invented content is flagged → the ATS-friendly resume. [Sharper MP4](docs/demo.mp4) · recorded offline with `scripts/demo_video.py`.</sub>
+
 **A local-only job search assistant for a fresh graduate:** it fetches Malaysian job ads politely, scores each one against your own experience with a score you can explain line by line, tracks your applications, and tailors resumes and cover letters with AI **without letting the AI invent anything**.
 
 It runs entirely on one Windows laptop. There are no accounts, no paid APIs, and no logging in to job sites. Your data stays in a local SQLite file.
