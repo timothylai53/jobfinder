@@ -110,6 +110,9 @@ test('first-time journey: from an empty app to an application on the Kanban', as
     const pdf = await request.get(href!)
     expect(pdf.headers()['content-type']).toContain('application/pdf')
     expect((await pdf.body()).subarray(0, 5).toString()).toBe('%PDF-')
+    const docx = await request.get(href!.replace(/pdf$/, 'docx'))
+    expect(docx.headers()['content-type']).toContain('wordprocessingml')
+    expect((await docx.body()).subarray(0, 2).toString()).toBe('PK') // a .docx is a zip
     const popup = page.waitForEvent('popup')
     await download.click() // opens the PDF in a new tab and moves the job to its next step
     await (await popup).close()

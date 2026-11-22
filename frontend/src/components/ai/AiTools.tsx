@@ -26,6 +26,7 @@ function Saved({ doc, onClose }: { doc: DocumentRow; onClose: () => void }) {
       <div className="flex flex-wrap items-center gap-3">
         <span>Saved as <strong>{DOC_LABEL[doc.type]} v{doc.version}</strong>.</span>
         {doc.printable && <a className="underline" href={`/api/documents/${doc.id}/pdf`} target="_blank" rel="noreferrer">Download PDF</a>}
+        {doc.printable && <a className="underline" href={`/api/documents/${doc.id}/docx`} download>Word (.docx)</a>}
         {doc.printable && <a className="underline" href={`/api/documents/${doc.id}/html`} target="_blank" rel="noreferrer">Preview</a>}
         <Button size="sm" variant="outline" className="ml-auto" onClick={onClose}>Close</Button>
       </div>

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Download, Eye, Trash2 } from 'lucide-react'
+import { Download, Eye, FileDown, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '@/api/client'
 import type { Application, DeepAnalysisResult, DocumentRow, InterviewPrepResult } from '@/api/types'
@@ -43,6 +43,7 @@ export default function DocumentsCard({ jobId, application }: { jobId: number; a
                   <>
                     <Button size="sm" variant="ghost" asChild><a href={`/api/documents/${d.id}/html`} target="_blank" rel="noreferrer"><Eye className="size-4" aria-hidden /> Preview</a></Button>
                     <Button size="sm" variant="ghost" asChild><a href={`/api/documents/${d.id}/pdf`} target="_blank" rel="noreferrer"><Download className="size-4" aria-hidden /> PDF</a></Button>
+                    <Button size="sm" variant="ghost" asChild><a href={`/api/documents/${d.id}/docx`} download aria-label={`Download ${DOC_LABEL[d.type]} v${d.version} as Word (.docx)`}><FileDown className="size-4" aria-hidden /> DOCX</a></Button>
                   </>
                 ) : (
                   <Button size="sm" variant="ghost" onClick={() => setView(d)}><Eye className="size-4" aria-hidden /> View</Button>

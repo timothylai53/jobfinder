@@ -1,12 +1,13 @@
 """Document versions: save accepted content, list per job, HTML preview, PDF download, template cover letter."""
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from pydantic import BaseModel
 from sqlmodel import Session, col, select
 
 from app.db import get_session
 from app.settings_store import get_general
 from documents import cover_template, render
+from documents.docx_export import docx_for
 from documents.service import CoverLetterIn, DocumentError, ResumeIn, save_analysis, save_cover_letter, save_resume
 from models import AITask, Application, Document, Job, MatchResult
 
@@ -111,6 +112,20 @@ def preview_html(doc_id: int, session: Session = Depends(get_session)):
     if doc.type not in render.RENDERABLE:
         raise HTTPException(422, "Only resumes and cover letters have a printable layout")
     return HTMLResponse(render.html_for(doc, get_general(session).resume_projects_first), headers={"Content-Security-Policy": PREVIEW_CSP})
+
+
+DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+
+@router.get("/documents/{doc_id}/docx")
+def download_docx(doc_id: int, session: Session = Depends(get_session)):
+    """The same resume or cover letter as the PDF, as an ATS-friendly Word file (made on the fly, not stored)."""
+    doc = _doc(session, doc_id)
+    if doc.type not in render.RENDERABLE:
+        raise HTTPException(422, "Only resumes and cover letters can be exported to Word")
+    data = docx_for(doc, get_general(session).resume_projects_first)
+    name = render.pdf_path_for(doc).with_suffix(".docx").name
+    return Response(data, media_type=DOCX, headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
 
 @router.get("/documents/{doc_id}/pdf")

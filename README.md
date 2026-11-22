@@ -33,7 +33,7 @@ JobFinder does the reading and bookkeeping, and treats **accuracy as the first r
 | **Dedupe and filters** | The same job from several sites becomes one job with several links. Filter rules (Senior/Lead titles, years, companies, salary, a title allow-list) hide noise, and every hidden job shows why. |
 | **AI without paid APIs** | **Copy-Paste** mode builds the full prompt for a free web chat and checks the pasted reply. **Ollama** runs a small local model (3B, fits a 3 GB GPU). **Off** keeps everything else working. |
 | **Fabrication guard** | See below. Flags are red (possibly invented) or amber (worth a look), right next to the item, in a side-by-side review. |
-| **Documents** | Numbered resume / cover-letter / analysis versions per job. An ATS-friendly single-column PDF via headless Chromium (selectable text, standard headings, clickable profile links). The tracker records which version you actually sent. |
+| **Documents** | Numbered resume / cover-letter / analysis versions per job. An ATS-friendly single-column PDF via headless Chromium (selectable text, standard headings, clickable profile links). The same resume or letter also downloads as **Word (.docx)**, in the same order, with real headings and no tables. The tracker records which version you actually sent. |
 | **Tracker** | Kanban (drag and drop) and table views, status history, follow-up reminders. |
 | **Today** | Opens on what to do next, built from real state: new high matches, follow-ups due, resumes ready to send, profile gaps. A first-run checklist (profile, resume, first job) until there is something to show. Each job page has one primary button that follows the job: Save to tracker, Tailor resume, Download resume, Mark as applied. |
 | **Automations** | Daily fetch, scoring, high-match alerts and follow-up reminders (APScheduler, with catch-up after the laptop was off), each with a run log. |
@@ -146,7 +146,7 @@ cd frontend && npx vitest run && npm run build
 - **Ollama hasn't been tested with a real model yet**, only against a mocked API. Small 3B models may miss JSON fields more often than web chats; the tolerant parser and fix-up prompt exist for that.
 - **The quick score is rules, not understanding.** It depends on the skill dictionary and on how the ad is written. That's why it shows its working and marks thin ads as low confidence.
 - **The fabrication guard can't catch everything** (see above). You still review each item.
-- **Single user, single laptop**, by design. No accounts, no sync, no DOCX export, one resume layout.
+- **Single user, single laptop**, by design. No accounts, no sync, one resume layout (PDF and Word share it).
 
 ## More
 
