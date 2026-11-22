@@ -55,3 +55,6 @@ class AutomationRun(SQLModel, table=True):
     items_processed: int = 0
     message: str = ""
     error: str = ""
+    # fetch_jobs only: one dict per source (source, status, profiles, cap, fetched, new, merged, hidden, requests,
+    # notes, error), so the run log can show aligned numbers instead of parsing the message.
+    details: list[dict] = Field(default_factory=list, sa_column=json_col())

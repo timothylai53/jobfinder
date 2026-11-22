@@ -55,6 +55,8 @@ export interface BaseResume {
   name: string
   original_file_path: string
   created_at: string
+  /** Last rename or change of its selection (created_at if never changed). */
+  updated_at: string
   item_ids: number[]
 }
 
@@ -283,6 +285,22 @@ export interface AutomationRunRow {
   result: 'running' | 'ok' | 'error' | 'skipped'
   items_processed: number
   message: string
+  error: string
+  /** fetch_jobs only (newer runs): one entry per source. */
+  details?: RunSourceDetail[]
+}
+
+export interface RunSourceDetail {
+  source: string
+  status: 'ok' | 'error' | 'paused' | 'skipped'
+  profiles: string[]
+  cap: number | null
+  fetched: number
+  new: number
+  merged: number
+  hidden: number
+  requests: number
+  notes: string[]
   error: string
 }
 

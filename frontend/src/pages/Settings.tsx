@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '@/api/client'
-import type { FilterRule, Profile, ScoringConfig, Settings as SettingsT, Skill } from '@/api/types'
+import type { FilterRule, Profile, ScoringConfig, Settings as SettingsT } from '@/api/types'
 import { ErrorText, Field, ListInput, NativeSelect, Notice, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -13,7 +13,8 @@ import { JobSources, SearchProfiles } from '@/components/SourceSettings'
 import { AiSettingsTab, PromptTemplatesTab } from '@/components/ai/AiSettings'
 import { cn } from '@/lib/utils'
 import { Textarea } from '@/components/ui/textarea'
-import { mapToText, textToMap } from '@/lib/locations'
+import LocationMapEditor from '@/components/LocationMapEditor'
+import SkillDictionary from '@/components/SkillDictionary'
 import { formatDateTime } from '@/lib/score'
 
 const EDU_LEVELS = ['', 'SPM', 'STPM', 'Diploma', 'Degree', 'Master', 'PhD']
@@ -237,87 +238,14 @@ function ScoringTab() {
   )
 }
 
-// ---------- locations ----------
-
-function LocationsTab() {
-  const q = useQuery({ queryKey: ['settings'], queryFn: () => api.get<SettingsT>('/api/settings') })
-  const defaults = useQuery({ queryKey: ['locations-defaults'], queryFn: () => api.get<Record<string, string[]>>('/api/settings/locations/defaults') })
-  const [text, setText] = useState('')
-  useEffect(() => { if (q.data) setText(mapToText(q.data.locations)) }, [q.data])
-  const done = useRescoreInvalidate()
-  const save = useMutation({ mutationFn: () => api.put('/api/settings', { ...q.data!, locations: textToMap(text) }), onSuccess: done })
-  return (
-    <Card>
-      <CardContent className="flex flex-col gap-3">
-        <p className="text-sm text-muted-foreground">
-          One state per line, as <code>State: town, town, …</code>. Matching is whole-word and case-insensitive, so “KL” does not match “Klang”.
-          Saving rescores every job.
-        </p>
-        <Textarea rows={18} className="font-mono text-xs" value={text} onChange={(e) => setText(e.target.value)} />
-        <div className="flex items-center justify-end gap-2">
-          {save.isSuccess && <span className="text-sm text-muted-foreground">Saved, jobs rescored.</span>}
-          <ErrorText error={q.error || save.error} />
-          <Button variant="outline" onClick={() => defaults.data && setText(mapToText(defaults.data))}>Reset to defaults</Button>
-          <Button disabled={!q.data || save.isPending} onClick={() => save.mutate()}>Save</Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ---------- skills ----------
-
-function SkillRow({ skill }: { skill: Skill }) {
-  const done = useRescoreInvalidate()
-  const [s, setS] = useState(skill)
-  useEffect(() => setS(skill), [skill])
-  const dirty = JSON.stringify(s) !== JSON.stringify(skill)
-  const save = useMutation({ mutationFn: () => api.put(`/api/skills/${skill.id}`, s), onSuccess: done })
-  const del = useMutation({ mutationFn: () => api.del(`/api/skills/${skill.id}`), onSuccess: done })
-  return (
-    <tr className="border-b">
-      <td className="py-1 pr-2"><Input value={s.name} onChange={(e) => setS({ ...s, name: e.target.value })} /></td>
-      <td className="py-1 pr-2"><Input className="w-28" value={s.category} onChange={(e) => setS({ ...s, category: e.target.value })} /></td>
-      <td className="w-full py-1 pr-2"><ListInput value={s.aliases} onChange={(v) => setS({ ...s, aliases: v })} /></td>
-      <td className="py-1 whitespace-nowrap">
-        <Button size="sm" variant="outline" disabled={!dirty} onClick={() => save.mutate()}>Save</Button>
-        <Button size="sm" variant="ghost" onClick={() => confirm(`Delete skill ${skill.name}?`) && del.mutate()}>Delete</Button>
-        <ErrorText error={save.error} />
-      </td>
-    </tr>
-  )
-}
+// ---------- skills and locations ----------
 
 function SkillsTab() {
-  const q = useQuery({ queryKey: ['skills'], queryFn: () => api.get<Skill[]>('/api/skills') })
-  const done = useRescoreInvalidate()
-  const [filter, setFilter] = useState('')
-  const [n, setN] = useState({ name: '', category: 'other', aliases: [] as string[] })
-  const add = useMutation({ mutationFn: () => api.post('/api/skills', n), onSuccess: () => { setN({ name: '', category: 'other', aliases: [] }); done() } })
-  const rows = (q.data ?? []).filter((s) => {
-    const f = filter.toLowerCase()
-    return !f || s.name.toLowerCase().includes(f) || s.category.includes(f) || s.aliases.some((a) => a.toLowerCase().includes(f))
-  })
-  return (
-    <Card>
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex items-end gap-2 rounded-md border p-2">
-          <Field label="New skill"><Input value={n.name} onChange={(e) => setN({ ...n, name: e.target.value })} /></Field>
-          <Field label="Category"><Input className="w-28" value={n.category} onChange={(e) => setN({ ...n, category: e.target.value })} /></Field>
-          <Field label="Aliases (comma-separated)" className="flex-1"><ListInput value={n.aliases} onChange={(v) => setN({ ...n, aliases: v })} /></Field>
-          <Button disabled={!n.name.trim()} onClick={() => add.mutate()}>Add</Button>
-        </div>
-        <ErrorText error={add.error || q.error} />
-        <Input placeholder="Filter skills…" value={filter} onChange={(e) => setFilter(e.target.value)} className="w-64" />
-        <table className="text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted-foreground"><th>Name</th><th>Category</th><th>Aliases</th><th /></tr>
-          </thead>
-          <tbody>{rows.map((s) => <SkillRow key={s.id} skill={s} />)}</tbody>
-        </table>
-      </CardContent>
-    </Card>
-  )
+  return <SkillDictionary onChanged={useRescoreInvalidate()} />
+}
+
+function LocationsTab() {
+  return <LocationMapEditor onSaved={useRescoreInvalidate()} />
 }
 
 // ---------- export / backup ----------

@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { api } from '@/api/client'
-import type { BaseResume, ExperienceItem, ExperienceItemInput, Profile } from '@/api/types'
+import type { ExperienceItem, ExperienceItemInput, Profile } from '@/api/types'
 import { ErrorText, PageHeader } from '@/components/common'
+import BaseResumes from '@/components/BaseResumes'
 import ItemEditor from '@/components/ItemEditor'
 import ResumeUpload from '@/components/ResumeUpload'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 
 function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
   for (const k of ['experience', 'resumes', 'profile', 'jobs', 'job', 'dashboard']) qc.invalidateQueries({ queryKey: [k] })
@@ -93,70 +93,7 @@ function NewItem({ onClose }: { onClose: () => void }) {
   )
 }
 
-// ---------- base resumes ----------
-
-function Resumes({ items }: { items: ExperienceItem[] }) {
-  const qc = useQueryClient()
-  const resumes = useQuery({ queryKey: ['resumes'], queryFn: () => api.get<BaseResume[]>('/api/resumes') })
-  const [newName, setNewName] = useState('')
-  const update = useMutation({
-    mutationFn: (r: { id: number; name: string; item_ids: number[] }) => api.put(`/api/resumes/${r.id}`, r),
-    onSuccess: () => invalidateAll(qc),
-  })
-  const create = useMutation({
-    mutationFn: () => api.post('/api/resumes', { name: newName, item_ids: [] }),
-    onSuccess: () => {
-      setNewName('')
-      invalidateAll(qc)
-    },
-  })
-  const del = useMutation({ mutationFn: (id: number) => api.del(`/api/resumes/${id}`), onSuccess: () => invalidateAll(qc) })
-  return (
-    <section aria-labelledby="base-resumes" className="flex flex-col gap-3">
-      <div>
-        <h2 id="base-resumes" className="text-lg font-semibold">Base resumes</h2>
-        <p className="text-sm text-muted-foreground">Each one is a selection of bank items, e.g. one for software roles and one for IT support.</p>
-      </div>
-      <div className="flex flex-col gap-4">
-        <ErrorText error={resumes.error || update.error || create.error} />
-        {(resumes.data ?? []).map((r) => (
-          <div key={r.id} className="border-b pb-4">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="font-medium">{r.name}</div>
-              <Button size="sm" variant="ghost" onClick={() => confirm(`Delete BaseResume “${r.name}”? Its Experience Bank items stay.`) && del.mutate(r.id)}>
-                Delete
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
-              {items.map((it) => (
-                <label key={it.id} className="flex items-center gap-1 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={r.item_ids.includes(it.id)}
-                    onChange={(e) =>
-                      update.mutate({
-                        id: r.id,
-                        name: r.name,
-                        item_ids: e.target.checked ? [...r.item_ids, it.id] : r.item_ids.filter((x) => x !== it.id),
-                      })
-                    }
-                  />
-                  <span className="font-mono text-xs">{it.code}</span> {it.title}
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
-        <div className="flex gap-2">
-          <Input placeholder="New BaseResume name" value={newName} onChange={(e) => setNewName(e.target.value)} className="w-64" />
-          <Button variant="outline" disabled={!newName.trim()} onClick={() => create.mutate()}>Create</Button>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/** Delete every bank item and BaseResume, after an automatic database backup. */
+/** Delete every bank item and base resume, after an automatic database backup. */
 function ClearBank({ count }: { count: number }) {
   const qc = useQueryClient()
   const clear = useMutation({
@@ -165,7 +102,7 @@ function ClearBank({ count }: { count: number }) {
   })
   const ask = () =>
     confirm(
-      `Delete all ${count} Experience Bank items and all BaseResumes?\n\n` +
+      `Delete all ${count} Experience Bank items and all base resumes?\n\n` +
         'A backup of your database is saved to data/backups first. Your profile and skill dictionary are kept.',
     )
   return (
@@ -206,7 +143,7 @@ export default function ResumeBank() {
           <Button variant="outline" className="self-start" onClick={() => setAdding(true)}>Add item</Button>
         )}
       </section>
-      <Resumes items={list} />
+      <BaseResumes items={list} />
     </div>
   )
 }

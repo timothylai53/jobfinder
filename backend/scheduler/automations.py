@@ -51,13 +51,16 @@ def seed(session: Session) -> None:
 
 # ---------- the tasks: (session, **options) -> (items processed, message) ----------
 
-def task_fetch_jobs(session: Session, **opts) -> tuple[int, str, bool]:
+def task_fetch_jobs(session: Session, **opts) -> tuple[int, str, bool, list[dict]]:
     results = run_fetch(session, source_keys=opts.get("source_keys"), profile_ids=opts.get("profile_ids"),
                         results_cap=opts.get("results_cap"))
     lines = [f"{r.label()}: {r.status}: {r.message} ({r.requests} request(s))" for r in results]
     ran = [r for r in results if r.status != "skipped"]
     failed = bool(ran) and all(r.status in ("error", "paused") for r in ran)
-    return sum(r.new for r in results), "\n".join(lines) or "no sources", failed
+    details = [{"source": r.key, "status": r.status, "profiles": r.profiles, "cap": r.cap, "fetched": r.fetched,
+                "new": r.new, "merged": r.merged, "hidden": r.hidden, "requests": r.requests, "notes": r.notes,
+                "error": r.error or (r.message if r.status == "skipped" else "")} for r in results]
+    return sum(r.new for r in results), "\n".join(lines) or "no sources", failed, details
 
 
 def merge_duplicates(session: Session) -> int:
@@ -188,7 +191,8 @@ def task_ollama_deep_analysis(session: Session, **_) -> tuple[int, str, bool]:
     return analysed, msg, bool(problems) and analysed == 0
 
 
-TASKS: dict[str, Callable[..., tuple[int, str, bool]]] = {
+# Each task returns (items processed, message, failed) and may add a 4th item: per-source details for the run log.
+TASKS: dict[str, Callable[..., tuple]] = {
     "fetch_jobs": task_fetch_jobs, "dedupe_and_filter": task_dedupe_and_filter, "score_new_jobs": task_score_new_jobs,
     "high_match_alert": task_high_match_alert, "follow_up_reminder": task_follow_up_reminder,
     "ollama_deep_analysis": task_ollama_deep_analysis,
@@ -225,8 +229,9 @@ def run_automation(engine, key: str, trigger: str = "manual", run_id: int | None
             session.commit()
             return run_id
         try:
-            items, message, failed = TASKS[key](session, **opts)
+            items, message, failed, *details = TASKS[key](session, **opts)
             run.result, run.items_processed, run.message = ("error" if failed else "ok"), items, message
+            run.details = details[0] if details else []
         except Exception as e:  # noqa: BLE001 - a failing automation is logged, never crashes the app
             session.rollback()
             run = session.get(AutomationRun, run_id) or run

@@ -16,6 +16,8 @@ ADDED_COLUMNS = [
     ("profile", "linkedin_url", "VARCHAR NOT NULL DEFAULT ''"),
     ("profile", "github_url", "VARCHAR NOT NULL DEFAULT ''"),
     ("profile", "portfolio_url", "VARCHAR NOT NULL DEFAULT ''"),
+    ("baseresume", "updated_at", "DATETIME"),
+    ("automationrun", "details", "JSON NOT NULL DEFAULT '[]'"),
 ]
 
 

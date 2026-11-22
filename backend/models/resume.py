@@ -11,6 +11,7 @@ class BaseResume(SQLModel, table=True):
     original_file_path: str = ""
     raw_text: str = ""
     created_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime | None = None  # last rename or change of its item selection
 
 
 class ExperienceItemBase(SQLModel):

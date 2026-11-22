@@ -37,3 +37,40 @@ export function buildOptions(map: Record<string, string[]>, query: string): Loca
   }
   return out
 }
+
+// ---------- the Location map editor (Settings) ----------
+
+export type LocationMap = Record<string, string[]>
+
+const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase()
+
+/** Add a town to a state. Rejects an empty name or one the state already has (any case). The same town in another
+ * state is allowed (Cheras is in both Kuala Lumpur and Selangor). */
+export function addTown(map: LocationMap, state: string, town: string): { map: LocationMap; error?: string } {
+  const t = town.trim().replace(/\s+/g, ' ')
+  if (!t) return { map, error: 'Type a town or area first.' }
+  const towns = map[state] ?? []
+  if (towns.some((x) => same(x, t))) return { map, error: `${t} is already in ${state}.` }
+  return { map: { ...map, [state]: [...towns, t] } }
+}
+
+export function removeTown(map: LocationMap, state: string, town: string): LocationMap {
+  return { ...map, [state]: (map[state] ?? []).filter((x) => x !== town) }
+}
+
+/** Every state that lists this town (case-insensitive), for "also in …" labels. */
+export function statesWith(map: LocationMap, town: string): string[] {
+  return Object.keys(map).filter((s) => map[s].some((x) => same(x, town)))
+}
+
+/** Towns matching a search, across all states, as [state, town] pairs in map order. */
+export function findTowns(map: LocationMap, query: string): { state: string; town: string }[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return []
+  return Object.entries(map).flatMap(([state, towns]) => towns.filter((t) => t.toLowerCase().includes(q)).map((town) => ({ state, town })))
+}
+
+/** One state back to its default towns (a state with no default keeps its towns). */
+export function resetState(map: LocationMap, defaults: LocationMap, state: string): LocationMap {
+  return state in defaults ? { ...map, [state]: [...defaults[state]] } : map
+}

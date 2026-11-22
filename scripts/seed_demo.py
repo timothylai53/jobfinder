@@ -121,6 +121,42 @@ TRACKER = [  # job index -> statuses walked through, days ago applied
 ]
 
 
+def demo_run_log() -> None:
+    """A short, fake automation history (no fetching happens), so the Automations run log has something to show."""
+    from sqlmodel import Session
+
+    from app.db import engine
+    from models import AutomationRun
+    from models._base import utcnow
+
+    def detail(source, profiles, cap, fetched, new, merged, hidden, requests, notes=(), status="ok", error=""):
+        return {"source": source, "status": status, "profiles": profiles, "cap": cap, "fetched": fetched, "new": new,
+                "merged": merged, "hidden": hidden, "requests": requests, "notes": list(notes), "error": error}
+
+    now = utcnow().replace(second=0, microsecond=0)
+    daily = ["KL/Selangor software"]
+    runs = [
+        (now - timedelta(days=9, hours=2), "fetch_jobs", "schedule", "ok", [
+            detail("jobstreet", daily, 50, 18, 9, 6, 3, 21),
+            detail("linkedin", daily, 25, 12, 4, 7, 1, 9, ["JobSpy warning: job_type fulltime isn't supported, ignoring it"]),
+            detail("indeed", daily, 25, 0, 0, 0, 0, 2, status="error", error="HTTP 429 (too many requests)")]),
+        (now - timedelta(days=9, hours=2) + timedelta(minutes=1), "score_new_jobs", "chain", "ok", "scored 13 new jobs"),
+        (now - timedelta(days=2, hours=1), "fetch_jobs", "manual", "ok", [
+            detail("jobstreet", ["Smoke test"], 5, 5, 2, 3, 0, 7),
+            detail("linkedin", ["Smoke test"], 5, 5, 1, 4, 0, 4, ["JobSpy warning: location 'Bangsar South' not found, searching the country"]),
+            detail("glassdoor", [], None, 0, 0, 0, 0, 0, status="skipped", error="no enabled search profile uses this source")]),
+        (now - timedelta(days=1, hours=3), "follow_up_reminder", "schedule", "ok", "1 follow-up due today"),
+    ]
+    with Session(engine) as session:
+        for at, key, trigger, result, body in runs:
+            details = body if isinstance(body, list) else []
+            message = body if isinstance(body, str) else ""
+            session.add(AutomationRun(automation_key=key, trigger=trigger, started_at=at, finished_at=at + timedelta(minutes=1),
+                                      result=result, items_processed=sum(d["new"] for d in details) or (13 if key == "score_new_jobs" else 0),
+                                      message=message, details=details))
+        session.commit()
+
+
 def seed(target: Path) -> None:
     if target.exists():
         shutil.rmtree(target)
@@ -168,6 +204,10 @@ def seed(target: Path) -> None:
         ok(c.patch(f"/api/applications/{first_app['id']}", json={"resume_version_id": resume["id"],
                                                                   "cover_letter_version_id": letter["id"]}))
         ok(c.post("/api/automations/high_match_alert/run"))
+        # a second base resume (education, the internship and the AWS certificate), for the Resume page
+        bank = {i["code"]: i["id"] for i in ok(c.get("/api/experience"))}
+        ok(c.post("/api/resumes", json={"name": "IT support", "item_ids": [bank[k] for k in ("B1", "B4", "B5") if k in bank]}))
+        demo_run_log()
         print(f"Demo data in {target}: {len(ids)} jobs, {len(TRACKER)} tracker cards, resume version {resume['version']}.")
 
 

@@ -97,14 +97,18 @@ export function NativeSelect({
   onChange,
   options,
   className,
+  label,
 }: {
   value: string
   onChange: (v: string) => void
   options: (string | { value: string; label: string })[]
   className?: string
+  /** Accessible name when there is no visible <label> around it. */
+  label?: string
 }) {
   return (
     <select
+      aria-label={label}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className={cn('h-9 rounded-lg border border-input bg-background px-2 text-[15px]', className)}

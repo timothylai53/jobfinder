@@ -12,7 +12,7 @@ from app.db import get_session
 from app.settings_store import next_item_code
 from matcher.service import get_profile, rescore_all
 from models import BaseResume, ExperienceItem, ExperienceItemBase
-from models._base import require_id
+from models._base import require_id, utcnow
 from resume_parser.extract_text import UnsupportedFile, extract_text
 from resume_parser.sections import parse_resume_text
 from skills.service import build_matcher
@@ -116,6 +116,7 @@ class ResumeOut(BaseModel):
     name: str
     original_file_path: str
     created_at: str
+    updated_at: str  # last change (falls back to created_at)
     item_ids: list[int]
 
 
@@ -124,6 +125,7 @@ def list_resumes(session: Session = Depends(get_session)):
     items = session.exec(select(ExperienceItem)).all()
     return [
         ResumeOut(id=require_id(r), name=r.name, original_file_path=r.original_file_path, created_at=r.created_at.isoformat(),
+                  updated_at=(r.updated_at or r.created_at).isoformat(),
                   item_ids=[require_id(i) for i in items if r.id in i.resume_ids])
         for r in session.exec(select(BaseResume).order_by(col(BaseResume.id))).all()
     ]
@@ -142,6 +144,7 @@ def update_resume(resume_id: int, req: ResumeUpdate, session: Session = Depends(
     if req.name.strip():
         _check_name_free(session, req.name, resume_id)
     r.name = req.name.strip() or r.name
+    r.updated_at = utcnow()
     wanted = set(req.item_ids)
     for i in session.exec(select(ExperienceItem)).all():
         has = resume_id in i.resume_ids
@@ -156,7 +159,8 @@ def update_resume(resume_id: int, req: ResumeUpdate, session: Session = Depends(
 @router.post("")
 def create_resume(req: ResumeUpdate, session: Session = Depends(get_session)):
     _check_name_free(session, req.name.strip() or "Resume")
-    r = BaseResume(name=req.name.strip() or "Resume")
+    now = utcnow()
+    r = BaseResume(name=req.name.strip() or "Resume", created_at=now, updated_at=now)
     session.add(r)
     session.flush()
     for i in session.exec(select(ExperienceItem)).all():
@@ -178,3 +182,24 @@ def delete_resume(resume_id: int, session: Session = Depends(get_session)):
     session.delete(r)
     session.commit()
     return {"ok": True}
+
+
+@router.post("/{resume_id}/duplicate")
+def duplicate_resume(resume_id: int, session: Session = Depends(get_session)):
+    """A copy with the same item selection, named "<name> (copy)" (or "(copy 2)", … if that is taken)."""
+    r = session.get(BaseResume, resume_id)
+    if not r:
+        raise HTTPException(404, "Resume not found")
+    taken = {x.name.strip().lower() for x in session.exec(select(BaseResume)).all()}
+    name, n = f"{r.name} (copy)", 2
+    while name.lower() in taken:
+        name, n = f"{r.name} (copy {n})", n + 1
+    now = utcnow()
+    copy = BaseResume(name=name, created_at=now, updated_at=now)
+    session.add(copy)
+    session.flush()
+    for i in session.exec(select(ExperienceItem)).all():
+        if resume_id in i.resume_ids:
+            i.resume_ids = [*i.resume_ids, require_id(copy)]
+    session.commit()
+    return {"id": copy.id, "name": name}

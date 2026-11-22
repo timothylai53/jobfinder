@@ -122,6 +122,27 @@ def test_fetch_run_logs_and_chains(client, engine, fake_net):
         assert s.get(Automation, "fetch_jobs").last_run_at is not None
 
 
+def test_fetch_run_stores_per_source_details(client, engine, fake_net):
+    _one_profile(engine)
+    run_id = run_automation(engine, "fetch_jobs", "manual", source_keys=["jobstreet", "indeed"])
+    with Session(engine) as s:
+        run = s.get(AutomationRun, run_id)
+        by = {d["source"]: d for d in run.details}
+    assert set(by) == {"jobstreet", "indeed"}
+    js = by["jobstreet"]
+    assert js["status"] == "ok" and js["profiles"] == ["KL/Selangor"] and js["cap"] == 50
+    assert {"fetched", "new", "merged", "hidden", "requests", "notes", "error"} <= set(js)
+    assert sum(d["new"] for d in run.details) == run.items_processed
+    api_row = next(r for r in client.get("/api/automations/runs").json() if r["id"] == run_id)
+    assert len(api_row["details"]) == 2
+
+
+def test_other_automations_have_no_details(client, engine):
+    run_id = run_automation(engine, "follow_up_reminder", "manual")
+    with Session(engine) as s:
+        assert s.get(AutomationRun, run_id).details == []
+
+
 def test_failing_task_is_logged_not_raised(client, engine, monkeypatch):
     def boom(session, **_):
         raise RuntimeError("kaput")

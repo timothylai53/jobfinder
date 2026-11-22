@@ -81,6 +81,16 @@ export function formatDateTime(iso: string | null | undefined): string {
   return d ? `${formatDate(iso)}, ${TIME.format(d).replace(/\s?([ap])\.?m\.?$/i, ' $1m').toLowerCase()}` : ''
 }
 
+const DAY_MONTH = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' })
+
+/** "13 Nov, 11:10 am" for log rows; the year is added only when it isn't this year. */
+export function formatShortDateTime(iso: string | null | undefined, now = new Date()): string {
+  const d = toDate(iso)
+  if (!d) return ''
+  const day = d.getFullYear() === now.getFullYear() ? DAY_MONTH.format(d).replace('Sept', 'Sep') : formatDate(iso)
+  return `${day}, ${TIME.format(d).replace(/\s?([ap])\.?m\.?$/i, ' $1m').toLowerCase()}`
+}
+
 /** "Nov 2026" for months (expected graduation). */
 export function formatMonth(iso: string | null | undefined): string {
   const d = toDate(iso)

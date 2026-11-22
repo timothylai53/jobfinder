@@ -59,6 +59,8 @@ class SourceResult:
     cap: int | None = None  # the per-run limit actually used
     profiles: list[str] = field(default_factory=list)  # search profile names actually used
     new_job_ids: list[int] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)  # warnings worth reading (JobSpy, blocked pages, coverage)
+    error: str = ""  # why the source stopped, if it did
 
     def label(self) -> str:
         """"indeed (limit 5, profile Smoke test)": what this run really used, for the run log."""
@@ -165,13 +167,15 @@ def _fetch_one(session: Session, src: Source, res: SourceResult, mine: list[Sear
         res.new = res.merged = res.hidden = 0
         res.new_job_ids = []
         error = error or SourceError(f"saving the fetched jobs failed ({e.__class__.__name__}: {e})")
-    notes = "; ".join(getattr(impl, "notes", []))
+    res.notes = list(getattr(impl, "notes", []))
+    notes = "; ".join(res.notes)
     summary = f"{res.fetched} fetched, {res.new} new, {res.merged} merged, {res.hidden} hidden by filters"
     if error is None:
         health.record_success(src, summary + (f". {notes}" if notes else ""))
         res.message = src.last_result
     else:
         health.record_failure(session, src, error, now)
+        res.error = str(error)
         res.status = "paused" if src.status == "paused" else "error"
         tail = f". Saved before stopping: {summary}" + (f". {notes}" if notes else "")
         res.message = f"{src.last_error}{tail}"
