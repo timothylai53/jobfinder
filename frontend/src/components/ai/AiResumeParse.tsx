@@ -6,7 +6,8 @@ import type { ExperienceItem, ParseResumeResult, ResumeDraft } from '@/api/types
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { parsedToDraft } from '@/lib/ai'
-import AiTaskFlow, { useAiSettings } from './AiTaskFlow'
+import AiTaskFlow from './AiTaskFlow'
+import { useAiSettings } from './hooks'
 import { FlagIcon } from '@/components/common'
 
 /**

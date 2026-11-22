@@ -47,7 +47,6 @@ export default function TailorReview({ task, onSaved }: { task: AiTask<TailorRes
     onSuccess: onSaved,
   })
   const accepted = rows.filter((r) => r.decision === 'accepted').length
-  let lastSection = ''
 
   return (
     <div className="flex flex-col gap-4">
@@ -78,10 +77,9 @@ export default function TailorReview({ task, onSaved }: { task: AiTask<TailorRes
         <div className="grid grid-cols-2 gap-3 text-sm font-medium text-muted-foreground">
           <span>Original (Experience Bank)</span><span>Rewritten for this job</span>
         </div>
-        {rows.map((r) => {
+        {rows.map((r, i) => {
           const b = byCode.get(r.source_id.trim().toUpperCase())
-          const header = r.section !== lastSection
-          lastSection = r.section
+          const header = i === 0 || rows[i - 1].section !== r.section
           const unsavable = r.flags.some(blocksSave) && !b
           return (
             <div key={r.key}>

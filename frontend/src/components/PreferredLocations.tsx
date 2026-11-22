@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { api } from '@/api/client'
 import type { Profile, Settings } from '@/api/types'
 import { Button } from '@/components/ui/button'
@@ -7,17 +7,19 @@ import { ErrorText } from './common'
 import LocationPicker from './LocationPicker'
 
 /** Edit Profile.preferred_locations (+ remote_ok via the "Remote" chip) with the state/town picker. */
+/** The profile's places as the picker shows them: Remote is a place in the list, not a separate switch. */
+function savedPlaces(p: Profile): string[] {
+  const places = p.preferred_locations.filter((x) => x.toLowerCase() !== 'remote')
+  return p.remote_ok ? [...places, 'Remote'] : places
+}
+
 export default function PreferredLocations({ onSaved, saveLabel = 'Save locations' }: { onSaved?: () => void; saveLabel?: string }) {
   const qc = useQueryClient()
   const profile = useQuery({ queryKey: ['profile'], queryFn: () => api.get<Profile>('/api/profile') })
   const settings = useQuery({ queryKey: ['settings'], queryFn: () => api.get<Settings>('/api/settings') })
-  const [value, setValue] = useState<string[] | null>(null)
-  useEffect(() => {
-    if (profile.data && value === null) {
-      const places = profile.data.preferred_locations.filter((p) => p.toLowerCase() !== 'remote')
-      setValue(profile.data.remote_ok ? [...places, 'Remote'] : places)
-    }
-  }, [profile.data, value])
+  // Local edits; until the first one, the picker shows what the profile has saved.
+  const [edited, setValue] = useState<string[] | null>(null)
+  const value = edited ?? (profile.data ? savedPlaces(profile.data) : null)
 
   const save = useMutation({
     mutationFn: () => {

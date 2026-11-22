@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { api } from '@/api/client'
 import type { AutomationRow, AutomationRunRow } from '@/api/types'
 import { ErrorText, NativeSelect, PageHeader } from '@/components/common'
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { formatDateTime, formatShortDateTime } from '@/lib/score'
 import { runRows, STATUS_LABEL, type RowStatus, type RunLogRow } from '@/lib/runlog'
+import { useLocalCopy } from '@/lib/hooks'
 
 const RESULT_TONE: Record<string, string> = {
   ok: 'bg-selected text-foreground', error: 'bg-danger-bg text-danger',
@@ -25,8 +26,7 @@ function scheduleText(a: AutomationRow) {
 
 function AutomationCard({ a }: { a: AutomationRow }) {
   const qc = useQueryClient()
-  const [time, setTime] = useState(a.schedule)
-  useEffect(() => setTime(a.schedule), [a.schedule])
+  const [time, setTime] = useLocalCopy(a.schedule)
   const update = useMutation({
     mutationFn: (body: Partial<AutomationRow>) => api.put(`/api/automations/${a.key}`, { enabled: a.enabled, mode: a.mode, schedule: a.schedule, ...body }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['automations'] }),

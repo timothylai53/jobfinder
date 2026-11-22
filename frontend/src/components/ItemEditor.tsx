@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Field, ListInput, NativeSelect } from './common'
 
-export const ITEM_TYPES: ItemType[] = ['work', 'project', 'education', 'achievement', 'certification', 'publication']
+const ITEM_TYPES: ItemType[] = ['work', 'project', 'education', 'achievement', 'certification', 'publication']
 
 /** Edit one Experience Bank item (used for both parsed drafts and saved items). */
 export default function ItemEditor({ value, onChange }: { value: ExperienceItemInput; onChange: (v: ExperienceItemInput) => void }) {

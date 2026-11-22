@@ -127,3 +127,7 @@ export const TASK_LABEL: Record<string, string> = {
   cover_letter: 'Cover letter',
   interview_prep: 'Interview prep',
 }
+
+export const DOC_LABEL: Record<string, string> = {
+  resume: 'Resume', cover_letter: 'Cover letter', deep_analysis: 'Deep analysis', interview_prep: 'Interview prep',
+}

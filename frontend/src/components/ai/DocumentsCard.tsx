@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Download, Eye, FileDown, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '@/api/client'
@@ -7,14 +7,11 @@ import { ErrorText } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { formatDate } from '@/lib/score'
-import { DOC_LABEL } from './AiTools'
+import { DOC_LABEL } from '@/lib/ai'
+import { useDocuments } from './hooks'
 import { DeepAnalysisView, InterviewPrepView } from './AnalysisViews'
 
 const SOURCE: Record<string, string> = { copy_paste: 'Copy-Paste', ollama: 'Ollama', template: 'Template', manual: 'Manual' }
-
-export function useDocuments(jobId: number) {
-  return useQuery({ queryKey: ['documents', jobId], queryFn: () => api.get<DocumentRow[]>(`/api/jobs/${jobId}/documents`) })
-}
 
 /** All saved versions for this job: preview, PDF download, view analyses, delete. (Job Detail's Documents tab.) */
 export default function DocumentsCard({ jobId, application }: { jobId: number; application: Application | null }) {

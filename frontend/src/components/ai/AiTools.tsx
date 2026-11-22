@@ -9,17 +9,14 @@ import type {
 import { ErrorText, Field, NativeSelect, Notice } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { TASK_LABEL } from '@/lib/ai'
+import { DOC_LABEL, TASK_LABEL } from '@/lib/ai'
 import { defaultStartFrom, typeSummary } from '@/lib/baseResumes'
 import { cn } from '@/lib/utils'
-import AiTaskFlow, { useAiSettings } from './AiTaskFlow'
+import AiTaskFlow from './AiTaskFlow'
+import { type AiOpen, useAiDialog, useAiSettings } from './hooks'
 import { DeepAnalysisView, InterviewPrepView } from './AnalysisViews'
 import CoverLetterEditor from './CoverLetterEditor'
 import TailorReview from './TailorReview'
-
-export const DOC_LABEL: Record<string, string> = {
-  resume: 'Resume', cover_letter: 'Cover letter', deep_analysis: 'Deep analysis', interview_prep: 'Interview prep',
-}
 
 function Saved({ doc, onClose }: { doc: DocumentRow; onClose: () => void }) {
   return (
@@ -186,17 +183,6 @@ const MORE: { open: AiOpen & string; label: string; icon: typeof Sparkles; ai: b
   { open: 'template', label: 'Cover letter from template (no AI)', icon: FileText, ai: false },
 ]
 
-export type AiOpen = AiTaskType | 'template' | null
-
-/** Which AI dialog is open on Job Detail. `n` makes every opening a fresh task. */
-export function useAiDialog() {
-  const [state, setState] = useState<{ open: AiOpen; n: number }>({ open: null, n: 0 })
-  return {
-    ...state,
-    start: (open: AiOpen) => setState((s) => ({ open, n: s.n + 1 })),
-    close: () => setState((s) => ({ ...s, open: null })),
-  }
-}
 
 /** The open dialog. The mode (Copy-Paste or Ollama) is the one chosen in Settings -> AI; if Ollama fails, the
  * dialog itself offers Copy-Paste for that task. */

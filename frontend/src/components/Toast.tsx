@@ -1,17 +1,7 @@
 import { X } from 'lucide-react'
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-
-interface ToastOptions {
-  message: string
-  /** Shows an Undo button; called instead of onExpire if pressed. */
-  undo?: () => void
-  /** Runs when the toast ends without Undo (e.g. the real delete). Also runs if another toast replaces this one. */
-  onExpire?: () => void
-  duration?: number
-}
-
-const Ctx = createContext<(t: ToastOptions) => void>(() => {})
+import { ToastContext as Ctx, type ToastOptions } from '@/lib/toast'
 
 /** One toast at a time, bottom centre, announced politely to screen readers. The timer pauses on hover or focus. */
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -69,4 +59,3 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export const useToast = () => useContext(Ctx)

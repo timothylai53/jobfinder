@@ -35,7 +35,6 @@ export default function LocationPicker({
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [])
-  useEffect(() => setActive(0), [query])
 
   const coveredByState = (o: LocationOption) => o.kind === 'town' && selected.has(o.state.toLowerCase())
 
@@ -108,6 +107,7 @@ export default function LocationPicker({
           value={query}
           onChange={(e) => {
             setQuery(e.target.value)
+            setActive(0) // a new search starts at its first option
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}

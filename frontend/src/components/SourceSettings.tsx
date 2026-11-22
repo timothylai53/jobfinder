@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { api } from '@/api/client'
 import type { SearchProfileRow, SourceRow } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { ErrorText, Field, ListInput, NativeSelect } from './common'
-import { sourceStatus } from './FetchNowDialog'
+import { sourceStatus } from '@/lib/sources'
 import { formatDateTime } from '@/lib/score'
+import { useLocalCopy } from '@/lib/hooks'
 
 const JOB_TYPES = [
   { value: 'fulltime', label: 'Full time' }, { value: 'parttime', label: 'Part time' },
@@ -100,9 +101,8 @@ export function SearchProfiles() {
 
 function SourceCard({ s }: { s: SourceRow }) {
   const qc = useQueryClient()
-  const [results, setResults] = useState(s.max_results)
-  const [runs, setRuns] = useState(s.max_runs_per_day)
-  useEffect(() => { setResults(s.max_results); setRuns(s.max_runs_per_day) }, [s.max_results, s.max_runs_per_day])
+  const [results, setResults] = useLocalCopy(s.max_results)
+  const [runs, setRuns] = useLocalCopy(s.max_runs_per_day)
   const done = () => { qc.invalidateQueries({ queryKey: ['sources'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }) }
   const save = useMutation({
     mutationFn: (body: Partial<SourceRow>) => api.put(`/api/sources/${s.key}`, { enabled: s.enabled, max_results: results, max_runs_per_day: runs, ...body }),

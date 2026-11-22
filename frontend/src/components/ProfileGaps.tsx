@@ -1,26 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { api } from '@/api/client'
-import type { ProfileStatus } from '@/api/types'
-import { formatMonth } from '@/lib/score'
-
-export function useProfileStatus() {
-  // Key starts with 'profile' so every profile / bank change that invalidates ['profile'] refreshes it.
-  return useQuery({
-    queryKey: ['profile', 'status'],
-    queryFn: () => api.get<ProfileStatus>('/api/profile/status'),
-    refetchOnMount: 'always',
-  })
-}
-
-export function educationLabel(e: ProfileStatus['education']): string {
-  if (!e) return 'none found'
-  const parts = [e.level + (e.field ? ` in ${e.field}` : '')]
-  if (e.in_progress) parts.push(`in progress${e.expected ? `, expected ${formatMonth(e.expected)}` : ''}`)
-  parts.push(e.source === 'profile' ? 'from your profile' : `from ${e.source}`)
-  return parts.join(', ')
-}
+import { useProfileStatus } from '@/lib/profile'
 
 /** Amber banner listing key profile fields that are missing, each linking to where it is fixed. */
 export default function ProfileGaps({ context = 'scores' }: { context?: 'scores' | 'score' }) {

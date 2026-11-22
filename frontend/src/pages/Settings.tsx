@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { api } from '@/api/client'
 import type { FilterRule, Profile, ScoringConfig, Settings as SettingsT } from '@/api/types'
 import { ErrorText, Field, ListInput, NativeSelect, Notice, PageHeader } from '@/components/common'
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Link, useSearchParams } from 'react-router-dom'
-import { educationLabel, useProfileStatus } from '@/components/ProfileGaps'
+import { educationLabel, useProfileStatus } from '@/lib/profile'
 import PreferredLocations from '@/components/PreferredLocations'
 import { JobSources, SearchProfiles } from '@/components/SourceSettings'
 import { AiSettingsTab, PromptTemplatesTab } from '@/components/ai/AiSettings'
@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import LocationMapEditor from '@/components/LocationMapEditor'
 import SkillDictionary from '@/components/SkillDictionary'
 import { formatDateTime } from '@/lib/score'
+import { useLocalCopy } from '@/lib/hooks'
 
 const EDU_LEVELS = ['', 'SPM', 'STPM', 'Diploma', 'Degree', 'Master', 'PhD']
 
@@ -30,8 +31,7 @@ function useRescoreInvalidate() {
 
 export function ProfileTab({ onSaved, saveLabel = 'Save profile' }: { onSaved?: () => void; saveLabel?: string }) {
   const q = useQuery({ queryKey: ['profile'], queryFn: () => api.get<Profile>('/api/profile') })
-  const [p, setP] = useState<Profile | null>(null)
-  useEffect(() => { if (q.data) setP(q.data) }, [q.data])
+  const [p, setP] = useLocalCopy<Profile | null>(q.data ?? null)
   const done = useRescoreInvalidate()
   // Saving this form confirms the years of experience, even when it stays 0.
   const save = useMutation({ mutationFn: (v: Profile) => api.put<Profile>('/api/profile', { ...v, years_confirmed: true }), onSuccess: () => { done(); onSaved?.() } })
@@ -119,8 +119,7 @@ const FILTER_TYPES: { value: FilterRule['type']; label: string; hint: string }[]
 
 function RuleRow({ rule }: { rule: FilterRule }) {
   const done = useRescoreInvalidate()
-  const [r, setR] = useState(rule)
-  useEffect(() => setR(rule), [rule])
+  const [r, setR] = useLocalCopy(rule)
   const save = useMutation({ mutationFn: (v: FilterRule) => api.put(`/api/filters/${rule.id}`, v), onSuccess: done })
   const del = useMutation({ mutationFn: () => api.del(`/api/filters/${rule.id}`), onSuccess: done })
   return (
@@ -172,8 +171,7 @@ const WEIGHT_LABELS: [keyof ScoringConfig['weights'], string][] = [
 
 function ScoringTab() {
   const q = useQuery({ queryKey: ['settings'], queryFn: () => api.get<SettingsT>('/api/settings') })
-  const [s, setS] = useState<SettingsT | null>(null)
-  useEffect(() => { if (q.data) setS(q.data) }, [q.data])
+  const [s, setS] = useLocalCopy<SettingsT | null>(q.data ?? null)
   const done = useRescoreInvalidate()
   // Locations are edited in their own tab; omitting them leaves the stored map unchanged.
   const save = useMutation({ mutationFn: (v: SettingsT) => api.put('/api/settings', { scoring: v.scoring, general: v.general }), onSuccess: done })
@@ -347,7 +345,11 @@ export default function Settings() {
   })
   // Follow ?section= links (from the "profile is missing …" banner) even when already on this page.
   const linked = params.get('section')
-  useEffect(() => { if (linked && SECTIONS.some((s) => s.id === linked)) setId(linked) }, [linked])
+  const [seenLinked, setSeenLinked] = useState(linked)
+  if (linked !== seenLinked) {
+    setSeenLinked(linked)
+    if (linked && SECTIONS.some((s) => s.id === linked)) setId(linked)
+  }
   const current = SECTIONS.find((s) => s.id === id) ?? SECTIONS[0]
   const pick = (v: string) => {
     setId(v)

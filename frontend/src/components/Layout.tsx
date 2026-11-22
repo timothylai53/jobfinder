@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Briefcase, FileText, GraduationCap, KanbanSquare, Settings, Sun, Timer } from 'lucide-react'
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import type { ExperienceItem, Profile } from '@/api/types'
 import { SETUP_DONE_KEY } from '@/pages/Setup'
@@ -83,7 +83,9 @@ export default function Layout() {
       </aside>
       <main id="main" className="min-w-0 flex-1 px-8 py-7">
         <div className="mx-auto max-w-[88rem]">
-          <Outlet />
+          <Suspense fallback={<p className="text-muted-foreground">Loading…</p>}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
     </div>

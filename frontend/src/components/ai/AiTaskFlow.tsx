@@ -8,10 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { isWarning } from '@/lib/ai'
 import { cn } from '@/lib/utils'
-
-export function useAiSettings() {
-  return useQuery({ queryKey: ['ai-settings'], queryFn: () => api.get<import('@/api/types').AiSettings>('/api/ai/settings') })
-}
+import { useAiSettings } from './hooks'
 
 export function CopyButton({ text, label = 'Copy prompt' }: { text: string; label?: string }) {
   const [done, setDone] = useState(false)
@@ -81,9 +78,8 @@ export default function AiTaskFlow({ task, jobId, resumeText, provider, baseResu
   useEffect(() => {
     if (!running) return
     const start = Date.now()
-    setElapsed(0)
     const id = setInterval(() => setElapsed(Math.round((Date.now() - start) / 1000)), 1000)
-    return () => clearInterval(id)
+    return () => { clearInterval(id); setElapsed(0) } // the next run starts its count from 0
   }, [running])
 
   const set = (next: AiTask) => qc.setQueryData(['ai-task', next.id], next)

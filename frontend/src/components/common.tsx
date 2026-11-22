@@ -1,5 +1,5 @@
 import { CircleCheck, CircleMinus, CircleX, TriangleAlert } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { ItemStatus } from '@/api/types'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -79,9 +79,11 @@ export function Field({ label, children, className }: { label: string; children:
 export function ListInput({ value, onChange, placeholder }: { value: string[]; onChange: (v: string[]) => void; placeholder?: string }) {
   const [text, setText] = useState(value.join(', '))
   // Follow outside changes (a reload after saving), but not the echo of our own typing, which would eat ", ".
-  useEffect(() => {
-    setText((t) => (parseList(t).join('|') === value.join('|') ? t : value.join(', ')))
-  }, [value])
+  const [seen, setSeen] = useState(value)
+  if (value !== seen) {
+    setSeen(value)
+    if (parseList(text).join('|') !== value.join('|')) setText(value.join(', '))
+  }
   return (
     <Input
       value={text}

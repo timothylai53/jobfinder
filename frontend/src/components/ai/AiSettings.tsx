@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, CircleAlert, RotateCcw } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { api } from '@/api/client'
 import type { AiSettings, OllamaStatus, PromptTemplate } from '@/api/types'
 import { ErrorText, Field, NativeSelect } from '@/components/common'
@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { TASK_LABEL } from '@/lib/ai'
 import { cn } from '@/lib/utils'
+import { useLocalCopy } from '@/lib/hooks'
 
 const MODES = [
   { value: 'copy_paste', label: 'Copy-Paste (default): copy a prompt into a free web chat, paste the reply back' },
@@ -20,8 +21,7 @@ const MODES = [
 export function AiSettingsTab() {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['ai-settings'], queryFn: () => api.get<AiSettings>('/api/ai/settings') })
-  const [s, setS] = useState<AiSettings | null>(null)
-  useEffect(() => { if (q.data) setS(q.data) }, [q.data])
+  const [s, setS] = useLocalCopy<AiSettings | null>(q.data ?? null)
   const save = useMutation({ mutationFn: (v: AiSettings) => api.put<AiSettings>('/api/ai/settings', v), onSuccess: (v) => qc.setQueryData(['ai-settings'], v) })
   const status = useMutation({ mutationFn: (model: string) => api.get<OllamaStatus>(`/api/ai/ollama/status?model=${encodeURIComponent(model)}`) })
   if (!s) return <ErrorText error={q.error} />
@@ -67,8 +67,7 @@ export function AiSettingsTab() {
 
 function TemplateEditor({ t }: { t: PromptTemplate }) {
   const qc = useQueryClient()
-  const [text, setText] = useState(t.text)
-  useEffect(() => setText(t.text), [t.text])
+  const [text, setText] = useLocalCopy(t.text)
   const done = () => qc.invalidateQueries({ queryKey: ['ai-templates'] })
   const save = useMutation({ mutationFn: () => api.put(`/api/ai/templates/${t.name}`, { text }), onSuccess: done })
   const reset = useMutation({ mutationFn: () => api.post(`/api/ai/templates/${t.name}/reset`), onSuccess: done })

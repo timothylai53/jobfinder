@@ -1,17 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Download, ExternalLink, Plus } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '@/api/client'
 import { STATUSES, type Application, type DeepAnalysisResult, type DocumentRow, type JobDetail as JobDetailT, type Profile, type Status } from '@/api/types'
 import Breakdown from '@/components/Breakdown'
-import { AiActions, AiDialogs, useAiDialog } from '@/components/ai/AiTools'
-import { useAiSettings } from '@/components/ai/AiTaskFlow'
-import DocumentsCard, { useDocuments } from '@/components/ai/DocumentsCard'
+import { AiActions, AiDialogs } from '@/components/ai/AiTools'
+import { useAiDialog, useAiSettings, useDocuments } from '@/components/ai/hooks'
+import DocumentsCard from '@/components/ai/DocumentsCard'
 import { DeepAnalysisView } from '@/components/ai/AnalysisViews'
 import PasteFullJdDialog from '@/components/PasteFullJdDialog'
 import ProfileGaps from '@/components/ProfileGaps'
-import { useToast } from '@/components/Toast'
+import { useToast } from '@/lib/toast'
 import { ErrorText, Field, NativeSelect, Notice, ScoreBadge, StatusMark } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +22,7 @@ import { gapNote, gaps, missingTitle, primaryStep, scoreVerdict } from '@/lib/ve
 import { pendingDeletes } from '@/lib/pendingDeletes'
 import { safeHttpUrl } from '@/lib/url'
 import { cn } from '@/lib/utils'
+import { useLocalCopy } from '@/lib/hooks'
 
 const TABS = [['overview', 'Overview'], ['score', 'Score details'], ['documents', 'Documents'], ['description', 'Job description']] as const
 
@@ -32,7 +33,12 @@ function useDownloaded(docId: number | undefined) {
   const key = docId ? `jobfinder.downloaded.${docId}` : ''
   const read = () => { try { return !!key && localStorage.getItem(key) === '1' } catch { return false } }
   const [done, setDone] = useState(read)
-  useEffect(() => setDone(read()), [key]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Another resume version: read its own flag (adjusted while rendering, not in an effect).
+  const [seenKey, setSeenKey] = useState(key)
+  if (key !== seenKey) {
+    setSeenKey(key)
+    setDone(read())
+  }
   const mark = () => { try { if (key) localStorage.setItem(key, '1') } catch { /* storage blocked */ } setDone(true) }
   return [done, mark] as const
 }
@@ -289,8 +295,7 @@ function Missing({ breakdown, onChanged }: { breakdown: Parameters<typeof gaps>[
 function ApplicationForm({ application, history, onPatch }: {
   application: Application; history: JobDetailT['history']; onPatch: (body: Record<string, unknown>) => void
 }) {
-  const [notes, setNotes] = useState(application.notes ?? '')
-  useEffect(() => setNotes(application.notes ?? ''), [application.notes])
+  const [notes, setNotes] = useLocalCopy(application.notes ?? '')
   // Dates and the versions sent only mean something once you have applied.
   const applied = application.status !== 'Saved'
   return (

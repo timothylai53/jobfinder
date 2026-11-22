@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { AlertTriangle, CheckCircle2, Circle, Clock, EyeOff, ListTodo } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { api } from '@/api/client'
 import type { Dashboard as DashboardT, ExperienceItem, Profile } from '@/api/types'
 import { ErrorText, PageHeader } from '@/components/common'
 import ImportJobDialog from '@/components/ImportJobDialog'
-import { useToast } from '@/components/Toast'
-import { useProfileStatus } from '@/components/ProfileGaps'
+import { useToast } from '@/lib/toast'
+import { useProfileStatus } from '@/lib/profile'
 import { Button } from '@/components/ui/button'
 import { formatDate, formatDateTime } from '@/lib/score'
 import { isFirstRun, nextSteps, setupSteps, type NextStep } from '@/lib/today'
@@ -22,10 +23,12 @@ export default function Dashboard() {
   const loaded = d && profile.data && bank.data
   const state = { profileFilled: !!profile.data?.name, bankCount: bank.data?.length ?? 0, jobCount: d?.total_jobs ?? 0 }
   const firstRun = loaded && isFirstRun(state)
+  // Read the clock once, when the page opens, not on every render.
+  const [today] = useState(() => new Date().toISOString())
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Today" lead={formatDate(new Date().toISOString())}>
+      <PageHeader title="Today" lead={formatDate(today)}>
         <ImportJobDialog variant="outline" />
       </PageHeader>
       <ErrorText error={q.error || profile.error || bank.error} />

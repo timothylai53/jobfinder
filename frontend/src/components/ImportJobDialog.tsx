@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ClipboardPaste, Link2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '@/api/client'
 import type { JobDraft, PasteDraft } from '@/api/types'
@@ -56,7 +56,12 @@ export default function ImportJobDialog({ defaultOpen = false, variant = 'defaul
   const qc = useQueryClient()
   const navigate = useNavigate()
 
-  useEffect(() => { if (defaultOpen) setOpen(true) }, [defaultOpen])
+  // Opened from outside (e.g. a link that asks for the import dialog): follow the prop when it turns on.
+  const [seenDefaultOpen, setSeenDefaultOpen] = useState(defaultOpen)
+  if (defaultOpen !== seenDefaultOpen) {
+    setSeenDefaultOpen(defaultOpen)
+    if (defaultOpen) setOpen(true)
+  }
 
   const reset = () => {
     setStage('paste'); setPasted(''); setUrl(''); setTip(''); setForm(EMPTY); setDetected([]); setUncertain([]); setSalaryHidden(false); setRemoved(0)

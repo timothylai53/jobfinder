@@ -27,7 +27,7 @@ const TYPE_OPTIONS = [
 const EDU_LEVELS = ['', 'SPM', 'STPM', 'Diploma', 'Degree', 'Master', 'PhD']
 
 /** What still needs a human look on one item. */
-export function itemIssues(it: ExperienceItemInput): string[] {
+function itemIssues(it: ExperienceItemInput): string[] {
   const out: string[] = []
   if (!it.title.trim()) out.push('title is empty')
   if ((it.type === 'work' || it.type === 'education') && !it.start.trim() && !it.end.trim()) out.push('dates are empty')
@@ -178,7 +178,7 @@ export default function ResumeReview({ draft, onSaved, onCancel }: {
       // Degree status always has a value; only apply it when the resume actually gave an education level.
       if (!prof.education_level) delete profile.degree_status
       const items = rows.filter((r) => !r._skip)
-        .map(({ _id, _skip, duplicate_of, ...it }) => ({ ...it, bullets: it.bullets.map((b) => b.trim()).filter(Boolean) }))
+        .map(({ _id, _skip, duplicate_of: _duplicateOf, ...it }) => ({ ...it, bullets: it.bullets.map((b) => b.trim()).filter(Boolean) }))
       return api.post<{ resume_id: number; item_codes: string[] }>('/api/resumes/import', {
         name, file_path: draft.file_path, raw_text: draft.raw_text, profile, items,
       })
