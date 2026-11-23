@@ -21,6 +21,7 @@ import SkillDictionary from '@/components/SkillDictionary'
 import { formatDateTime } from '@/lib/score'
 import { useLocalCopy } from '@/lib/hooks'
 import { confirmLeave, useUnsavedChanges } from '@/lib/unsaved'
+import ScoreCheck from '@/components/ScoreCheck'
 
 const EDU_LEVELS = ['', 'SPM', 'STPM', 'Diploma', 'Degree', 'Master', 'PhD']
 
@@ -328,6 +329,7 @@ const SECTIONS = [
   { group: 'Advanced', id: 'skills', title: 'Skill dictionary', desc: 'The skills and aliases the matcher recognises in job descriptions and your resume.', el: <SkillsTab /> },
   { group: 'Advanced', id: 'location-map', title: 'Location map', desc: 'Which towns and areas belong to each state. Used by Preferred locations.', el: <LocationsTab /> },
   { group: 'Advanced', id: 'prompts', title: 'Prompt templates', desc: 'The instructions sent with each AI task. The rules, your bank and the output format are always added.', el: <PromptTemplatesTab /> },
+  { group: 'Advanced', id: 'score-check', title: 'Score check', desc: 'How often the quick score matches your own judgement, from the jobs you rated.', el: <ScoreCheck /> },
   { group: 'Advanced', id: 'export', title: 'Export & backup', desc: 'Download your jobs and applications, or copy the database to a backup file.', el: <ExportTab /> },
 ] as const
 

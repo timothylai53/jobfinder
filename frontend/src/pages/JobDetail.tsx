@@ -23,6 +23,7 @@ import { pendingDeletes } from '@/lib/pendingDeletes'
 import { safeHttpUrl } from '@/lib/url'
 import { cn } from '@/lib/utils'
 import { useLocalCopy } from '@/lib/hooks'
+import ScoreFeedback from '@/components/ScoreFeedback'
 
 const TABS = [['overview', 'Overview'], ['score', 'Score details'], ['documents', 'Documents'], ['description', 'Job description']] as const
 
@@ -103,6 +104,7 @@ export default function JobDetail() {
             {[job.company, job.work_arrangement ? `${job.location} (${job.work_arrangement})` : job.location, salary, job.job_type].filter(Boolean).join(', ')}
           </p>
           {verdict && <p className={cn('mt-3 max-w-[65ch] text-[17px] leading-snug', verdict.tone === 'blocked' && 'text-danger')}>{verdict.text}</p>}
+          {match && !summaryOnly && <ScoreFeedback jobId={job.id} />}
         </div>
         <div className="flex flex-col items-end gap-2">
           <PrimaryAction application={application} jobId={job.id} onSave={() => save.mutate()} saving={save.isPending}

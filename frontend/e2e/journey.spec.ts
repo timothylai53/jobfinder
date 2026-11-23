@@ -483,3 +483,28 @@ test('unsaved changes are guarded, and filters live in the URL', async ({ page, 
     await expect(page.getByRole('combobox', { name: 'Show runs of' })).toHaveValue('follow_up_reminder')
   })
 })
+
+test('score check: rate a job score, see it in the report', async ({ page, request }) => {
+  const jobs: { id: number; title: string; score: number | null; hidden: boolean }[] = await (await request.get('/api/jobs')).json()
+  const job = jobs.find((j) => j.score !== null && !j.hidden)!
+  await page.goto('/settings?section=score-check')
+  await expect(page.getByText("Rate a few jobs' scores")).toBeVisible() // empty state first
+
+  await page.goto(`/jobs/${job.id}`)
+  const feel = page.getByRole('group', { name: 'Does this score feel right?' })
+  await feel.getByRole('button', { name: 'Too high' }).click()
+  await expect(feel.getByRole('button', { name: 'Too high' })).toHaveAttribute('aria-pressed', 'true')
+  const why = feel.getByRole('textbox', { name: 'Why? (optional)' })
+  await why.fill('Needs more years than it says')
+  await why.blur()
+  await expect.poll(async () => (await (await request.get(`/api/jobs/${job.id}/rating`)).json())?.note).toBe('Needs more years than it says')
+
+  await page.goto('/settings?section=score-check')
+  await expect(page.getByText('The score felt about right for 0 of 1 job you rated (0%).')).toBeVisible()
+  await expect(page.getByText('It was too high once.')).toBeVisible()
+  const miss = page.getByRole('region', { name: 'Where the score missed' }).getByRole('listitem')
+  await expect(miss).toContainText(job.title)
+  await expect(miss).toContainText('Needs more years than it says')
+  const csv = await (await request.get('/api/score-check.csv')).text()
+  expect(csv).toContain('too_high')
+})

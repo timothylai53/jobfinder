@@ -34,3 +34,15 @@ describe('last run in one line', () => {
     expect(lastRunSummary(run({ result: 'running' }))).toBe('Running now')
   })
 })
+
+describe('score check wording', () => {
+  it('says how often the score matched, and how it missed', async () => {
+    const { agreementSentence, missSentence } = await import('./scoreCheck')
+    expect(agreementSentence({ rated: 0, about_right: 0, agree_pct: null })).toBe('No jobs rated yet.')
+    expect(agreementSentence({ rated: 10, about_right: 7, agree_pct: 70 })).toBe('The score felt about right for 7 of 10 jobs you rated (70%).')
+    expect(agreementSentence({ rated: 1, about_right: 1, agree_pct: 100 })).toBe('The score felt about right for 1 of 1 job you rated (100%).')
+    expect(missSentence({ too_high: 3, too_low: 2 })).toBe('It was too high 3 times and too low twice.')
+    expect(missSentence({ too_high: 1, too_low: 0 })).toBe('It was too high once.')
+    expect(missSentence({ too_high: 0, too_low: 0 })).toBe('')
+  })
+})

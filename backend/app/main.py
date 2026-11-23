@@ -18,6 +18,7 @@ from api import (
     notifications,
     profile,
     resumes,
+    score_check,
     settings,
     skill_gaps,
     skills,
@@ -76,7 +77,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(title="JobFinder", lifespan=lifespan)
 security.install(app)
 for r in (profile, resumes, experience, skills, jobs, filters, applications, dashboard, export, settings, sources,
-          automations, notifications, skill_gaps, ai, documents):
+          automations, notifications, skill_gaps, ai, documents, score_check):
     app.include_router(r.router)
 
 
