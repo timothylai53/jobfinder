@@ -148,7 +148,7 @@ export function JobSources() {
   return (
     <div className="flex flex-col gap-3">
       <ErrorText error={q.error} />
-      <div className="overflow-x-auto rounded-lg border bg-background">
+      <div className="relative overflow-x-auto rounded-lg border bg-background">
         <table className="w-full text-[15px]">
           <thead className="border-b text-left text-sm text-muted-foreground">
             <tr>

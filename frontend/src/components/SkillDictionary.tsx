@@ -8,6 +8,7 @@ import { useToast } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { skillCategories, visibleSkills, type SkillSort } from '@/lib/skills'
+import { useRestoreFocus } from '@/lib/hooks'
 import { cn } from '@/lib/utils'
 
 type Draft = Omit<Skill, 'id'> & { id?: number }
@@ -96,6 +97,7 @@ function Panel({ initial, categories, onClose, onChanged }: {
   const [s, setS] = useState<Draft>(initial)
   const [alias, setAlias] = useState('')
   const [aliasError, setAliasError] = useState('')
+  useRestoreFocus() // must run before the panel takes focus, so it remembers the opener
   const nameRef = useRef<HTMLInputElement>(null)
   useEffect(() => nameRef.current?.focus(), [])
   const isNew = initial.id === undefined

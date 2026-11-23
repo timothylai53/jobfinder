@@ -35,15 +35,15 @@ function useApplications() {
 
 const isOverdue = (a: ApplicationRow) => a.status === 'Applied' && !!a.follow_up_at && a.follow_up_at <= new Date().toLocaleDateString('en-CA') /* local YYYY-MM-DD, not UTC */
 
-function Card({ app }: { app: ApplicationRow }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: app.id })
+function Card({ app, onMove }: { app: ApplicationRow; onMove: (id: number, s: Status) => void }) {
+  const { listeners, setNodeRef, transform, isDragging } = useDraggable({ id: app.id })
   const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined
   return (
     <div
       ref={setNodeRef}
       style={style}
+      // Mouse and touch drag the card; keyboard users get the Move to menu below instead of a fake button.
       {...listeners}
-      {...attributes}
       className={cn('cursor-grab rounded-md border bg-background p-2 text-sm', isDragging && 'z-10 opacity-90 shadow-pop')}
     >
       <div className="flex items-start justify-between gap-2">
@@ -59,11 +59,18 @@ function Card({ app }: { app: ApplicationRow }) {
           Follow up {formatDate(app.follow_up_at)}
         </div>
       )}
+      <label className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground" onPointerDown={(e) => e.stopPropagation()}>
+        Move to
+        <select value={app.status} aria-label={`Move ${app.job_title} to`} onChange={(e) => onMove(app.id, e.target.value as Status)}
+          className="h-7 min-w-0 flex-1 rounded-md border border-input bg-background px-1.5 text-xs text-foreground">
+          {STATUSES.map((st) => <option key={st} value={st}>{st}</option>)}
+        </select>
+      </label>
     </div>
   )
 }
 
-function Column({ status, apps }: { status: Status; apps: ApplicationRow[] }) {
+function Column({ status, apps, onMove }: { status: Status; apps: ApplicationRow[]; onMove: (id: number, s: Status) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
   return (
     <div ref={setNodeRef} role="region" aria-label={`${status} column`} className={cn('flex min-h-64 w-60 shrink-0 flex-col gap-2 rounded-lg bg-muted/60 p-2', isOver && 'ring-2 ring-ring')}>
@@ -72,7 +79,7 @@ function Column({ status, apps }: { status: Status; apps: ApplicationRow[] }) {
         <span className="text-muted-foreground">{apps.length}</span>
       </div>
       {apps.map((a) => (
-        <Card key={a.id} app={a} />
+        <Card key={a.id} app={a} onMove={onMove} />
       ))}
     </div>
   )
@@ -87,9 +94,9 @@ function Kanban({ apps, onMove }: { apps: ApplicationRow[]; onMove: (id: number,
   }
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="relative flex gap-3 overflow-x-auto pb-2">
         {STATUSES.map((s) => (
-          <Column key={s} status={s} apps={apps.filter((a) => a.status === s)} />
+          <Column key={s} status={s} apps={apps.filter((a) => a.status === s)} onMove={onMove} />
         ))}
       </div>
     </DndContext>
@@ -197,7 +204,7 @@ export default function Tracker() {
   const apps = list.data ?? []
   return (
     <div>
-      <PageHeader title="Tracker" lead="Where each application stands. Drag a card to change its status.">
+      <PageHeader title="Tracker" lead="Where each application stands. Drag a card, or use its Move to menu, to change its status.">
         <Button variant={view === 'kanban' ? 'selected' : 'outline'} aria-pressed={view === 'kanban'} onClick={() => setV('kanban')}>
           Kanban
         </Button>

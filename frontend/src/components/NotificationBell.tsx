@@ -49,7 +49,7 @@ export default function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute top-9 left-0 z-40 w-80 rounded-lg border bg-popover shadow-pop">
+        <div className="absolute top-9 right-0 z-40 w-[min(20rem,calc(100vw-2rem))] rounded-lg border bg-popover shadow-pop md:right-auto md:left-0">
           <div className="flex items-center justify-between border-b px-3 py-2">
             <span className="font-semibold">Notifications</span>
             {unread > 0 && (

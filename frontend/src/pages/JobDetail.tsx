@@ -131,7 +131,7 @@ export default function JobDetail() {
       <ProfileGaps context="score" />
 
       <Tabs value={tab} onValueChange={(v) => setParams(v === 'overview' ? {} : { tab: v }, { replace: true })} className="gap-5">
-        <TabsList variant="line" className="h-auto w-full justify-start gap-1 rounded-none border-b p-0">
+        <TabsList variant="line" className="relative h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b p-0">
           {TABS.map(([v, label]) => (
             <TabsTrigger key={v} value={v} className="h-auto flex-none rounded-none px-3 py-2 text-[15px]">{label}</TabsTrigger>
           ))}

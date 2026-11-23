@@ -83,7 +83,7 @@ function NextSteps({ steps }: { steps: NextStep[] }) {
                 ? <AlertTriangle role="img" className="size-[18px] shrink-0 text-attention" aria-label="Needs fixing" />
                 : <ListTodo className="size-[18px] shrink-0 text-muted-foreground" aria-hidden />}
               <span className="min-w-0 flex-1 basis-64 text-[15px]">{s.text}</span>
-              <div className="ml-auto flex items-center gap-1">
+              <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
                 {s.jobId !== undefined && (
                   <Button size="sm" variant="ghost" className="text-muted-foreground" disabled={notInterested.isPending}
                     aria-label={`Not interested: ${s.text}`} onClick={() => notInterested.mutate(s)}>

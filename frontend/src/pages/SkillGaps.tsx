@@ -15,14 +15,14 @@ function GapList({ rows, max }: { rows: SkillGapRow[]; max: number }) {
     <ol className="flex flex-col divide-y rounded-lg border bg-card">
       {rows.map((g, i) => (
         <li key={g.skill} className="px-4 py-3">
-          <button className="flex w-full items-center gap-3 text-left" onClick={() => setOpen(open === g.skill ? null : g.skill)} aria-expanded={open === g.skill}>
+          <button className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-left sm:flex-nowrap" onClick={() => setOpen(open === g.skill ? null : g.skill)} aria-expanded={open === g.skill}>
             <span className="w-6 text-right text-sm text-muted-foreground tabular-nums">{i + 1}</span>
-            <span className="w-64 shrink-0 font-medium">{g.skill}</span>
-            <span className="flex h-3 flex-1 overflow-hidden rounded-full bg-muted" aria-hidden>
+            <span className="min-w-0 flex-1 font-medium sm:w-64 sm:flex-none sm:shrink-0">{g.skill}</span>
+            <span className="order-last flex h-3 w-full overflow-hidden rounded-full bg-muted sm:order-none sm:w-auto sm:flex-1" aria-hidden>
               <span className="bg-chart-4" style={{ width: `${(g.required / max) * 100}%` }} />
               <span className="bg-chart-1" style={{ width: `${(g.preferred / max) * 100}%` }} />
             </span>
-            <span className="w-48 text-right text-sm tabular-nums">
+            <span className="w-28 text-right text-sm tabular-nums sm:w-48">
               {g.required > 0 && <>required in {g.required}</>}
               {g.required > 0 && g.preferred > 0 && ', '}
               {g.preferred > 0 && <>preferred in {g.preferred}</>}

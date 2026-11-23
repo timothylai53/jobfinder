@@ -125,7 +125,7 @@ function RunLog({ runs, labels, error }: { runs: AutomationRunRow[]; labels: Rec
           options={[{ value: '', label: 'All automations and sources' }, ...groups.map(([value, label]) => ({ value, label }))]} />
       </div>
       <ErrorText error={error} />
-      <div className="overflow-x-auto rounded-lg border bg-card">
+      <div className="relative overflow-x-auto rounded-lg border bg-card">
         <table className="w-full text-[15px]">
           <thead className="border-b text-left text-sm text-muted-foreground">
             <tr>

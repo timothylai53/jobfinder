@@ -330,3 +330,53 @@ test('settings sections: filter rules, scoring, job sources, automations', async
     await expect(row).not.toContainText(/:\s*$/m)
   })
 })
+
+test('accessibility: keyboard paths and narrow windows', async ({ page, request }) => {
+  await test.step('Tracker: a card moves by keyboard through its Move to menu (no fake drag button)', async () => {
+    const apps: { id: number; job_title: string; status: string }[] = await (await request.get('/api/applications')).json()
+    const app = apps.find((a) => a.status === 'Applied')!
+    await page.goto('/tracker')
+    await page.getByRole('button', { name: 'Kanban' }).click()
+    const card = page.getByRole('region', { name: 'Applied column' })
+    await expect(card.getByRole('button')).toHaveCount(0) // cards are no longer focusable pseudo-buttons
+    const link = card.getByRole('link', { name: app.job_title })
+    await link.focus()
+    await page.keyboard.press('Tab')
+    const menu = page.getByRole('combobox', { name: `Move ${app.job_title} to` })
+    await expect(menu).toBeFocused()
+    await menu.selectOption('Interview') // a native select: arrow keys or typing choose, as in any form
+    await expect(page.getByRole('region', { name: 'Interview column' }).getByRole('link', { name: app.job_title })).toBeVisible()
+    await expect.poll(async () => (await (await request.get('/api/applications')).json())
+      .find((a: { id: number }) => a.id === app.id).status).toBe('Interview')
+  })
+
+  await test.step('side panels take focus, close on Escape and give focus back', async () => {
+    await page.goto('/settings?section=skills')
+    await page.getByRole('searchbox', { name: 'Search skills and aliases' }).fill('python')
+    const edit = page.getByRole('button', { name: 'Edit Python', exact: true })
+    await edit.focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('complementary', { name: 'Edit Python' }).getByRole('textbox', { name: 'Name', exact: true })).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('complementary', { name: 'Edit Python' })).toHaveCount(0)
+    await expect(edit).toBeFocused()
+  })
+
+  await test.step('390 px: a Menu instead of the sidebar, and no page-level sideways scroll', async () => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    const apps: { job_id: number }[] = await (await request.get('/api/applications')).json()
+    for (const path of ['/', '/jobs', `/jobs/${apps[0].job_id}`, '/tracker', '/resume', '/automations', '/skill-gaps',
+      '/settings?section=filters', '/settings?section=skills', '/settings?section=location-map', '/settings?section=scoring']) {
+      await page.goto(path)
+      await page.waitForLoadState('networkidle')
+      const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+      expect(over, `sideways scroll on ${path}`).toBeLessThanOrEqual(0)
+    }
+    await page.goto('/')
+    await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0) // the sidebar is hidden
+    await page.getByRole('button', { name: 'Menu' }).click()
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Jobs' }).click()
+    await expect(page).toHaveURL(/\/jobs$/)
+    await expect(page.getByRole('button', { name: 'Menu' })).toHaveAttribute('aria-expanded', 'false')
+  })
+})

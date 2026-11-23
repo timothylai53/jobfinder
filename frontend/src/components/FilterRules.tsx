@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FILTER_TYPES, ruleSentence } from '@/lib/filters'
 import { useToast } from '@/lib/toast'
+import { useRestoreFocus } from '@/lib/hooks'
 import { cn } from '@/lib/utils'
 
 type Draft = Omit<FilterRule, 'id' | 'action'> & { id?: number }
@@ -47,7 +48,7 @@ export default function FilterRules({ onChanged }: { onChanged: () => void }) {
         {rules.length > 0 ? (
           <ul className="divide-y rounded-lg border bg-background">
             {rules.map((r) => (
-              <li key={r.id} className={cn('flex items-center gap-3 px-4 py-3', draft?.id === r.id && 'bg-selected')}>
+              <li key={r.id} className={cn('flex flex-wrap items-center gap-3 px-4 py-3', draft?.id === r.id && 'bg-selected')}>
                 <input type="checkbox" className="size-4 shrink-0 accent-foreground" checked={r.enabled}
                   aria-label={`Use the rule: ${ruleSentence(r)}`} onChange={() => toggle.mutate(r)} />
                 <span className={cn('min-w-0 flex-1 break-words', !r.enabled && 'text-muted-foreground')}>
@@ -72,6 +73,7 @@ export default function FilterRules({ onChanged }: { onChanged: () => void }) {
 function Panel({ initial, onClose, onSaved }: { initial: Draft; onClose: () => void; onSaved: () => void }) {
   const toast = useToast()
   const [r, setR] = useState<Draft>(initial)
+  useRestoreFocus() // must run before the panel takes focus, so it remembers the opener
   const first = useRef<HTMLSelectElement>(null)
   useEffect(() => first.current?.focus(), [])
   const isNew = initial.id === undefined
