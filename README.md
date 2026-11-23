@@ -28,15 +28,15 @@ JobFinder does the reading and bookkeeping, and treats **accuracy as the first r
 | | |
 |---|---|
 | **Explainable quick score (0–100)** | Rule-based and offline. Required skills 45, preferred 15, years 20, education 10, language + location 10. Each line is ✅ met / ⚠️ partial / ❌ not met / ➖ not specified, with the bank item that proves it. Hard gates cap a job at 40 (e.g. far more years required than you have). Thin or summary-only ads are marked "low confidence" instead of scoring high. |
-| **Experience Bank** | Upload a PDF/DOCX resume. It's parsed into a reviewable draft, and each item gets a stable ID (`B1`, `B2`, …). The bank, not the original PDF, is the source of truth. |
+| **Experience Bank** | Upload a PDF/DOCX resume. It's parsed into a reviewable draft, and each item gets a stable ID (`B1`, `B2`, …). The bank, not the original PDF, is the source of truth. **Base resumes** are named selections of bank items (one for software roles, one for IT support); tailoring can start from one, and then only its items go to the AI. |
 | **Polite job fetching** | JobStreet (its public, logged-out search API) and LinkedIn / Indeed / Glassdoor via `python-jobspy`. Requests go one at a time, 2–6 s apart, capped per run and per day. A 403/429 pauses that source for 24 h and notifies you. There are no credential fields anywhere. Manual import (paste a JD or URL) always works. |
 | **Dedupe and filters** | The same job from several sites becomes one job with several links. Filter rules (Senior/Lead titles, years, companies, salary, a title allow-list) hide noise, and every hidden job shows why. |
 | **AI without paid APIs** | **Copy-Paste** mode builds the full prompt for a free web chat and checks the pasted reply. **Ollama** runs a small local model (3B, fits a 3 GB GPU). **Off** keeps everything else working. |
 | **Fabrication guard** | See below. Flags are red (possibly invented) or amber (worth a look), right next to the item, in a side-by-side review. |
 | **Documents** | Numbered resume / cover-letter / analysis versions per job. An ATS-friendly single-column PDF via headless Chromium (selectable text, standard headings, clickable profile links). The same resume or letter also downloads as **Word (.docx)**, in the same order, with real headings and no tables. The tracker records which version you actually sent. |
-| **Tracker** | Kanban (drag and drop) and table views, status history, follow-up reminders. |
+| **Tracker** | Kanban (drag and drop, or each card's Move to menu from the keyboard) and table views, status history, follow-up reminders. |
 | **Today** | Opens on what to do next, built from real state: new high matches, follow-ups due, resumes ready to send, profile gaps. A first-run checklist (profile, resume, first job) until there is something to show. Each job page has one primary button that follows the job: Save to tracker, Tailor resume, Download resume, Mark as applied. |
-| **Automations** | Daily fetch, scoring, high-match alerts and follow-up reminders (APScheduler, with catch-up after the laptop was off), each with a run log. |
+| **Automations** | Daily fetch, scoring, high-match alerts and follow-up reminders (APScheduler, with catch-up after the laptop was off), each with a run log: one aligned row per source (fetched, new, merged, hidden, requests) and warnings in plain words. |
 | **Skill gaps** | The skills your saved jobs ask for that you don't have yet, ranked by how often they're asked for. |
 
 | Jobs list | Job detail: score, one-line verdict, the next step |
@@ -48,6 +48,10 @@ JobFinder does the reading and bookkeeping, and treats **accuracy as the first r
 | ![AI review](docs/screenshots/ai-review-flags.png) | ![Resume](docs/screenshots/resume-preview.png) |
 
 ![Tracker](docs/screenshots/tracker-kanban.png)
+
+| Base resumes: pick bank items by group | Automations: one row per source, warnings in plain words |
+|---|---|
+| ![Base resume editor](docs/screenshots/base-resume-editor.png) | ![Run log](docs/screenshots/run-log.png) |
 
 ## How the fabrication guard works
 
@@ -65,7 +69,7 @@ Every prompt includes your bank items **with their IDs** and the rule *"use only
 
 Replies are parsed tolerantly: code fences, smart quotes, trailing commas and comments are handled. A schema error names the exact field, and a "fix-up prompt" asks the chat to correct itself. The guard never silently fixes content. It flags, and you accept, edit or reject each item. Only accepted items are saved.
 
-**Limits:** numbers written as words ("five engineers") and invented achievements that name no skill or number can't be detected automatically. That's what the side-by-side review is for.
+**Limits:** numbers written as words ("five engineers"), invented achievements that name no skill or number, and a number that already appears in the source item but is used for a new claim ("led a team of 3" from an item that mentions "3 operations teams") can't be detected automatically. That's what the side-by-side review is for.
 
 ## How polite scraping works
 
@@ -113,7 +117,7 @@ I built this with [Claude Code](https://claude.com/claude-code) as the implement
    - "Version control" no longer counts as Git;
    - numbers invented by the AI are now flagged;
    - headings no longer end a PDF page.
-4. **Every judgment call is logged.** [`DECISIONS.md`](DECISIONS.md) has 180+ numbered decisions with their reasons.
+4. **Every judgment call is logged.** [`DECISIONS.md`](DECISIONS.md) has 230+ numbered decisions with their reasons.
 5. **Standing rules** in [`CLAUDE.md`](CLAUDE.md): no live requests unless I start a supervised step, never touch the real database, no personal data in the repo, full test suite before every commit, ask before adding dependencies.
 
 ## Run it

@@ -118,6 +118,27 @@ def shoot(base: str) -> None:
         page.wait_for_timeout(400)
         page.screenshot(path=str(OUT / "ai-review-flags.png"))
 
+        # Base resume editor: IT support open, grouped bank items with select-all per group
+        page.set_viewport_size({"width": 1180, "height": 900})
+        page.goto(f"{base}/resume")
+        page.wait_for_load_state("networkidle")
+        section = page.locator("section[aria-labelledby=base-resumes]")
+        page.get_by_role("button", name="Edit IT support").click()
+        page.get_by_role("checkbox", name="Select all in Projects").check()
+        section.scroll_into_view_if_needed()
+        page.wait_for_timeout(400)
+        section.screenshot(path=str(OUT / "base-resume-editor.png"))
+
+        # Run log: one aligned row per source, with LinkedIn's warning open in plain words
+        page.set_viewport_size({"width": 1440, "height": 900})
+        page.goto(f"{base}/automations")
+        page.wait_for_load_state("networkidle")
+        log = page.locator("section[aria-labelledby=run-log]")
+        log.get_by_role("row").filter(has_text="LinkedIn").first.get_by_role("button", name="Details").click()
+        log.scroll_into_view_if_needed()
+        page.wait_for_timeout(400)
+        log.screenshot(path=str(OUT / "run-log.png"))
+
         docs = api.get(f"{base}/api/jobs/{first['id']}/documents").json()
         resume = next(d for d in docs if d["type"] == "resume")
         page.set_viewport_size({"width": 860, "height": 800})
