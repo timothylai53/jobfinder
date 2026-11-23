@@ -74,3 +74,12 @@ export function findTowns(map: LocationMap, query: string): { state: string; tow
 export function resetState(map: LocationMap, defaults: LocationMap, state: string): LocationMap {
   return state in defaults ? { ...map, [state]: [...defaults[state]] } : map
 }
+
+/** Add a new, empty state (or area such as a federal territory). Rejects an empty name or one already listed (any case). */
+export function addState(map: LocationMap, state: string): { map: LocationMap; error?: string } {
+  const s = state.trim().replace(/\s+/g, ' ')
+  if (!s) return { map, error: 'Type a state name first.' }
+  const existing = Object.keys(map).find((x) => same(x, s))
+  if (existing) return { map, error: `${existing} is already in the map.` }
+  return { map: { ...map, [s]: [] } }
+}

@@ -88,7 +88,7 @@ export default function TailorReview({ task, onSaved }: { task: AiTask<TailorRes
                 <div className="text-sm">
                   {b ? (
                     <>
-                      <div className="font-medium">[{b.code}] {b.title}{b.organization && `, ${b.organization}`}</div>
+                      <div><span className="font-medium">{b.title}</span>{b.organization && <span className="text-muted-foreground"> · {b.organization}</span>}{(b.start || b.end) && <span className="text-muted-foreground"> · {dateRange(b.start, b.end)}</span>}<span className="ml-1.5 text-xs text-muted-foreground">{b.code}</span></div>
                       <ul className="mt-1 list-disc pl-4 text-muted-foreground">{b.bullets.map((x, i) => <li key={i}>{x}</li>)}</ul>
                     </>
                   ) : (

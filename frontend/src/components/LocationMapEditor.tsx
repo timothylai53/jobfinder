@@ -8,7 +8,7 @@ import { useToast } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { addTown, findTowns, mapToText, removeTown, resetState, statesWith, textToMap, type LocationMap } from '@/lib/locations'
+import { addState, addTown, findTowns, mapToText, removeTown, resetState, statesWith, textToMap, type LocationMap } from '@/lib/locations'
 import { cn } from '@/lib/utils'
 
 /** Settings → Location map: one collapsible section per state, towns as chips. Changes stay local until Save,
@@ -88,6 +88,17 @@ export default function LocationMapEditor({ onSaved }: { onSaved: () => void }) 
         {Object.keys(map).length === 0 && q.data && <li className="px-4 py-5 text-muted-foreground">No states yet. Reset to the defaults, or add them under Advanced.</li>}
       </ul>
 
+      {!query.trim() && (
+        <AddState onAdd={(name) => {
+          const r = addState(map, name)
+          if (!r.error) {
+            change(r.map, `Added ${name.trim()}. Add its towns, then save.`)
+            setOpen((o) => new Set(o).add(name.trim().replace(/ +/g, ' ')))
+          }
+          return r.error
+        }} />
+      )}
+
       <details className="rounded-lg border bg-background">
         <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium select-none hover:bg-muted">Advanced: import or export as text</summary>
         <TextView key={mapToText(map)} map={map} onApply={(next) => change(next, 'Text applied to the location map.')} />
@@ -164,6 +175,28 @@ function TextView({ map, onApply }: { map: LocationMap; onApply: (m: LocationMap
         <Button variant="outline" size="sm" disabled={text === mapToText(map) || Object.keys(parsed).length === 0}
           onClick={() => onApply(parsed)}>Apply text ({Object.keys(parsed).length} states)</Button>
       </div>
+    </div>
+  )
+}
+
+function AddState({ onAdd }: { onAdd: (name: string) => string | undefined }) {
+  const [name, setName] = useState('')
+  const [error, setError] = useState('')
+  const add = () => {
+    const e = onAdd(name)
+    setError(e ?? '')
+    if (!e) setName('')
+  }
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <label htmlFor="add-state" className="text-sm font-medium text-muted-foreground">Add a state or area</label>
+        <Input id="add-state" placeholder="e.g. Singapore, then Enter" value={name} className="w-64"
+          onChange={(e) => { setName(e.target.value); setError('') }}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add() } }} />
+        <Button variant="outline" size="sm" disabled={!name.trim()} onClick={add}>Add state</Button>
+      </div>
+      {error && <p className="text-sm text-danger" role="alert">{error}</p>}
     </div>
   )
 }

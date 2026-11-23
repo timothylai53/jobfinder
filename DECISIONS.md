@@ -407,3 +407,11 @@ Decisions made while building, each with the reason. Newest at the bottom of eac
 | 229 | **Focus in side panels:** the Skill dictionary and Filter rules panels already took focus on open and closed on Escape. Now focus also **returns to the Edit button** that opened them (`useRestoreFocus`), as a dialog does. Real dialogs (Radix) already trap and return focus. | Keyboard users would otherwise land at the top of the page. |
 | 230 | **Contrast of the newer pairs, all AA:** muted text on the amber highlight 5.6:1, amber text 5.3:1, muted on the selected chip 5.1:1, the category label 5.3:1, white on the accent 6.3:1, form edges 3.2:1 (non-text). Disabled buttons are exempt under WCAG. | Your request. |
 | 231 | **An E2E test locks this in:**<br>• a Tracker card moves by keyboard (Tab from its link to its Move to menu, choose Interview, check the API);<br>• a side panel takes focus, Escape closes it and focus is back on Edit;<br>• at 390 px, 11 pages have no sideways scroll, the sidebar is hidden, and Menu → Jobs navigates and closes. | So it can't quietly regress. |
+
+## Small tidy-ups (2026-11-23)
+
+| # | Decision | Reason |
+|---|---|---|
+| 232 | **The unused dark theme block is gone** from `index.css`. The `@custom-variant dark` line stays, with a comment. Without it, Tailwind's default `dark:` variant would follow the OS setting, and the few `dark:` classes the shadcn primitives carry would half-theme the app at night. With it they stay inert. | Dead code removed without changing anything visible. |
+| 233 | **Tailor review, original side:** "Software Engineering Intern · Kedai Tech Sdn Bhd · Jun 2025 – Sep 2025", with the code as a small grey note at the end, instead of "[B1] Software Engineering Intern, Kedai Tech Sdn Bhd". | Your request: names first, codes second. |
+| 234 | **Location map: "Add a state or area"** sits in the normal editor, below the list (hidden while searching). The new state opens empty, ready for towns. A duplicate in any case or spacing is refused with a message (`addState()`, tested). It has Undo like every other change, and nothing is saved until Save. The Advanced text box still works for bulk edits. | Your request. |

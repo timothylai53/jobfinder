@@ -380,3 +380,42 @@ test('accessibility: keyboard paths and narrow windows', async ({ page, request 
     await expect(page.getByRole('button', { name: 'Menu' })).toHaveAttribute('aria-expanded', 'false')
   })
 })
+
+test('tidy-ups: a new state in the location map, and the tailor review names bank items', async ({ page, request }) => {
+  await test.step('location map: add a state through the editor, give it a town, save', async () => {
+    await page.goto('/settings?section=location-map')
+    const add = page.getByRole('textbox', { name: 'Add a state or area' })
+    await add.fill('selangor')
+    await add.press('Enter')
+    await expect(page.getByRole('alert')).toHaveText('Selangor is already in the map.')
+    await add.fill('Wilayah Contoh')
+    await add.press('Enter')
+    await expect(page.getByRole('button', { name: /^Wilayah Contoh 0 towns$/ })).toHaveAttribute('aria-expanded', 'true')
+    const town = page.getByRole('textbox', { name: 'Add a town or area to Wilayah Contoh' })
+    await town.fill('Bandar Contoh')
+    await town.press('Enter')
+    await page.getByRole('button', { name: 'Save and rescore' }).click()
+    await expect(page.getByText('Location map saved. Jobs rescored.')).toBeVisible()
+    expect((await (await request.get('/api/settings')).json()).locations['Wilayah Contoh']).toEqual(['Bandar Contoh'])
+  })
+
+  await test.step('tailor review: the original side shows title and organisation, not a bracketed code', async () => {
+    const bank: { code: string; title: string; organization: string; type: string }[] = await (await request.get('/api/experience')).json()
+    const work = bank.find((b) => b.type === 'work')!
+    const apps: { job_id: number }[] = await (await request.get('/api/applications')).json()
+    await page.goto(`/jobs/${apps[0].job_id}`)
+    await page.getByRole('button', { name: 'More' }).click()
+    await page.getByRole('button', { name: 'Tailor resume (new version)' }).click()
+    await page.getByLabel('Start from').selectOption({ label: 'Whole bank' })
+    await page.getByRole('button', { name: 'Build prompt' }).click()
+    const reply = '```json' + String.fromCharCode(10) + JSON.stringify({
+      summary: 'Software engineering student.', skills_order: [],
+      sections: [{ section: 'Experience', items: [{ source_id: work.code, text: 'Built internal dashboards' }] }], omitted_ids: [], notes: '',
+    }) + String.fromCharCode(10) + '```'
+    await page.getByPlaceholder("Paste the chat's reply here", { exact: false }).fill(reply)
+    await page.getByRole('button', { name: 'Check reply' }).click()
+    await expect(page.getByText(`[${work.code}]`)).toHaveCount(0)
+    await expect(page.getByText(work.title, { exact: true }).first()).toBeVisible()
+    await page.keyboard.press('Escape')
+  })
+})

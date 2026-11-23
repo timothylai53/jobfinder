@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { AutomationRunRow, BaseResume, ExperienceItem, Skill } from '@/api/types'
 import { defaultStartFrom, groupItems, splitLeftOut, toggleGroup, typeSummary } from './baseResumes'
 import { dateRange } from './score'
-import { addTown, findTowns, removeTown, resetState, statesWith } from './locations'
+import { addState, addTown, findTowns, removeTown, resetState, statesWith } from './locations'
 import { metaText, parseLegacyLine, plainNote, runRows } from './runlog'
 import { skillCategories, visibleSkills } from './skills'
 
@@ -124,5 +124,15 @@ describe('tailoring from a base resume', () => {
     expect(dateRange('Jan 2024', 'jan  2024')).toBe('Jan 2024')
     expect(dateRange('Jun 2025', 'Sep 2025')).toBe('Jun 2025 – Sep 2025')
     expect(dateRange('', '2024')).toBe('2024')
+  })
+})
+
+describe('adding a state', () => {
+  it('adds an empty state and refuses blanks and duplicates (any case or spacing)', () => {
+    const map = { Selangor: ['Shah Alam'] }
+    expect(addState(map, '  Wilayah   Contoh ').map).toEqual({ Selangor: ['Shah Alam'], 'Wilayah Contoh': [] })
+    expect(addState(map, 'selangor').error).toBe('Selangor is already in the map.')
+    expect(addState(map, ' ').error).toBeTruthy()
+    expect(map).toEqual({ Selangor: ['Shah Alam'] })
   })
 })
