@@ -52,3 +52,7 @@ def no_network(monkeypatch):
 
     monkeypatch.setattr(httpx.HTTPTransport, "handle_request", blocked)
     monkeypatch.setattr("sources.jobspy_source.real_scrape", blocked_scrape)
+    # httpx2 is only here for Starlette's TestClient (in-process transport, unaffected); block its real transport too,
+    # so nothing can reach the network through it either.
+    import httpx2
+    monkeypatch.setattr(httpx2.HTTPTransport, "handle_request", blocked)
