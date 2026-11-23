@@ -22,6 +22,7 @@ import { formatDateTime } from '@/lib/score'
 import { useLocalCopy } from '@/lib/hooks'
 import { confirmLeave, useUnsavedChanges } from '@/lib/unsaved'
 import ScoreCheck from '@/components/ScoreCheck'
+import BackupList from '@/components/BackupList'
 
 const EDU_LEVELS = ['', 'SPM', 'STPM', 'Diploma', 'Degree', 'Master', 'PhD']
 
@@ -256,7 +257,7 @@ function ExportTab() {
   const qc = useQueryClient()
   const backup = useMutation({
     mutationFn: () => api.post<{ path: string; name: string }>('/api/backup'),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['backup-status'] }),
+    onSuccess: () => { for (const k of ['backup-status', 'backups']) qc.invalidateQueries({ queryKey: [k] }) },
   })
   const b = status.data
   return (
@@ -284,7 +285,11 @@ function ExportTab() {
             <ErrorText error={backup.error || status.error} />
           </div>
         </div>
-        <p className="text-sm text-muted-foreground">Backups are copies of data/jobfinder.db in data/backups/. To restore one, run stop.bat and copy it back over data/jobfinder.db.</p>
+        <div className="border-t pt-3"><BackupList /></div>
+        <p className="text-sm text-muted-foreground">
+          Backups are copies of data/jobfinder.db in data/backups/. Restoring one saves your current data as a backup first, so
+          it can always be undone by restoring that one.
+        </p>
       </CardContent>
     </Card>
   )

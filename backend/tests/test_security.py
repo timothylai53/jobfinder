@@ -208,11 +208,12 @@ def test_exports_neutralise_spreadsheet_formulas(client):
 
 
 def test_sql_only_through_the_orm():
-    """Raw SQL is allowed only in the two places that manage the schema itself (fixed names, no user input)."""
+    """Raw SQL is allowed only where the database file itself is managed: the schema (migrations, db) and the backup
+    check before a restore (integrity_check and the table list). All of it is fixed text, never built from input."""
     import re
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
-    allowed = {"app/migrations.py", "app/db.py"}
+    allowed = {"app/migrations.py", "app/db.py", "export/backup.py"}
     offenders = []
     for f in root.rglob("*.py"):
         rel = f.relative_to(root).as_posix()
@@ -221,3 +222,5 @@ def test_sql_only_through_the_orm():
         if re.search(r"\b(text|exec_driver_sql)\(\s*f?[\"']|\.execute\(\s*f?[\"']", f.read_text(encoding="utf-8")):
             offenders.append(rel)
     assert offenders == []
+    backup = (root / "export/backup.py").read_text(encoding="utf-8")
+    assert not re.search(r"\.execute\(\s*f[\"']", backup)  # its SQL stays fixed text

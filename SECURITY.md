@@ -63,6 +63,7 @@ Not in scope: someone with access to the logged-in Windows account (they can rea
   - stored under a random name with the original name reduced to `[A-Za-z0-9._-]`.
 - **Downloads:** documents are fetched by integer ID only. The PDF path is built by the server under `data/documents/<job_id>/` from a sanitised name and never taken from the request.
 - **Backups** go to `data/backups/`, which is gitignored with the rest of `data/`.
+- **Restoring a backup** (Settings → Export & backup) takes a backup's **name only**, which must match `jobfinder-…db` (no folders or `..`) and be a file directly inside `data/backups/`. The file must pass SQLite's `integrity_check` and have JobFinder's tables before anything changes. The current data is always saved as a `jobfinder-before-restore-…` backup first, then the copy goes in through SQLite's backup API (no half-written database). Older backups are brought up to the current schema. The request is a `POST`, so it gets the same Origin/CSRF checks as every change.
 
 ### Exports (formula injection) (`export/excel_csv.py`)
 Text cells starting with `= + - @`, tab or carriage return get a leading `'`. A job titled `=HYPERLINK(...)` therefore stays text in Excel. This covers both CSV and XLSX (openpyxl would otherwise write it as a live formula).

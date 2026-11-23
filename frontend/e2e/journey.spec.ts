@@ -508,3 +508,22 @@ test('score check: rate a job score, see it in the report', async ({ page, reque
   const csv = await (await request.get('/api/score-check.csv')).text()
   expect(csv).toContain('too_high')
 })
+
+test('restore a backup from Settings: current data saved first, then replaced', async ({ page, request }) => {
+  const before = (await (await request.get('/api/jobs')).json()).length
+  await page.goto('/settings?section=export')
+  await page.getByRole('button', { name: 'Backup database now' }).click()
+  await expect(page.getByText(/^Saved jobfinder-\d/)).toBeVisible()
+  await request.post('/api/jobs/manual', { data: { title: 'Added After The Backup', company: 'Syarikat Contoh Bhd', description: 'Python developer' } })
+  expect((await (await request.get('/api/jobs')).json()).length).toBe(before + 1)
+
+  await page.reload()
+  const restore = page.getByRole('button', { name: /^Restore the backup from / }).first()
+  page.once('dialog', (d) => { expect(d.message()).toContain('Your current data is saved as a backup first'); d.accept() })
+  await restore.click()
+  await expect(page.getByText(/Restored the backup from .*Your previous data is saved as jobfinder-before-restore-/)).toBeVisible()
+  const titles = (await (await request.get('/api/jobs')).json()).map((j: { title: string }) => j.title)
+  expect(titles).not.toContain('Added After The Backup')
+  expect(titles.length).toBe(before)
+  await expect(page.getByText('before restore').first()).toBeVisible()
+})
