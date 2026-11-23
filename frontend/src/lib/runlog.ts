@@ -91,3 +91,18 @@ export function runRows(run: AutomationRunRow, automationLabel: string): RunLogR
     details: lines.map((l) => (/[.!?)]$/.test(l) ? l : `${l}.`)).map((l) => l.charAt(0).toUpperCase() + l.slice(1)),
   }]
 }
+
+/** One short line for an automation's last run: "3 sources, 7 new jobs", "1 follow-up due today", or the error. */
+export function lastRunSummary(run: AutomationRunRow): string {
+  if (run.result === 'running') return 'Running now'
+  if (run.error) return run.error
+  if (run.details?.length) {
+    const ran = run.details.filter((d) => d.status !== 'skipped')
+    const fresh = run.details.reduce((n, d) => n + d.new, 0)
+    const failed = ran.filter((d) => d.status === 'error' || d.status === 'paused').length
+    return [`${ran.length} ${ran.length === 1 ? 'source' : 'sources'}`, `${fresh} new ${fresh === 1 ? 'job' : 'jobs'}`,
+      failed ? `${failed} with problems` : ''].filter(Boolean).join(', ')
+  }
+  const first = run.message.split('\n')[0].trim()
+  return first ? first.charAt(0).toUpperCase() + first.slice(1) : 'Nothing to do'
+}

@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { api } from '@/api/client'
-import type { FilterRule, Profile, ScoringConfig, Settings as SettingsT } from '@/api/types'
-import { ErrorText, Field, ListInput, NativeSelect, Notice, PageHeader } from '@/components/common'
+import type { Profile, ScoringConfig, Settings as SettingsT } from '@/api/types'
+import { ErrorText, Field, ListInput, NativeSelect, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,9 @@ import { JobSources, SearchProfiles } from '@/components/SourceSettings'
 import { AiSettingsTab, PromptTemplatesTab } from '@/components/ai/AiSettings'
 import { cn } from '@/lib/utils'
 import { Textarea } from '@/components/ui/textarea'
+import FilterRules from '@/components/FilterRules'
 import LocationMapEditor from '@/components/LocationMapEditor'
+import { useToast } from '@/lib/toast'
 import SkillDictionary from '@/components/SkillDictionary'
 import { formatDateTime } from '@/lib/score'
 import { useLocalCopy } from '@/lib/hooks'
@@ -108,55 +110,8 @@ export function ProfileTab({ onSaved, saveLabel = 'Save profile' }: { onSaved?: 
 
 // ---------- filters ----------
 
-const FILTER_TYPES: { value: FilterRule['type']; label: string; hint: string }[] = [
-  { value: 'title_contains', label: 'Title contains', hint: 'Comma-separated words, e.g. Senior, Lead, Manager' },
-  { value: 'title_must_contain_one_of', label: 'Title must contain one of', hint: 'Comma-separated words: jobs whose title has none of them are hidden. 2-letter words (IT, QA) must be whole words; longer ones also match a longer word ("test" matches Tester)' },
-  { value: 'company_equals', label: 'Company is', hint: 'Comma-separated company names (suffixes like Sdn Bhd are ignored)' },
-  { value: 'min_years_over', label: 'Required years over', hint: 'Number, e.g. 2: hides jobs requiring more than 2 years' },
-  { value: 'min_salary_below', label: 'Salary below', hint: 'Number, e.g. 3000: unknown salaries are never hidden' },
-  { value: 'keyword_in_jd', label: 'JD mentions', hint: 'Comma-separated words or phrases' },
-]
-
-function RuleRow({ rule }: { rule: FilterRule }) {
-  const done = useRescoreInvalidate()
-  const [r, setR] = useLocalCopy(rule)
-  const save = useMutation({ mutationFn: (v: FilterRule) => api.put(`/api/filters/${rule.id}`, v), onSuccess: done })
-  const del = useMutation({ mutationFn: () => api.del(`/api/filters/${rule.id}`), onSuccess: done })
-  return (
-    <div className="flex items-center gap-2">
-      <input type="checkbox" checked={r.enabled} title="Enabled" onChange={(e) => save.mutate({ ...r, enabled: e.target.checked })} />
-      <NativeSelect value={r.type} onChange={(v) => setR({ ...r, type: v as FilterRule['type'] })} options={FILTER_TYPES} />
-      <Input className="flex-1" value={r.value} onChange={(e) => setR({ ...r, value: e.target.value })} />
-      <Button size="sm" variant="outline" disabled={r.value === rule.value && r.type === rule.type} onClick={() => save.mutate(r)}>Save</Button>
-      <Button size="sm" variant="ghost" onClick={() => del.mutate()}>Delete</Button>
-      <ErrorText error={save.error || del.error} />
-    </div>
-  )
-}
-
 function FiltersTab() {
-  const q = useQuery({ queryKey: ['filters'], queryFn: () => api.get<FilterRule[]>('/api/filters') })
-  const done = useRescoreInvalidate()
-  const [type, setType] = useState<FilterRule['type']>('title_contains')
-  const [value, setValue] = useState('')
-  const add = useMutation({
-    mutationFn: () => api.post('/api/filters', { type, value, enabled: true }),
-    onSuccess: () => { setValue(''); done() },
-  })
-  return (
-    <Card>
-      <CardContent className="flex flex-col gap-3">
-        {(q.data ?? []).map((r) => <RuleRow key={r.id} rule={r} />)}
-        <div className="flex items-center gap-2 border-t pt-3">
-          <NativeSelect value={type} onChange={(v) => setType(v as FilterRule['type'])} options={FILTER_TYPES} />
-          <Input className="flex-1" placeholder={FILTER_TYPES.find((f) => f.value === type)?.hint} value={value} onChange={(e) => setValue(e.target.value)} />
-          <Button disabled={!value.trim()} onClick={() => add.mutate()}>Add rule</Button>
-        </div>
-        <ErrorText error={q.error || add.error} />
-        <p className="text-xs text-muted-foreground">Rules re-apply to all jobs whenever you change them. Jobs you hid or unhid by hand are left alone.</p>
-      </CardContent>
-    </Card>
-  )
+  return <FilterRules onChanged={useRescoreInvalidate()} />
 }
 
 // ---------- scoring + general ----------
@@ -174,62 +129,91 @@ function ScoringTab() {
   const [s, setS] = useLocalCopy<SettingsT | null>(q.data ?? null)
   const done = useRescoreInvalidate()
   // Locations are edited in their own tab; omitting them leaves the stored map unchanged.
-  const save = useMutation({ mutationFn: (v: SettingsT) => api.put('/api/settings', { scoring: v.scoring, general: v.general }), onSuccess: done })
+  const toast = useToast()
+  const save = useMutation({
+    mutationFn: (v: SettingsT) => api.put('/api/settings', { scoring: v.scoring, general: v.general }),
+    onSuccess: () => { done(); toast({ message: 'Scoring saved. Jobs rescored.' }) },
+  })
   const defaults = useQuery({ queryKey: ['scoring-defaults'], queryFn: () => api.get<ScoringConfig>('/api/settings/scoring/defaults') })
   const sum = useMemo(() => (s ? Object.values(s.scoring.weights).reduce((a, b) => a + b, 0) : 0), [s])
   if (!s) return <ErrorText error={q.error} />
   const w = (k: keyof ScoringConfig['weights'], v: number) => setS({ ...s, scoring: { ...s.scoring, weights: { ...s.scoring.weights, [k]: v } } })
   const g = <K extends keyof ScoringConfig['gates']>(k: K, v: ScoringConfig['gates'][K]) =>
     setS({ ...s, scoring: { ...s.scoring, gates: { ...s.scoring.gates, [k]: v } } })
+  const num = (v: string) => (v === '' ? 0 : Number(v))
   return (
     <Card>
-      <CardContent className="flex flex-col gap-4">
-        <div className="grid grid-cols-5 gap-3">
-          {WEIGHT_LABELS.map(([k, label]) => (
-            <Field key={k} label={label}>
-              <Input type="number" min="0" value={s.scoring.weights[k]} onChange={(e) => w(k, Number(e.target.value))} />
+      <CardContent className="flex flex-col gap-6">
+        <section aria-labelledby="weights" className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 id="weights" className="font-semibold">How the 100 points are split</h3>
+            <p className={cn('text-sm tabular-nums', sum === 100 ? 'text-muted-foreground' : 'text-attention')} aria-live="polite">
+              Total {sum}{sum !== 100 && ': it is scaled to 100 when scoring'}
+            </p>
+          </div>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-3">
+            {WEIGHT_LABELS.map(([k, label]) => (
+              <Field key={k} label={label}>
+                <Input type="number" min="0" value={s.scoring.weights[k]} onChange={(e) => w(k, num(e.target.value))} />
+              </Field>
+            ))}
+          </div>
+        </section>
+
+        <section aria-labelledby="gates" className="flex flex-col gap-3 border-t pt-5">
+          <div>
+            <h3 id="gates" className="font-semibold">Hard requirements</h3>
+            <p className="text-sm text-muted-foreground">A job that misses one of these gets its score capped, so it never looks like a good fit.</p>
+          </div>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-3">
+            <Field label="Years short that count as a miss">
+              <Input type="number" min="0" step="0.5" value={s.scoring.gates.years_short_by} onChange={(e) => g('years_short_by', num(e.target.value))} />
             </Field>
-          ))}
-        </div>
-        {sum !== 100 && <Notice tone="warn">Weights add up to {sum}. The total is normalized to 100.</Notice>}
-        <div className="grid grid-cols-4 gap-3">
-          <Field label="Years gate: short by ≥">
-            <Input type="number" min="0" step="0.5" value={s.scoring.gates.years_short_by} onChange={(e) => g('years_short_by', Number(e.target.value))} />
-          </Field>
-          <Field label="Cap when a gate fails">
-            <Input type="number" min="0" max="100" value={s.scoring.gates.cap} onChange={(e) => g('cap', Number(e.target.value))} />
-          </Field>
-          <label className="mt-5 flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={s.scoring.gates.language} onChange={(e) => g('language', e.target.checked)} /> Mandatory language gate
+            <Field label="Highest score after a miss">
+              <Input type="number" min="0" max="100" value={s.scoring.gates.cap} onChange={(e) => g('cap', num(e.target.value))} />
+            </Field>
+          </div>
+          <label className="flex items-center gap-2 text-[15px]">
+            <input type="checkbox" className="size-4 accent-foreground" checked={s.scoring.gates.language} onChange={(e) => g('language', e.target.checked)} />
+            A required language you don't speak is a miss
           </label>
-          <label className="mt-5 flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={s.scoring.gates.education} onChange={(e) => g('education', e.target.checked)} /> Mandatory degree gate
+          <label className="flex items-center gap-2 text-[15px]">
+            <input type="checkbox" className="size-4 accent-foreground" checked={s.scoring.gates.education} onChange={(e) => g('education', e.target.checked)} />
+            A required degree you don't have (and aren't studying for) is a miss
           </label>
-        </div>
-        <label className="flex items-start gap-2 border-t pt-3 text-[15px]">
-          <input type="checkbox" className="mt-1" checked={s.scoring.score_soft_skills}
-            onChange={(e) => setS({ ...s, scoring: { ...s.scoring, score_soft_skills: e.target.checked } })} />
-          <span>
-            <span className="font-medium">Score soft skills</span>
-            <span className="block text-sm text-muted-foreground">
-              Off: Communication, Problem Solving, Teamwork and other soft skills are listed under each job but earn no points.
-              On: they count toward the required and preferred skill points like any other skill.
+        </section>
+
+        <section aria-labelledby="soft" className="border-t pt-5">
+          <h3 id="soft" className="sr-only">Soft skills</h3>
+          <label className="flex items-start gap-2 text-[15px]">
+            <input type="checkbox" className="mt-1 size-4 accent-foreground" checked={s.scoring.score_soft_skills}
+              onChange={(e) => setS({ ...s, scoring: { ...s.scoring, score_soft_skills: e.target.checked } })} />
+            <span>
+              <span className="font-medium">Score soft skills</span>
+              <span className="block text-sm text-muted-foreground">
+                Off: Communication, Problem Solving, Teamwork and other soft skills are listed under each job but earn no points.
+                On: they count toward the required and preferred skill points like any other skill.
+              </span>
             </span>
-          </span>
-        </label>
-        <div className="grid grid-cols-4 gap-3 border-t pt-3">
-          <Field label="Follow-up after (days)">
-            <Input type="number" min="1" max="90" value={s.general.follow_up_days} onChange={(e) => setS({ ...s, general: { ...s.general, follow_up_days: Number(e.target.value) } })} />
-          </Field>
-          <Field label="High-match threshold">
-            <Input type="number" min="0" max="100" value={s.general.high_match_threshold} onChange={(e) => setS({ ...s, general: { ...s.general, high_match_threshold: Number(e.target.value) } })} />
-          </Field>
-        </div>
-        <div className="flex items-center justify-end gap-2">
-          {save.isSuccess && <span className="text-sm text-muted-foreground">Saved.</span>}
+          </label>
+        </section>
+
+        <section aria-labelledby="alerts" className="flex flex-col gap-3 border-t pt-5">
+          <h3 id="alerts" className="font-semibold">Reminders and alerts</h3>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-3">
+            <Field label="Suggest a follow-up after (days)">
+              <Input type="number" min="1" max="90" value={s.general.follow_up_days} onChange={(e) => setS({ ...s, general: { ...s.general, follow_up_days: num(e.target.value) } })} />
+            </Field>
+            <Field label="Tell me about new jobs scoring at least">
+              <Input type="number" min="0" max="100" value={s.general.high_match_threshold} onChange={(e) => setS({ ...s, general: { ...s.general, high_match_threshold: num(e.target.value) } })} />
+            </Field>
+          </div>
+        </section>
+
+        <div className="flex items-center justify-end gap-2 border-t pt-4">
           <ErrorText error={save.error} />
-          <Button variant="outline" onClick={() => defaults.data && setS({ ...s, scoring: defaults.data })}>Reset scoring to defaults</Button>
-          <Button onClick={() => save.mutate(s)} disabled={save.isPending}>Save</Button>
+          <Button variant="ghost" onClick={() => defaults.data && setS({ ...s, scoring: defaults.data })}>Reset scoring to defaults</Button>
+          <Button onClick={() => save.mutate(s)} disabled={save.isPending}>Save and rescore</Button>
         </div>
       </CardContent>
     </Card>

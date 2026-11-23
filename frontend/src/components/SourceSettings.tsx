@@ -5,6 +5,7 @@ import type { SearchProfileRow, SourceRow } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { useToast } from '@/lib/toast'
 import { ErrorText, Field, ListInput, NativeSelect } from './common'
 import { sourceStatus } from '@/lib/sources'
 import { formatDateTime } from '@/lib/score'
@@ -99,44 +100,46 @@ export function SearchProfiles() {
 
 // ---------- sources ----------
 
-function SourceCard({ s }: { s: SourceRow }) {
+/** One row of the Job sources table: on/off, health, and the two limits (saved when a box loses focus). */
+function SourceRowView({ s }: { s: SourceRow }) {
   const qc = useQueryClient()
+  const toast = useToast()
   const [results, setResults] = useLocalCopy(s.max_results)
   const [runs, setRuns] = useLocalCopy(s.max_runs_per_day)
   const done = () => { qc.invalidateQueries({ queryKey: ['sources'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }) }
   const save = useMutation({
     mutationFn: (body: Partial<SourceRow>) => api.put(`/api/sources/${s.key}`, { enabled: s.enabled, max_results: results, max_runs_per_day: runs, ...body }),
-    onSuccess: done,
+    onSuccess: (_d, body) => { done(); if (!('enabled' in body)) toast({ message: `${s.label} limits saved.` }) },
   })
   const resume = useMutation({ mutationFn: () => api.post(`/api/sources/${s.key}/resume`), onSuccess: done })
   const st = sourceStatus(s)
+  const last = s.last_run_at ? `Last run ${formatDateTime(s.last_run_at)}` : 'Not run yet'
+  const detail = s.status !== 'ok' ? s.last_error : s.last_result
   return (
-    <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
-      <div>
-        <label className="flex flex-wrap items-center gap-x-2 font-semibold">
-          <input type="checkbox" checked={s.enabled} onChange={(e) => save.mutate({ enabled: e.target.checked })} />
-          {s.label}
-          <span className={cn('text-sm font-normal', st.tone)}>{st.text}</span>
-        </label>
-        <p className="text-sm text-muted-foreground">
-          {s.last_run_at ? `Last run ${formatDateTime(s.last_run_at)}: ` : 'Not run yet. '}
-          {s.status !== 'ok' ? s.last_error : s.last_result}
-        </p>
-        {s.key === 'glassdoor' && <p className="text-sm text-muted-foreground">Glassdoor has little Malaysia coverage; off by default.</p>}
+    <tr className="border-t align-top first:border-t-0">
+      <td className="px-4 py-3">
+        <input type="checkbox" className="mt-1 size-4 accent-foreground" aria-label={`Use ${s.label}`} checked={s.enabled}
+          onChange={(e) => save.mutate({ enabled: e.target.checked })} />
+      </td>
+      <td className="px-4 py-3">
+        <span className={cn('font-medium', !s.enabled && 'text-muted-foreground')}>{s.label}</span>
+        <span className={cn('ml-2 text-sm', st.tone)}>{st.text}</span>
+        <span className="block text-sm text-muted-foreground" title={detail || undefined}>{last}{detail ? `: ${detail}` : '.'}</span>
+        {s.key === 'glassdoor' && <span className="block text-sm text-muted-foreground">Little Malaysia coverage, so it starts off.</span>}
+        {s.status === 'paused' && <Button size="sm" variant="outline" className="mt-2" onClick={() => resume.mutate()}>Resume now</Button>}
         <ErrorText error={save.error || resume.error} />
-      </div>
-      <div className="flex flex-wrap items-end gap-3">
-        <Field label={`Jobs per run (max ${s.hard_max_results})`}>
-          <Input type="number" min={1} max={s.hard_max_results} className="w-24" value={results} onChange={(e) => setResults(Number(e.target.value))}
-            onBlur={() => results !== s.max_results && save.mutate({})} />
-        </Field>
-        <Field label={`Runs per day (max ${s.hard_max_runs_per_day})`}>
-          <Input type="number" min={1} max={s.hard_max_runs_per_day} className="w-24" value={runs} onChange={(e) => setRuns(Number(e.target.value))}
-            onBlur={() => runs !== s.max_runs_per_day && save.mutate({})} />
-        </Field>
-        {s.status === 'paused' && <Button size="sm" variant="outline" onClick={() => resume.mutate()}>Resume now</Button>}
-      </div>
-    </div>
+      </td>
+      <td className="px-4 py-3">
+        <Input type="number" min={1} max={s.hard_max_results} className="w-20" aria-label={`${s.label}: jobs per run`} value={results}
+          onChange={(e) => setResults(Number(e.target.value))} onBlur={() => results !== s.max_results && save.mutate({})} />
+        <span className="mt-1 block text-xs text-muted-foreground">up to {s.hard_max_results}</span>
+      </td>
+      <td className="px-4 py-3">
+        <Input type="number" min={1} max={s.hard_max_runs_per_day} className="w-20" aria-label={`${s.label}: runs per day`} value={runs}
+          onChange={(e) => setRuns(Number(e.target.value))} onBlur={() => runs !== s.max_runs_per_day && save.mutate({})} />
+        <span className="mt-1 block text-xs text-muted-foreground">up to {s.hard_max_runs_per_day}</span>
+      </td>
+    </tr>
   )
 }
 
@@ -145,7 +148,19 @@ export function JobSources() {
   return (
     <div className="flex flex-col gap-3">
       <ErrorText error={q.error} />
-      {(q.data ?? []).map((s) => <SourceCard key={s.key} s={s} />)}
+      <div className="overflow-x-auto rounded-lg border bg-background">
+        <table className="w-full text-[15px]">
+          <thead className="border-b text-left text-sm text-muted-foreground">
+            <tr>
+              <th scope="col" className="w-12 px-4 py-2 font-medium"><span className="sr-only">On</span></th>
+              <th scope="col" className="px-4 py-2 font-medium">Source</th>
+              <th scope="col" className="w-32 px-4 py-2 font-medium">Jobs per run</th>
+              <th scope="col" className="w-32 px-4 py-2 font-medium">Runs per day</th>
+            </tr>
+          </thead>
+          <tbody>{(q.data ?? []).map((s) => <SourceRowView key={s.key} s={s} />)}</tbody>
+        </table>
+      </div>
       <p className="text-sm text-muted-foreground">
         No logins, ever: sources only read public, logged-out pages. Requests go one at a time with 2–6 s pauses. A source that answers
         “too many requests” or “forbidden”, or fails 3 times in a row, is paused for 24 hours and you get a notification.

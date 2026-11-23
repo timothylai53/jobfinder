@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { formatDateTime, formatShortDateTime } from '@/lib/score'
-import { runRows, STATUS_LABEL, type RowStatus, type RunLogRow } from '@/lib/runlog'
+import { lastRunSummary, runRows, STATUS_LABEL, type RowStatus, type RunLogRow } from '@/lib/runlog'
 import { useLocalCopy } from '@/lib/hooks'
 
 const RESULT_TONE: Record<string, string> = {
@@ -19,12 +19,8 @@ function when(iso: string | null | undefined) {
   return iso ? formatDateTime(iso) : '—'
 }
 
-function scheduleText(a: AutomationRow) {
-  if (a.mode === 'manual') return 'Only when I click Run now'
-  return a.daily ? `Every day at ${a.schedule}` : 'Right after Fetch jobs'
-}
-
-function AutomationCard({ a }: { a: AutomationRow }) {
+/** One automation as a row: on/off with what it does, when it runs, how its last run went, and Run now. */
+function AutomationItem({ a }: { a: AutomationRow }) {
   const qc = useQueryClient()
   const [time, setTime] = useLocalCopy(a.schedule)
   const update = useMutation({
@@ -38,50 +34,43 @@ function AutomationCard({ a }: { a: AutomationRow }) {
       setTimeout(() => qc.invalidateQueries({ queryKey: ['automation-runs'] }), 800)
     },
   })
+  const id = `auto-${a.key}`
   return (
-    <div className="grid gap-x-4 gap-y-2 rounded-lg border bg-card p-4 md:grid-cols-[minmax(0,1fr)_auto]">
-      <div>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 font-semibold">
-            <input type="checkbox" checked={a.enabled} onChange={(e) => update.mutate({ enabled: e.target.checked })} />
-            {a.label}
-          </label>
-          {a.key === 'fetch_jobs' && !a.enabled && (
-            <span className="rounded bg-muted px-1.5 text-xs text-muted-foreground">off until you turn it on</span>
+    <li className="grid gap-x-6 gap-y-3 px-5 py-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.1fr)_auto] lg:items-start">
+      <div className="flex items-start gap-3">
+        <input id={id} type="checkbox" className="mt-1 size-4 shrink-0 accent-foreground" checked={a.enabled}
+          onChange={(e) => update.mutate({ enabled: e.target.checked })} />
+        <label htmlFor={id} className="min-w-0">
+          <span className={cn('font-medium', !a.enabled && 'text-muted-foreground')}>{a.label}</span>
+          {!a.enabled && <span className="text-sm text-muted-foreground"> (off)</span>}
+          <span className="block text-sm text-muted-foreground">{a.description}</span>
+        </label>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm text-muted-foreground lg:sr-only">When</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <NativeSelect label={`When ${a.label} runs`} value={a.mode} onChange={(v) => update.mutate({ mode: v as AutomationRow['mode'] })}
+            options={[{ value: 'scheduled', label: a.daily ? 'Every day at' : 'Right after Fetch jobs' }, { value: 'manual', label: 'Only when I run it' }]} />
+          {a.daily && a.mode === 'scheduled' && (
+            <Input type="time" aria-label={`${a.label} time`} className="w-32" value={time}
+              onChange={(e) => setTime(e.target.value)} onBlur={() => time !== a.schedule && update.mutate({ schedule: time })} />
           )}
         </div>
-        <p className="text-sm text-muted-foreground">{a.description}</p>
-        <p className="mt-1 text-sm">
-          {a.enabled ? scheduleText(a) : 'Off'}
-          {a.enabled && a.next_run_at && a.mode === 'scheduled' && <span className="text-muted-foreground"> · next {when(a.next_run_at)}</span>}
-        </p>
-        {a.last_run && (
-          <p className="mt-1 text-sm">
-            <span className={cn('rounded-sm px-1.5 py-0.5 text-xs font-medium', RESULT_TONE[a.last_run.result])}>{STATUS_LABEL[a.last_run.result]}</span>{' '}
-            <span className="text-muted-foreground">last run {when(a.last_run.started_at)}: {a.last_run.error || a.last_run.message.split('\n')[0]}</span>
-          </p>
-        )}
+        {a.enabled && a.next_run_at && a.mode === 'scheduled' && <span className="text-sm text-muted-foreground">Next: {when(a.next_run_at)}</span>}
+      </div>
+      <div className="text-sm">
+        {a.last_run ? (
+          <>
+            <span className={cn('rounded-sm px-1.5 py-0.5 text-xs font-medium', RESULT_TONE[a.last_run.result])}>{STATUS_LABEL[a.last_run.result]}</span>
+            <span className="ml-2 text-muted-foreground">{formatShortDateTime(a.last_run.started_at)}</span>
+            <span className="block">{lastRunSummary(a.last_run)}</span>
+          </>
+        ) : <span className="text-muted-foreground">Hasn't run yet.</span>}
         <ErrorText error={update.error || run.error} />
       </div>
-      <div className="flex flex-wrap items-center gap-2 md:justify-end">
-        <NativeSelect
-          value={a.mode}
-          onChange={(v) => update.mutate({ mode: v as AutomationRow['mode'] })}
-          options={[{ value: 'scheduled', label: 'Scheduled' }, { value: 'manual', label: 'Manual only' }]}
-        />
-        {a.daily && (
-          <Input
-            type="time"
-            aria-label={`${a.label} time`}
-            className="w-36"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            onBlur={() => time !== a.schedule && update.mutate({ schedule: time })}
-          />
-        )}
-        <Button variant="outline" size="sm" disabled={run.isPending} onClick={() => run.mutate()}>Run now</Button>
-      </div>
-    </div>
+      <Button variant="outline" size="sm" className="justify-self-start" disabled={run.isPending} onClick={() => run.mutate()}
+        aria-label={`Run ${a.label} now`}>Run now</Button>
+    </li>
   )
 }
 
@@ -97,7 +86,9 @@ export default function Automations() {
       </p>
       <ErrorText error={autos.error} />
       <section className="flex flex-col gap-3">
-        {(autos.data ?? []).map((a) => <AutomationCard key={a.key} a={a} />)}
+        <ul className="divide-y rounded-lg border bg-card">
+          {(autos.data ?? []).map((a) => <AutomationItem key={a.key} a={a} />)}
+        </ul>
       </section>
       <RunLog runs={runs.data ?? []} labels={label} error={runs.error} />
     </div>
