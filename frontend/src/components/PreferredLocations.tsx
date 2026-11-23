@@ -5,6 +5,7 @@ import type { Profile, Settings } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { ErrorText } from './common'
 import LocationPicker from './LocationPicker'
+import { useUnsavedChanges } from '@/lib/unsaved'
 
 /** Edit Profile.preferred_locations (+ remote_ok via the "Remote" chip) with the state/town picker. */
 /** The profile's places as the picker shows them: Remote is a place in the list, not a separate switch. */
@@ -20,17 +21,20 @@ export default function PreferredLocations({ onSaved, saveLabel = 'Save location
   // Local edits; until the first one, the picker shows what the profile has saved.
   const [edited, setValue] = useState<string[] | null>(null)
   const value = edited ?? (profile.data ? savedPlaces(profile.data) : null)
+  useUnsavedChanges(edited !== null && !!profile.data && JSON.stringify(edited) !== JSON.stringify(savedPlaces(profile.data)))
 
   const save = useMutation({
     mutationFn: () => {
       const v = value ?? []
-      return api.put('/api/profile', {
+      return api.put<Profile>('/api/profile', {
         ...profile.data!,
         preferred_locations: v.filter((p) => p.toLowerCase() !== 'remote'),
         remote_ok: v.some((p) => p.toLowerCase() === 'remote'),
       })
     },
-    onSuccess: () => {
+    onSuccess: (saved) => {
+      qc.setQueryData(['profile'], saved)
+      setValue(null) // clean at once: the picker now shows the saved places
       for (const k of ['profile', 'jobs', 'job', 'dashboard']) qc.invalidateQueries({ queryKey: [k] })
       onSaved?.()
     },
@@ -46,7 +50,7 @@ export default function PreferredLocations({ onSaved, saveLabel = 'Save location
       <div className="flex items-center justify-end gap-2">
         {save.isSuccess && <span className="text-sm text-muted-foreground">Saved. Jobs rescored.</span>}
         <ErrorText error={save.error} />
-        <Button onClick={() => save.mutate()} disabled={save.isPending}>{saveLabel}</Button>
+        <Button onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? 'Saving…' : saveLabel}</Button>
       </div>
     </div>
   )

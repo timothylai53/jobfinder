@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { formatDateTime, formatShortDateTime } from '@/lib/score'
 import { lastRunSummary, runRows, STATUS_LABEL, type RowStatus, type RunLogRow } from '@/lib/runlog'
 import { useLocalCopy } from '@/lib/hooks'
+import { useQueryParam } from '@/lib/urlState'
 
 const RESULT_TONE: Record<string, string> = {
   ok: 'bg-selected text-foreground', error: 'bg-danger-bg text-danger',
@@ -114,7 +115,7 @@ function RunLog({ runs, labels, error }: { runs: AutomationRunRow[]; labels: Rec
   // Newest first by start time (ids follow insertion order, which a catch-up run or an import can break).
   const rows = useMemo(() => [...runs].sort((a, b) => Date.parse(b.started_at) - Date.parse(a.started_at) || b.id - a.id)
     .flatMap((r) => runRows(r, labels[r.automation_key] ?? r.automation_key)), [runs, labels])
-  const [filter, setFilter] = useState('')
+  const [filter, setFilter] = useQueryParam('log') // ?log=linkedin keeps the filter on reload and Back
   const [shown, setShown] = useState(PAGE)
   const [open, setOpen] = useState<Set<string>>(new Set())
   const groups = useMemo(() => {

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '@/api/client'
 import type { JobSummary } from '@/api/types'
@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatDate, formatSalary, sortJobs, type SortKey } from '@/lib/score'
 import { cn } from '@/lib/utils'
 import { usePendingDeletes } from '@/lib/pendingDeletes'
+import { useQueryParam } from '@/lib/urlState'
 
 const SORTS: { value: SortKey; label: string }[] = [
   { value: 'score', label: 'Score' },
@@ -25,12 +26,17 @@ export default function Jobs() {
   const qc = useQueryClient()
   const [params] = useSearchParams()
   const jobs = useQuery({ queryKey: ['jobs'], queryFn: () => api.get<JobSummary[]>('/api/jobs') })
-  const [tab, setTab] = useState<'visible' | 'hidden'>('visible')
-  const [q, setQ] = useState('')
-  const [minScore, setMinScore] = useState('')
-  const [onlyUntracked, setOnlyUntracked] = useState(false)
-  const [sort, setSort] = useState<SortKey>('score')
-  const [desc, setDesc] = useState(true)
+  // Filters live in the URL (?tab=hidden&q=react&min=60&untracked=1&sort=title&dir=asc): Back and reload keep them.
+  const [tabParam, setTab] = useQueryParam('tab', 'visible')
+  const tab: 'visible' | 'hidden' = tabParam === 'hidden' ? 'hidden' : 'visible'
+  const [q, setQ] = useQueryParam('q')
+  const [minScore, setMinScore] = useQueryParam('min')
+  const [untracked, setUntracked] = useQueryParam('untracked')
+  const onlyUntracked = untracked === '1'
+  const [sortParam, setSort] = useQueryParam('sort', 'score')
+  const sort: SortKey = SORTS.some((s) => s.value === sortParam) ? (sortParam as SortKey) : 'score'
+  const [dir, setDir] = useQueryParam('dir', 'desc')
+  const desc = dir !== 'asc'
 
   const save = useMutation({
     mutationFn: (jobId: number) => api.post('/api/applications', { job_id: jobId }),
@@ -83,12 +89,12 @@ export default function Jobs() {
         <Input className="w-56" placeholder="Search title, company, location" value={q} onChange={(e) => setQ(e.target.value)} />
         <Input className="w-28" type="number" placeholder="Min score" value={minScore} onChange={(e) => setMinScore(e.target.value)} />
         <label className="flex items-center gap-1 text-sm">
-          <input type="checkbox" checked={onlyUntracked} onChange={(e) => setOnlyUntracked(e.target.checked)} />
+          <input type="checkbox" checked={onlyUntracked} onChange={(e) => setUntracked(e.target.checked ? '1' : '')} />
           Not in tracker
         </label>
         <span className="ml-auto text-sm text-muted-foreground">Sort</span>
-        <NativeSelect value={sort} onChange={(v) => setSort(v as SortKey)} options={SORTS} />
-        <Button variant="outline" size="sm" onClick={() => setDesc(!desc)}>
+        <NativeSelect label="Sort by" value={sort} onChange={setSort} options={SORTS} />
+        <Button variant="outline" size="sm" aria-label={desc ? 'Sorted high to low; switch to low to high' : 'Sorted low to high; switch to high to low'} onClick={() => setDir(desc ? 'asc' : 'desc')}>
           {desc ? '↓' : '↑'}
         </Button>
       </div>

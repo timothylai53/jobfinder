@@ -20,6 +20,7 @@ import { readLocal, writeLocal } from '@/lib/storage'
 import SkillDictionary from '@/components/SkillDictionary'
 import { formatDateTime } from '@/lib/score'
 import { useLocalCopy } from '@/lib/hooks'
+import { confirmLeave, useUnsavedChanges } from '@/lib/unsaved'
 
 const EDU_LEVELS = ['', 'SPM', 'STPM', 'Diploma', 'Degree', 'Master', 'PhD']
 
@@ -37,7 +38,13 @@ export function ProfileTab({ onSaved, saveLabel = 'Save profile' }: { onSaved?: 
   const [p, setP] = useLocalCopy<Profile | null>(q.data ?? null)
   const done = useRescoreInvalidate()
   // Saving this form confirms the years of experience, even when it stays 0.
-  const save = useMutation({ mutationFn: (v: Profile) => api.put<Profile>('/api/profile', { ...v, years_confirmed: true }), onSuccess: () => { done(); onSaved?.() } })
+  const qc = useQueryClient()
+  // The reply becomes the saved copy at once, so the form is clean before any navigation that follows.
+  const save = useMutation({
+    mutationFn: (v: Profile) => api.put<Profile>('/api/profile', { ...v, years_confirmed: true }),
+    onSuccess: (saved) => { qc.setQueryData(['profile'], saved); done(); onSaved?.() },
+  })
+  useUnsavedChanges(!!p && !!q.data && JSON.stringify(p) !== JSON.stringify(q.data))
   const status = useProfileStatus()
   if (!p) return <ErrorText error={q.error} />
   const set = <K extends keyof Profile>(k: K, v: Profile[K]) => setP({ ...p, [k]: v })
@@ -101,7 +108,7 @@ export function ProfileTab({ onSaved, saveLabel = 'Save profile' }: { onSaved?: 
           <div className="flex items-center justify-end gap-2 sm:col-span-2">
             {save.isSuccess && <span className="text-sm text-muted-foreground">Saved. Jobs rescored.</span>}
             <ErrorText error={save.error} />
-            <Button type="submit" disabled={save.isPending}>{saveLabel}</Button>
+            <Button type="submit" disabled={save.isPending}>{save.isPending ? 'Saving…' : saveLabel}</Button>
           </div>
         </form>
       </CardContent>
@@ -131,9 +138,11 @@ function ScoringTab() {
   const done = useRescoreInvalidate()
   // Locations are edited in their own tab; omitting them leaves the stored map unchanged.
   const toast = useToast()
+  const qc = useQueryClient()
+  useUnsavedChanges(!!s && !!q.data && JSON.stringify(s) !== JSON.stringify(q.data))
   const save = useMutation({
-    mutationFn: (v: SettingsT) => api.put('/api/settings', { scoring: v.scoring, general: v.general }),
-    onSuccess: () => { done(); toast({ message: 'Scoring saved. Jobs rescored.' }) },
+    mutationFn: (v: SettingsT) => api.put<SettingsT>('/api/settings', { scoring: v.scoring, general: v.general }),
+    onSuccess: (saved) => { qc.setQueryData(['settings'], saved); done(); toast({ message: 'Scoring saved. Jobs rescored.' }) },
   })
   const defaults = useQuery({ queryKey: ['scoring-defaults'], queryFn: () => api.get<ScoringConfig>('/api/settings/scoring/defaults') })
   const sum = useMemo(() => (s ? Object.values(s.scoring.weights).reduce((a, b) => a + b, 0) : 0), [s])
@@ -214,7 +223,7 @@ function ScoringTab() {
         <div className="flex items-center justify-end gap-2 border-t pt-4">
           <ErrorText error={save.error} />
           <Button variant="ghost" onClick={() => defaults.data && setS({ ...s, scoring: defaults.data })}>Reset scoring to defaults</Button>
-          <Button onClick={() => save.mutate(s)} disabled={save.isPending}>Save and rescore</Button>
+          <Button onClick={() => save.mutate(s)} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save and rescore'}</Button>
         </div>
       </CardContent>
     </Card>
@@ -337,6 +346,7 @@ export default function Settings() {
   }
   const current = SECTIONS.find((s) => s.id === id) ?? SECTIONS[0]
   const pick = (v: string) => {
+    if (v !== id && !confirmLeave()) return
     setId(v)
     writeLocal('settingsSection', v)
   }

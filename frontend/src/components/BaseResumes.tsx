@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { groupItems, toggleGroup, typeSummary } from '@/lib/baseResumes'
 import { dateRange, formatDate } from '@/lib/score'
+import { useUnsavedChanges } from '@/lib/unsaved'
 
 const PURPOSE = 'A base resume is a starting set of bank items: one for software roles, one for IT support.'
 
@@ -142,6 +143,7 @@ function Editor({ resume, items, onClose }: { resume: BaseResume; items: Experie
   const [query, setQuery] = useState('')
   const groups = useMemo(() => groupItems(items, query), [items, query])
   const dirty = selected.size !== resume.item_ids.length || resume.item_ids.some((id) => !selected.has(id))
+  useUnsavedChanges(dirty)
   const save = useMutation({
     mutationFn: () => api.put(`/api/resumes/${resume.id}`, { name: resume.name, item_ids: items.filter((i) => selected.has(i.id)).map((i) => i.id) }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['resumes'] }); toast({ message: `Saved ${resume.name}.` }); onClose() },

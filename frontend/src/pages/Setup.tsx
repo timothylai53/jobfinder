@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { ProfileTab } from './Settings'
 import { writeLocal } from '@/lib/storage'
+import UnsavedGuard from '@/components/UnsavedGuard'
 
 export const SETUP_DONE_KEY = 'setupDone'
 
@@ -34,6 +35,7 @@ export default function Setup() {
 
   return (
     <div className="min-h-screen bg-fog">
+      <UnsavedGuard />
       <div className={cn('mx-auto flex flex-col gap-6 px-6 py-8', step === 1 ? 'max-w-7xl' : 'max-w-3xl')}>
         <header className="flex items-start justify-between gap-4">
           <div>

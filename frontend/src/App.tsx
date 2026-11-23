@@ -1,34 +1,25 @@
-import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import Dashboard from '@/pages/Dashboard'
 
-// Today loads with the app; every other page is its own chunk, fetched the first time it is opened.
-const JobDetail = lazy(() => import('@/pages/JobDetail'))
-const Jobs = lazy(() => import('@/pages/Jobs'))
-const ResumeBank = lazy(() => import('@/pages/ResumeBank'))
-const Automations = lazy(() => import('@/pages/Automations'))
-const Settings = lazy(() => import('@/pages/Settings'))
-const SkillGaps = lazy(() => import('@/pages/SkillGaps'))
-const Setup = lazy(() => import('@/pages/Setup'))
-const Tracker = lazy(() => import('@/pages/Tracker'))
+// Today loads with the app; every other page is its own chunk, loaded by the router the first time it is opened
+// (the current page stays on screen until the next one is ready).
+const page = (load: () => Promise<{ default: React.ComponentType }>) => async () => ({ Component: (await load()).default })
 
-export default function App() {
-  return (
-    <Routes>
-      <Route path="setup" element={<Suspense fallback={null}><Setup /></Suspense>} />
-      {/* Layout wraps its page in Suspense, so the sidebar stays put while a page chunk loads. */}
-      <Route element={<Layout />}>
-        <Route index element={<Dashboard />} />
-        <Route path="jobs" element={<Jobs />} />
-        <Route path="jobs/:id" element={<JobDetail />} />
-        <Route path="tracker" element={<Tracker />} />
-        <Route path="resume" element={<ResumeBank />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="skill-gaps" element={<SkillGaps />} />
-        <Route path="automations" element={<Automations />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
-  )
-}
+/** The route tree, used by main.tsx's data router (which the unsaved-changes guard needs). */
+export const appRoutes = (
+  <>
+    <Route path="setup" lazy={page(() => import('@/pages/Setup'))} />
+    <Route element={<Layout />}>
+      <Route index element={<Dashboard />} />
+      <Route path="jobs" lazy={page(() => import('@/pages/Jobs'))} />
+      <Route path="jobs/:id" lazy={page(() => import('@/pages/JobDetail'))} />
+      <Route path="tracker" lazy={page(() => import('@/pages/Tracker'))} />
+      <Route path="resume" lazy={page(() => import('@/pages/ResumeBank'))} />
+      <Route path="settings" lazy={page(() => import('@/pages/Settings'))} />
+      <Route path="skill-gaps" lazy={page(() => import('@/pages/SkillGaps'))} />
+      <Route path="automations" lazy={page(() => import('@/pages/Automations'))} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Route>
+  </>
+)

@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { addState, addTown, findTowns, mapToText, removeTown, resetState, statesWith, textToMap, type LocationMap } from '@/lib/locations'
 import { cn } from '@/lib/utils'
+import { useUnsavedChanges } from '@/lib/unsaved'
 
 /** Settings → Location map: one collapsible section per state, towns as chips. Changes stay local until Save,
  * which rescores every job. A plain-text view for bulk edits sits under Advanced. */
@@ -24,6 +25,7 @@ export default function LocationMapEditor({ onSaved }: { onSaved: () => void }) 
   const saved = q.data?.locations
   const map = useMemo(() => edited ?? saved ?? {}, [edited, saved])
   const dirty = edited !== null && JSON.stringify(saved) !== JSON.stringify(edited)
+  useUnsavedChanges(dirty)
   const save = useMutation({
     mutationFn: () => api.put('/api/settings', { ...q.data!, locations: map }),
     onSuccess: () => { onSaved(); setMap(null); toast({ message: 'Location map saved. Jobs rescored.' }) },
@@ -108,7 +110,7 @@ export default function LocationMapEditor({ onSaved }: { onSaved: () => void }) 
         {dirty && <span className="text-sm text-muted-foreground">Unsaved changes</span>}
         <ErrorText error={save.error} />
         <Button variant="ghost" disabled={!dirty} onClick={() => setMap(null)}>Discard changes</Button>
-        <Button disabled={!dirty || save.isPending} onClick={() => save.mutate()}>Save and rescore</Button>
+        <Button disabled={!dirty || save.isPending} onClick={() => save.mutate()}>{save.isPending ? 'Saving…' : 'Save and rescore'}</Button>
       </div>
     </div>
   )

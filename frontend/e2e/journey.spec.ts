@@ -419,3 +419,67 @@ test('tidy-ups: a new state in the location map, and the tailor review names ban
     await page.keyboard.press('Escape')
   })
 })
+
+test('unsaved changes are guarded, and filters live in the URL', async ({ page, context, request }) => {
+  const savedName = (await (await request.get('/api/profile')).json()).name as string
+
+  await test.step('leaving a page with unsaved edits asks first; Cancel keeps them, OK leaves', async () => {
+    await page.goto('/settings?section=profile')
+    await page.getByLabel('Name', { exact: true }).fill('Aisyah Tan (edited)')
+    let message = ''
+    page.once('dialog', (d) => { message = d.message(); d.dismiss() })
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Jobs' }).click()
+    await expect.poll(() => message).toBe('You have unsaved changes. Leave anyway?')
+    await expect(page).toHaveURL(/\/settings/)
+    await expect(page.getByLabel('Name', { exact: true })).toHaveValue('Aisyah Tan (edited)')
+
+    page.once('dialog', (d) => d.dismiss()) // another Settings section is also a way to lose the edit
+    await page.getByRole('button', { name: 'Filter rules' }).click()
+    await expect(page.getByLabel('Name', { exact: true })).toHaveValue('Aisyah Tan (edited)')
+
+    page.once('dialog', (d) => d.accept())
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Jobs' }).click()
+    await expect(page).toHaveURL(/\/jobs$/)
+    expect((await (await request.get('/api/profile')).json()).name).toBe(savedName) // nothing was saved
+  })
+
+  await test.step('closing or reloading the tab with unsaved edits gets the browser warning', async () => {
+    const tab = await context.newPage()
+    await tab.goto('/settings?section=scoring')
+    await tab.getByRole('spinbutton', { name: 'Education' }).fill('12')
+    let kind = ''
+    tab.once('dialog', (d) => { kind = d.type(); d.accept() })
+    await tab.close({ runBeforeUnload: true })
+    await expect.poll(() => kind).toBe('beforeunload')
+  })
+
+  await test.step('a save makes the form clean at once: navigating right after it does not ask', async () => {
+    await page.goto('/settings?section=profile')
+    await page.getByLabel('Name', { exact: true }).fill(savedName)
+    await page.getByRole('button', { name: 'Save profile' }).click()
+    await expect(page.getByRole('button', { name: 'Save profile' })).toBeEnabled()
+    page.once('dialog', (d) => { throw new Error(`unexpected dialog: ${d.message()}`) })
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Tracker' }).click()
+    await expect(page).toHaveURL(/\/tracker/)
+  })
+
+  await test.step('Jobs filters survive reload and Back; the Tracker view and run-log filter come from the URL', async () => {
+    await page.goto('/jobs')
+    await page.getByPlaceholder('Search title, company, location').fill('Junior')
+    await page.getByRole('combobox', { name: 'Sort by' }).selectOption('title')
+    await expect(page).toHaveURL(/q=Junior/)
+    await expect(page).toHaveURL(/sort=title/)
+    await page.reload()
+    await expect(page.getByPlaceholder('Search title, company, location')).toHaveValue('Junior')
+    await expect(page.getByRole('combobox', { name: 'Sort by' })).toHaveValue('title')
+    await page.getByRole('link', { name: 'Junior Software Engineer' }).first().click()
+    await expect(page).toHaveURL(/\/jobs\/\d+/)
+    await page.goBack()
+    await expect(page.getByPlaceholder('Search title, company, location')).toHaveValue('Junior')
+
+    await page.goto('/tracker?view=table')
+    await expect(page.getByRole('button', { name: 'Table' })).toHaveAttribute('aria-pressed', 'true')
+    await page.goto('/automations?log=follow_up_reminder')
+    await expect(page.getByRole('combobox', { name: 'Show runs of' })).toHaveValue('follow_up_reminder')
+  })
+})

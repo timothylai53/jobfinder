@@ -10,6 +10,7 @@ import NotificationBell from './NotificationBell'
 import { ToastProvider } from './Toast'
 import { Button } from './ui/button'
 import { LogoMark } from './common'
+import UnsavedGuard from './UnsavedGuard'
 
 // The four places a job search happens, then the tools you visit now and then.
 const MAIN = [
@@ -70,6 +71,7 @@ export default function Layout() {
 
   return (
     <ToastProvider>
+    <UnsavedGuard />
     <div className="flex min-h-screen flex-col bg-fog md:flex-row">
       <a href="#main" className="sr-only z-50 rounded-md border bg-background px-3 py-2 focus:not-sr-only focus:fixed focus:top-2 focus:left-2">Skip to content</a>
       {/* Narrow windows: a top bar with the logo, the bell and a Menu button instead of the sidebar. */}

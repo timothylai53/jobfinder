@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatDate } from '@/lib/score'
 import { cn } from '@/lib/utils'
 import { readLocal, writeLocal } from '@/lib/storage'
+import { useQueryParam } from '@/lib/urlState'
 
 function useApplications() {
   const qc = useQueryClient()
@@ -196,7 +197,9 @@ function AppTable({ apps, onMove }: { apps: ApplicationRow[]; onMove: (id: numbe
 
 export default function Tracker() {
   const { list, move } = useApplications()
-  const [view, setView] = useState<'kanban' | 'table'>(() => (readLocal('trackerView') === 'table' ? 'table' : 'kanban'))
+  // ?view=table in the URL wins; without it, the view last used in this browser (Kanban by default).
+  const [viewParam, setView] = useQueryParam('view', readLocal('trackerView') === 'table' ? 'table' : 'kanban')
+  const view: 'kanban' | 'table' = viewParam === 'table' ? 'table' : 'kanban'
   const setV = (v: 'kanban' | 'table') => {
     setView(v)
     writeLocal('trackerView', v)
