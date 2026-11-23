@@ -75,8 +75,15 @@ function AutomationItem({ a }: { a: AutomationRow }) {
 }
 
 export default function Automations() {
-  const autos = useQuery({ queryKey: ['automations'], queryFn: () => api.get<AutomationRow[]>('/api/automations'), refetchInterval: 10_000 })
-  const runs = useQuery({ queryKey: ['automation-runs'], queryFn: () => api.get<AutomationRunRow[]>('/api/automations/runs?limit=200'), refetchInterval: 5_000 })
+  // Poll quickly only while something is running; otherwise a slow refresh is enough (runs are rare).
+  const autos = useQuery({
+    queryKey: ['automations'], queryFn: () => api.get<AutomationRow[]>('/api/automations'),
+    refetchInterval: (q) => (q.state.data?.some((a) => a.last_run?.result === 'running') ? 3_000 : 30_000),
+  })
+  const runs = useQuery({
+    queryKey: ['automation-runs'], queryFn: () => api.get<AutomationRunRow[]>('/api/automations/runs?limit=200'),
+    refetchInterval: (q) => (q.state.data?.some((r) => r.result === 'running') ? 3_000 : 30_000),
+  })
   const label = Object.fromEntries((autos.data ?? []).map((a) => [a.key, a.label]))
   return (
     <div className="flex flex-col gap-6">

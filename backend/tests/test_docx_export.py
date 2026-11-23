@@ -116,3 +116,19 @@ def test_analyses_have_no_word_version(client, job):
         doc = save_analysis(s, job, "interview_prep", {"questions": [{"question": "Why us?"}]}, "manual", None)
     assert client.get(f"/api/documents/{doc.id}/docx").status_code == 422
     assert client.get("/api/documents/999999/docx").status_code == 404
+
+
+def test_docx_is_a4_with_the_pdf_margins_and_real_properties(client, job):
+    from docx.shared import Mm
+
+    rid = _resume(client, job)["id"]
+    lid = client.post("/api/documents/cover-letter", json={
+        "job_id": job, "greeting": "Dear Hiring Manager,", "closing": "Sincerely,", "paragraphs": ["Hello."]}).json()["id"]
+    for doc_id in (rid, lid):
+        _, d = _docx(client, doc_id)
+        sec = d.sections[0]
+        assert (round(sec.page_width.mm), round(sec.page_height.mm)) == (210, 297)  # A4, like the PDF
+        assert abs(sec.left_margin - Mm(16)) < Mm(0.1) and abs(sec.top_margin - Mm(16)) < Mm(0.1)
+        assert d.core_properties.author == "Ali Bin Contoh" and "python-docx" not in d.core_properties.last_modified_by
+    assert _docx(client, rid)[1].core_properties.title == "Ali Bin Contoh resume"
+    assert _docx(client, lid)[1].core_properties.title.startswith("Cover letter: Junior Software Engineer")

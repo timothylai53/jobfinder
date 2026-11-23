@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatDate } from '@/lib/score'
 import { cn } from '@/lib/utils'
+import { readLocal, writeLocal } from '@/lib/storage'
 
 function useApplications() {
   const qc = useQueryClient()
@@ -195,10 +196,10 @@ function AppTable({ apps, onMove }: { apps: ApplicationRow[]; onMove: (id: numbe
 
 export default function Tracker() {
   const { list, move } = useApplications()
-  const [view, setView] = useState<'kanban' | 'table'>(() => (localStorage.getItem('trackerView') as 'kanban' | 'table') || 'kanban')
+  const [view, setView] = useState<'kanban' | 'table'>(() => (readLocal('trackerView') === 'table' ? 'table' : 'kanban'))
   const setV = (v: 'kanban' | 'table') => {
     setView(v)
-    localStorage.setItem('trackerView', v)
+    writeLocal('trackerView', v)
   }
   const onMove = (id: number, status: Status) => move.mutate({ id, status })
   const apps = list.data ?? []

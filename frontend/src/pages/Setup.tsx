@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { ProfileTab } from './Settings'
+import { writeLocal } from '@/lib/storage'
 
 export const SETUP_DONE_KEY = 'setupDone'
 
@@ -22,7 +23,7 @@ export default function Setup() {
   const [step, setStep] = useState(0)
   const navigate = useNavigate()
   const finish = (to: string) => {
-    localStorage.setItem(SETUP_DONE_KEY, '1')
+    writeLocal(SETUP_DONE_KEY, '1')
     navigate(to)
   }
   const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1))
@@ -123,7 +124,7 @@ export default function Setup() {
                     <Button variant="outline" onClick={() => finish('/')}>Go to the dashboard</Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    You can run this setup again from <Link to="/settings" onClick={() => localStorage.setItem(SETUP_DONE_KEY, '1')} className="underline">Settings</Link>.
+                    You can run this setup again from <Link to="/settings" onClick={() => writeLocal(SETUP_DONE_KEY, '1')} className="underline">Settings</Link>.
                   </p>
                 </>
               )}

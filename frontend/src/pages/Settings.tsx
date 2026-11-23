@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import FilterRules from '@/components/FilterRules'
 import LocationMapEditor from '@/components/LocationMapEditor'
 import { useToast } from '@/lib/toast'
+import { readLocal, writeLocal } from '@/lib/storage'
 import SkillDictionary from '@/components/SkillDictionary'
 import { formatDateTime } from '@/lib/score'
 import { useLocalCopy } from '@/lib/hooks'
@@ -50,15 +51,15 @@ export function ProfileTab({ onSaved, saveLabel = 'Save profile' }: { onSaved?: 
             save.mutate(p)
           }}
         >
-          <Field label="Name"><Input value={p.name} onChange={(e) => set('name', e.target.value)} /></Field>
-          <Field label="Email"><Input type="email" value={p.email} onChange={(e) => set('email', e.target.value)} /></Field>
-          <Field label="Phone"><Input value={p.phone} onChange={(e) => set('phone', e.target.value)} /></Field>
-          <Field label="LinkedIn URL"><Input value={p.linkedin_url} placeholder="e.g. linkedin.com/in/your-name" onChange={(e) => set('linkedin_url', e.target.value)} /></Field>
-          <Field label="GitHub URL"><Input value={p.github_url} placeholder="e.g. github.com/your-name" onChange={(e) => set('github_url', e.target.value)} /></Field>
-          <Field label="Portfolio URL"><Input value={p.portfolio_url} placeholder="Optional" onChange={(e) => set('portfolio_url', e.target.value)} />
+          <Field label="Name"><Input name="name" autoComplete="name" value={p.name} onChange={(e) => set('name', e.target.value)} /></Field>
+          <Field label="Email"><Input type="email" name="email" autoComplete="email" spellCheck={false} value={p.email} onChange={(e) => set('email', e.target.value)} /></Field>
+          <Field label="Phone"><Input type="tel" name="tel" autoComplete="tel" value={p.phone} onChange={(e) => set('phone', e.target.value)} /></Field>
+          <Field label="LinkedIn URL"><Input name="linkedin" inputMode="url" autoComplete="url" spellCheck={false} value={p.linkedin_url} placeholder="e.g. linkedin.com/in/your-name" onChange={(e) => set('linkedin_url', e.target.value)} /></Field>
+          <Field label="GitHub URL"><Input name="github" inputMode="url" autoComplete="off" spellCheck={false} value={p.github_url} placeholder="e.g. github.com/your-name" onChange={(e) => set('github_url', e.target.value)} /></Field>
+          <Field label="Portfolio URL"><Input name="portfolio" inputMode="url" autoComplete="off" spellCheck={false} value={p.portfolio_url} placeholder="Optional" onChange={(e) => set('portfolio_url', e.target.value)} />
             <span className="text-sm text-muted-foreground">Links are printed in your resume and cover-letter header. They're never put in AI prompts.</span>
           </Field>
-          <Field label="Where you live"><Input value={p.location} placeholder="e.g. Petaling Jaya" onChange={(e) => set('location', e.target.value)} /></Field>
+          <Field label="Where you live"><Input name="city" autoComplete="address-level2" value={p.location} placeholder="e.g. Petaling Jaya" onChange={(e) => set('location', e.target.value)} /></Field>
           <Field label="Years of work experience">
             <Input type="number" step="0.5" min="0" value={p.years_of_experience} onChange={(e) => set('years_of_experience', Number(e.target.value))} />
             <span className="text-sm text-muted-foreground">Internships can count. Leave at 0 if you are a fresh graduate.</span>
@@ -324,7 +325,7 @@ const SECTIONS = [
 export default function Settings() {
   const [params] = useSearchParams()
   const [id, setId] = useState<string>(() => {
-    const saved = params.get('section') ?? localStorage.getItem('settingsSection')
+    const saved = params.get('section') ?? readLocal('settingsSection')
     return SECTIONS.some((s) => s.id === saved) ? saved! : 'profile'
   })
   // Follow ?section= links (from the "profile is missing …" banner) even when already on this page.
@@ -337,7 +338,7 @@ export default function Settings() {
   const current = SECTIONS.find((s) => s.id === id) ?? SECTIONS[0]
   const pick = (v: string) => {
     setId(v)
-    localStorage.setItem('settingsSection', v)
+    writeLocal('settingsSection', v)
   }
   return (
     <div>

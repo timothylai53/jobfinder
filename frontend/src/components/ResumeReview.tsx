@@ -52,7 +52,7 @@ function ItemCard({ row, onChange, onRemove, onFocus }: {
       id={`item-${row._id}`}
       onFocusCapture={onFocus}
       onMouseEnter={onFocus}
-      className={cn('rounded-lg border bg-card', issues.length ? 'border-l-4 border-l-attention-edge' : '')}
+      className={cn('rounded-lg border bg-card', issues.length > 0 && 'border-attention-edge')}
     >
       <header className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-2 border-b p-4">
         <Input aria-label="Title" className="h-9 text-base font-semibold" placeholder="Title, e.g. Software Engineering Intern" value={row.title} onChange={(e) => set('title', e.target.value)} />

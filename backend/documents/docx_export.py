@@ -13,7 +13,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.opc.constants import RELATIONSHIP_TYPE
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Pt, RGBColor
+from docx.shared import Mm, Pt, RGBColor
 from docx.text.paragraph import Paragraph
 
 from documents.render import layout_resume
@@ -22,8 +22,12 @@ from models import Document
 FONT = "Arial"
 
 
-def _base() -> Docx:
+def _base(title: str, author: str) -> Docx:
     d = new_docx()
+    # The file's own properties (shown by Word and some ATS imports), not python-docx's defaults.
+    props = d.core_properties
+    props.title, props.author, props.last_modified_by = title, author, author
+    props.subject = props.keywords = props.comments = props.category = ""
     normal = d.styles["Normal"]
     normal.font.name, normal.font.size = FONT, Pt(10.5)
     normal.paragraph_format.space_after = Pt(3)
@@ -33,7 +37,9 @@ def _base() -> Docx:
         st.font.color.rgb = RGBColor(0x11, 0x11, 0x11)
     d.styles["Heading 1"].paragraph_format.space_before = Pt(10)
     for section in d.sections:
-        section.left_margin = section.right_margin = section.top_margin = section.bottom_margin = Pt(45)
+        # A4 with the PDF's margins (resume.html: @page { size: A4; margin: 16mm }), not python-docx's US Letter.
+        section.page_width, section.page_height = Mm(210), Mm(297)
+        section.left_margin = section.right_margin = section.top_margin = section.bottom_margin = Mm(16)
     return d
 
 
@@ -72,8 +78,9 @@ def _contact(d: Docx, header: dict, one_line: bool) -> None:
 
 def resume_docx(doc: Document, projects_first: bool = True) -> bytes:
     c = layout_resume(doc.content, projects_first)
-    d = _base()
     header = c.get("header") or {}
+    name = header.get("name") or ""
+    d = _base(f"{name} resume" if name else "Resume", name)
     d.add_paragraph(header.get("name") or "Your Name", style="Title")
     _contact(d, header, one_line=True)
     if c.get("summary"):
@@ -103,8 +110,9 @@ def resume_docx(doc: Document, projects_first: bool = True) -> bytes:
 
 def cover_letter_docx(doc: Document) -> bytes:
     c = doc.content
-    d = _base()
     header = c.get("header") or {}
+    title = f"Cover letter: {c.get('role', '')}" + (f", {c['company']}" if c.get("company") else "")
+    d = _base(title, header.get("name") or "")
     name = d.add_paragraph()
     name.add_run(header.get("name") or "Your Name").bold = True
     name.paragraph_format.space_after = Pt(0)
