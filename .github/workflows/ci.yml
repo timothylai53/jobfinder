@@ -114,14 +114,19 @@ jobs:
         shell: cmd
         run: call "Job Finder\setup.bat"
       - name: start.bat
-        shell: cmd
-        # The servers keep running after this step. Their output must not go to the step's own pipe, or the runner
-        # waits for them to exit (they never do), so start.bat writes to a log file instead.
+        shell: pwsh
+        # cmd.exe hands every inheritable handle (including this step's output pipe) to the servers start.bat leaves
+        # running, and the runner would wait for them forever. Start-Process passes no handles; we wait for start.bat
+        # itself only, not for the servers.
         timeout-minutes: 5
         run: |
-          mkdir "%JOBFINDER_LOG_DIR%"
-          call "Job Finder\start.bat" > "%JOBFINDER_LOG_DIR%\start.log" 2>&1 < NUL
-          type "%JOBFINDER_LOG_DIR%\start.log"
+          New-Item -ItemType Directory -Force $env:JOBFINDER_LOG_DIR | Out-Null
+          $log = Join-Path $env:JOBFINDER_LOG_DIR 'start.log'
+          $bat = Join-Path $env:GITHUB_WORKSPACE 'Job Finder\start.bat'
+          $p = Start-Process cmd.exe -ArgumentList "/c `"`"$bat`" > `"$log`" 2>&1`"" -WindowStyle Hidden -PassThru
+          $p.WaitForExit()
+          Get-Content $log
+          if ($p.ExitCode -ne 0) { throw "start.bat exited with $($p.ExitCode)" }
       - name: Smoke test, then stop.bat
         shell: pwsh
         timeout-minutes: 8
