@@ -115,14 +115,19 @@ jobs:
         run: call "Job Finder\setup.bat"
       - name: start.bat
         shell: cmd
+        # The servers keep running after this step. Their output must not go to the step's own pipe, or the runner
+        # waits for them to exit (they never do), so start.bat writes to a log file instead.
+        timeout-minutes: 5
         run: |
           mkdir "%JOBFINDER_LOG_DIR%"
-          call "Job Finder\start.bat"
+          call "Job Finder\start.bat" > "%JOBFINDER_LOG_DIR%\start.log" 2>&1 < NUL
+          type "%JOBFINDER_LOG_DIR%\start.log"
       - name: Smoke test, then stop.bat
         shell: pwsh
+        timeout-minutes: 8
         run: '& "Job Finder\scripts\smoke-windows.ps1"'
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() || cancelled()
         with:
           name: windows-install-logs
           path: logs
