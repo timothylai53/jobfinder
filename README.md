@@ -104,7 +104,7 @@ Data flow: fetch → normalise → dedupe → filter → save the full ad → qu
 - **Frontend:** React, Vite, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, React Router, dnd-kit.
 - **Tests:** pytest (**449 tests**) and Vitest (**46 tests**). An autouse fixture blocks every real HTTP request and the real JobSpy call, so the suite never touches a live site. PDF tests render real PDFs offline and read them back.
 - **End-to-end:** Playwright drives the real UI and API in Chromium on fake data (`frontend/e2e/`): first-run checklist → profile → upload a resume → import a job by smart paste → score and verdict → "I have this" → save → Copy-Paste tailor with a fake AI reply (flags visible) → PDF → mark as applied → Kanban, plus hide/undo and snooze. Own ports and a throwaway data folder; any non-localhost request fails the test. Run with `npm run e2e` in `frontend/`.
-- **CI:** GitHub Actions on `ubuntu-latest`: backend ruff (lint), mypy (types) and pytest (with Playwright Chromium); frontend Vitest and production build; then the end-to-end tests.
+- **CI:** GitHub Actions on `ubuntu-latest`: backend ruff (lint), mypy (types) and pytest (with Playwright Chromium); frontend Vitest and production build; then the end-to-end tests. A **`windows-latest`** job does what a new user does: a fresh checkout into a folder with a space, `setup.bat`, `start.bat`, a smoke test of the API, the page and its proxy (`scripts/smoke-windows.ps1`), then `stop.bat`, checking both ports are free.
 
 ## How it was built (with Claude Code)
 
